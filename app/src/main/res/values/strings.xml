@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">RemindForge</string>
+    <string name="notification_channel_name">Behavior reminders</string>
+    <string name="notification_channel_description">Periodic reminders to check your posture and habits</string>
+    <string name="notification_title">RemindForge reminder</string>
+    <string name="notification_text">Time to check in — sit upright, relax your shoulders.</string>
+</resources>

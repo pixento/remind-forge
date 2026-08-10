@@ -1,0 +1,48 @@
+package nl.pixento.remindforge
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import nl.pixento.remindforge.alerting.AlertPlayer
+import nl.pixento.remindforge.alerting.AndroidAlertPlayer
+import nl.pixento.remindforge.alerting.ReminderNotifier
+import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.data.datastore.SettingsRepositoryImpl
+import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
+import nl.pixento.remindforge.domain.TriggerReminderUseCase
+import nl.pixento.remindforge.scheduling.AlarmScheduler
+import nl.pixento.remindforge.scheduling.AndroidAlarmScheduler
+
+private const val SETTINGS_DATASTORE_FILE_NAME = "reminder_settings.preferences_pb"
+
+/** Manual composition root: wires the repository/scheduler/alertPlayer/use cases together. */
+class AppContainer(context: Context) {
+
+    private val appContext = context.applicationContext
+
+    val applicationScope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+
+    private val settingsDataStore: DataStore<Preferences> by lazy {
+        PreferenceDataStoreFactory.create(
+            produceFile = { File(appContext.filesDir, "datastore/$SETTINGS_DATASTORE_FILE_NAME") },
+        )
+    }
+
+    val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(settingsDataStore) }
+    val alarmScheduler: AlarmScheduler by lazy { AndroidAlarmScheduler(appContext) }
+    val alertPlayer: AlertPlayer by lazy { AndroidAlertPlayer(appContext) }
+    val reminderNotifier: ReminderNotifier by lazy { ReminderNotifier(appContext) }
+
+    val triggerReminderUseCase: TriggerReminderUseCase by lazy {
+        TriggerReminderUseCase(settingsRepository, alertPlayer, reminderNotifier, alarmScheduler)
+    }
+
+    val scheduleCoordinator: ReminderScheduleCoordinator by lazy {
+        ReminderScheduleCoordinator(settingsRepository, alarmScheduler)
+    }
+}
