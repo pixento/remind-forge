@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.AndroidAlertPlayer
-import nl.pixento.remindforge.alerting.ReminderNotifier
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.data.datastore.SettingsRepositoryImpl
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
@@ -36,10 +35,9 @@ class AppContainer(context: Context) {
     val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(settingsDataStore) }
     val alarmScheduler: AlarmScheduler by lazy { AndroidAlarmScheduler(appContext) }
     val alertPlayer: AlertPlayer by lazy { AndroidAlertPlayer(appContext) }
-    val reminderNotifier: ReminderNotifier by lazy { ReminderNotifier(appContext) }
 
     val triggerReminderUseCase: TriggerReminderUseCase by lazy {
-        TriggerReminderUseCase(settingsRepository, alertPlayer, reminderNotifier, alarmScheduler)
+        TriggerReminderUseCase(settingsRepository, alertPlayer, alarmScheduler)
     }
 
     val scheduleCoordinator: ReminderScheduleCoordinator by lazy {

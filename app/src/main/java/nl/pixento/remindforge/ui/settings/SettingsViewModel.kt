@@ -47,6 +47,9 @@ class SettingsViewModel(
             }
         }
         refreshPermissionState()
+        viewModelScope.launch {
+            scheduleCoordinator.healIfNeeded()
+        }
     }
 
     fun onEnabledChanged(enabled: Boolean) = persist { setEnabled(enabled) }

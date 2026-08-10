@@ -4,7 +4,6 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.alerting.AlertPlayer
-import nl.pixento.remindforge.alerting.ReminderNotifier
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
@@ -19,7 +18,6 @@ import nl.pixento.remindforge.scheduling.AlarmScheduler
 class TriggerReminderUseCase(
     private val settingsRepository: SettingsRepository,
     private val alertPlayer: AlertPlayer,
-    private val reminderNotifier: ReminderNotifier,
     private val alarmScheduler: AlarmScheduler,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val now: () -> Instant = Instant::now,
@@ -37,7 +35,6 @@ class TriggerReminderUseCase(
             )
         ) {
             playAlert(settings)
-            reminderNotifier.showNotification()
         }
 
         val next = NextTriggerCalculator.nextTrigger(

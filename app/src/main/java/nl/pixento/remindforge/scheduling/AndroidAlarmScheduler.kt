@@ -22,17 +22,38 @@ class AndroidAlarmScheduler(
     override fun scheduleNext(triggerAtMillis: Long) {
         val pendingIntent = buildPendingIntent(triggerAtMillis)
         alarmManager.cancel(pendingIntent)
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerAtMillis,
-            pendingIntent,
-        )
+        try {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent,
+            )
+        } catch (e: SecurityException) {
+            // SCHEDULE_EXACT_ALARM not granted (default on API 33+ until the user opts in via
+            // system settings) - keep the chain alive with a less precise, permission-free alarm
+            // rather than letting it die silently.
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent,
+            )
+        }
     }
 
     override fun cancel() {
         val pendingIntent = buildPendingIntent(scheduledAtMillis = null)
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
+    }
+
+    override fun hasPending(): Boolean {
+        val intent = Intent(context, ReminderAlarmReceiver::class.java)
+        return PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+        ) != null
     }
 
     private fun buildPendingIntent(scheduledAtMillis: Long?): PendingIntent {

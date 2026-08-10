@@ -10,7 +10,6 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.alerting.AlertPlayer
-import nl.pixento.remindforge.alerting.ReminderNotifier
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
@@ -23,13 +22,11 @@ class TriggerReminderUseCaseTest {
     private val zone = ZoneOffset.UTC
     private val settingsRepository = mockk<SettingsRepository>()
     private val alertPlayer = mockk<AlertPlayer>(relaxUnitFun = true)
-    private val reminderNotifier = mockk<ReminderNotifier>(relaxUnitFun = true)
     private val alarmScheduler = mockk<AlarmScheduler>(relaxUnitFun = true)
 
     private fun useCase(fixedNow: Instant) = TriggerReminderUseCase(
         settingsRepository = settingsRepository,
         alertPlayer = alertPlayer,
-        reminderNotifier = reminderNotifier,
         alarmScheduler = alarmScheduler,
         zone = zone,
         now = { fixedNow },
@@ -54,12 +51,11 @@ class TriggerReminderUseCaseTest {
         useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
         verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
-        verify { reminderNotifier.showNotification() }
         verify(exactly = 0) { alertPlayer.playRingtone(any()) }
     }
 
     @Test
-    fun `enabled and ringtone mode plays ringtone and notifies`() = runTest {
+    fun `enabled and ringtone mode plays ringtone`() = runTest {
         val settings = ReminderSettings(
             enabled = true,
             windowStart = LocalTime.of(9, 0),
@@ -73,7 +69,6 @@ class TriggerReminderUseCaseTest {
         useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
         verify { alertPlayer.playRingtone("content://media/ringtone/1") }
-        verify { reminderNotifier.showNotification() }
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
     }
 
@@ -87,7 +82,6 @@ class TriggerReminderUseCaseTest {
 
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
         verify(exactly = 0) { alertPlayer.playRingtone(any()) }
-        verify(exactly = 0) { reminderNotifier.showNotification() }
         verify(exactly = 0) { alarmScheduler.scheduleNext(any()) }
     }
 
@@ -107,7 +101,6 @@ class TriggerReminderUseCaseTest {
         useCase(fixedNow = driftedNow).onAlarmFired(scheduledAt.toEpochMilli())
 
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
-        verify(exactly = 0) { reminderNotifier.showNotification() }
         coVerify { alarmScheduler.scheduleNext(any()) }
     }
 

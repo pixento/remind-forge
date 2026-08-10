@@ -50,4 +50,22 @@ class AndroidAlarmSchedulerTest {
         scheduler.cancel()
         assertNull(shadowOf(alarmManager).nextScheduledAlarm)
     }
+
+    @Test
+    fun `hasPending is false before any alarm is scheduled`() {
+        assertEquals(false, scheduler.hasPending())
+    }
+
+    @Test
+    fun `hasPending is true after scheduling`() {
+        scheduler.scheduleNext(1_700_000_000_000L)
+        assertEquals(true, scheduler.hasPending())
+    }
+
+    @Test
+    fun `hasPending is false after cancel`() {
+        scheduler.scheduleNext(1_700_000_000_000L)
+        scheduler.cancel()
+        assertEquals(false, scheduler.hasPending())
+    }
 }

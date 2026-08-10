@@ -73,6 +73,12 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `init triggers a coordinator heal check`() {
+        viewModel()
+        coVerify { coordinator.healIfNeeded() }
+    }
+
+    @Test
     fun `interval below minimum is clamped to 5`() {
         val vm = viewModel()
         vm.onIntervalChanged(2)

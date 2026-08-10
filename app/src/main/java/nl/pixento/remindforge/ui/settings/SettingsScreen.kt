@@ -1,10 +1,7 @@
 package nl.pixento.remindforge.ui.settings
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
@@ -54,25 +50,9 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { /* Alerting still works without it; only the tray notification is gated. */ }
-
     SettingsScreen(
         uiState = uiState,
-        onEnabledChanged = { enabled ->
-            viewModel.onEnabledChanged(enabled)
-            if (enabled &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        },
+        onEnabledChanged = viewModel::onEnabledChanged,
         onIntervalChanged = viewModel::onIntervalChanged,
         onWindowStartChanged = viewModel::onWindowStartChanged,
         onWindowEndChanged = viewModel::onWindowEndChanged,

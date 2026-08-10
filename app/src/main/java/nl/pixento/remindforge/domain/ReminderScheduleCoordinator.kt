@@ -36,4 +36,16 @@ class ReminderScheduleCoordinator(
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())
     }
+
+    /**
+     * Repairs a chain that died silently (revoked permission, process death mid-tick, OEM
+     * background kill) without disturbing one that's still intact. Safe to call on every app
+     * start: a no-op unless enabled and nothing is actually scheduled.
+     */
+    suspend fun healIfNeeded() {
+        val settings = settingsRepository.settings.first()
+        if (settings.enabled && !alarmScheduler.hasPending()) {
+            rescheduleFromNow()
+        }
+    }
 }
