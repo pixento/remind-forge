@@ -5,9 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.AndroidAlertPlayer
 import nl.pixento.remindforge.data.ScheduleStateRepository
@@ -26,8 +23,6 @@ private const val SETTINGS_DATASTORE_FILE_NAME = "reminder_settings.preferences_
 class AppContainer(context: Context) {
 
     private val appContext = context.applicationContext
-
-    val applicationScope: CoroutineScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
 
     private val settingsDataStore: DataStore<Preferences> by lazy {
         PreferenceDataStoreFactory.create(

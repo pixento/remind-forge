@@ -71,7 +71,7 @@ class AndroidAlertPlayer(
     }
 
     override fun playRingtone(uriString: String) {
-        stopPreview()
+        stopCurrentRingtone()
         val uri = Uri.parse(uriString)
         val ringtone = RingtoneManager.getRingtone(context, uri) ?: return
         ringtone.audioAttributes = alarmAudioAttributes
@@ -87,13 +87,14 @@ class AndroidAlertPlayer(
         // should buzz once, not ring like an alarm clock until the user acts. The fixed fallback
         // only applies if the sound's duration couldn't be read.
         val stop = Runnable {
-            if (currentRingtone === ringtone) stopPreview()
+            if (currentRingtone === ringtone) stopCurrentRingtone()
         }
         pendingStop = stop
         mainHandler.postDelayed(stop, ringtoneDurationMillis(uri) ?: FALLBACK_DURATION_MILLIS)
     }
 
-    override fun stopPreview() {
+    /** Idempotent: safe when nothing is playing, and cancels any queued auto-stop. */
+    private fun stopCurrentRingtone() {
         pendingStop?.let { mainHandler.removeCallbacks(it) }
         pendingStop = null
         currentRingtone?.let { ringtone -> if (ringtone.isPlaying) ringtone.stop() }

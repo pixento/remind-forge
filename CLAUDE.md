@@ -138,12 +138,11 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   The screen follows the platform sound-and-vibration settings idiom: rounded grouped cards of rows,
   each row a title over its current value in the accent colour, the whole row tappable to open a
   picker. Build new settings out of `components/SettingsList.kt` (`SettingsGroup`, `SettingsRow`,
-  `SettingsDivider`) and the two dialogs, `components/RadioChoiceDialog.kt` and
-  `components/NumberInputDialog.kt`, rather than adding bespoke inline controls. Both keep the value
-  as a draft until OK — `RadioChoiceDialog` so `onPreview` can audition an option that Cancel then
-  discards (mirroring the system ringtone picker), `NumberInputDialog` so nothing outside its
+  `SettingsDivider`) and `components/NumberInputDialog.kt`, rather than adding bespoke inline
+  controls. `NumberInputDialog` keeps the typed value as a draft until OK so nothing outside its
   `range` can ever be committed (OK is disabled while the field is empty or out of range, which is
   why the interval row can offer free numeric entry without the caller clamping a surprise value).
+  A radio-style chooser is a full screen rather than a dialog here — see `ui/settings/vibration/`.
 
   Both alert channels open a *separate picker activity*, so the two rows behave alike: Sound launches
   the system `ACTION_RINGTONE_PICKER`, Vibration launches `VibrationPickerActivity` through the

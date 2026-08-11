@@ -27,9 +27,9 @@ import nl.pixento.remindforge.R
 private const val MAX_DIGITS = 3
 
 /**
- * Free numeric entry shaped like [RadioChoiceDialog]: a titled dialog with Cancel/OK where the
- * typed value stays a draft until OK. Nothing outside [range] can be committed - OK is disabled
- * while the field is empty or out of range, so the caller never has to clamp a surprise value.
+ * Free numeric entry: a titled dialog with Cancel/OK where the typed value stays a draft until OK.
+ * Nothing outside [range] can be committed - OK is disabled while the field is empty or out of
+ * range, so the caller never has to clamp a surprise value.
  */
 @Composable
 fun NumberInputDialog(

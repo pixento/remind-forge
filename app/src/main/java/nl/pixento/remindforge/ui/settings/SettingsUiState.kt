@@ -16,8 +16,6 @@ data class SettingsUiState(
     val needsExactAlarmPermission: Boolean = false,
     val showBatteryOptimizationBanner: Boolean = false,
 ) {
-    val isOvernightWrap: Boolean get() = windowStart > windowEnd
-
     /** Both channels silenced: reminders would still fire, just with nothing to notice. */
     val hasNoAlertSelected: Boolean
         get() = vibrationPattern == VibrationPatternType.SILENT && ringtoneUri == null
