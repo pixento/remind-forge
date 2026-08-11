@@ -67,14 +67,21 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
 ### Layers
 
 - `domain/` — pure logic and use cases (`NextTriggerCalculator`, `TriggerReminderUseCase`,
-  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`, `AlertMode`,
+  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`,
   `VibrationPatternType`). No Android framework dependencies except where noted.
 - `data/` — `SettingsRepository` interface + `data/datastore/SettingsRepositoryImpl`, backed by
   Preferences DataStore (`data/datastore/PreferencesKeys`, `SettingsMapper` convert between
-  `Preferences` and `ReminderSettings`).
+  `Preferences` and `ReminderSettings`). `AlertModeMigration` is a one-shot `DataMigration` that
+  translates the removed `alert_mode` preference into the two independent channels below; keep
+  schema changes to one-shot migrations rather than fallbacks in `SettingsMapper`, which would
+  re-apply on every read.
 - `alerting/` — `AlertPlayer`/`AndroidAlertPlayer` (Vibrator + RingtoneManager, played
   programmatically; no notification channel or tray notification is involved — the alarm chain is a
-  plain `BroadcastReceiver` and needs neither), `VibrationPatterns`.
+  plain `BroadcastReceiver` and needs neither), `VibrationPatterns`. Vibration and sound are two
+  **independent** channels — a tick can buzz, ring, or both. `VibrationPatternType.SILENT` (whose
+  `waveformFor` is `null`) silences the first, a null `ringtoneUri` the second; silencing both is a
+  legal state that the Settings screen warns about and `TriggerReminderUseCase` reports as
+  `AlarmFiredOutcome.NO_ALERT_SELECTED` while still rescheduling.
 - `scheduling/` — `AlarmScheduler`/`AndroidAlarmScheduler`, plus `ExactAlarmPermission` and
   `BatteryOptimization` helpers for the two runtime-permission-like states the Settings screen has to
   surface (SCHEDULE_EXACT_ALARM grant, battery optimization exemption) since both are granted via a
@@ -85,8 +92,15 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `SettingsRepository.settings` and writes through `persist { ... }`, which always follows a
   settings write with `scheduleCoordinator.rescheduleFromNow()` so a change takes effect immediately
   instead of waiting for the in-flight chain to finish its current interval. `ui/settings/components/`
-  holds the individual controls (interval stepper, time window picker, alert mode selector, vibration
-  pattern picker, ringtone picker launcher, permission banners).
+  holds the individual controls (interval picker, time window picker, vibration pattern picker,
+  ringtone picker launcher, permission banners).
+
+  The screen follows the platform sound-and-vibration settings idiom: rounded grouped cards of rows,
+  each row a title over its current value in the accent colour, the whole row tappable to open a
+  picker. Build new settings out of `components/SettingsList.kt` (`SettingsGroup`, `SettingsRow`,
+  `SettingsDivider`) and `components/RadioChoiceDialog.kt` rather than adding bespoke inline
+  controls — `RadioChoiceDialog` keeps the choice as a draft until OK so `onPreview` can audition an
+  option that Cancel then discards, mirroring the system ringtone picker.
 
 ### Permission model
 
@@ -98,4 +112,4 @@ rather than via an `ActivityResultContract` callback.
 ## Git workflow
 
 Don't commit automatically after making changes. Only commit when the user explicitly asks for it,
-and when they do, use a short, single-sentence, descriptive commit message.
+and when they do, use a short, single-sentence, imperative style, descriptive commit message.

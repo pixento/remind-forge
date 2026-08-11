@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.data.SettingsRepository
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
@@ -37,14 +36,34 @@ class TriggerReminderUseCaseTest {
         Instant.parse("2026-01-01T${"%02d".format(hour)}:${"%02d".format(minute)}:00Z")
 
     @Test
-    fun `enabled and vibration mode plays vibration and notifies`() = runTest {
+    fun `a pattern and a ringtone both play on the same tick`() = runTest {
         val settings = ReminderSettings(
             enabled = true,
             intervalMinutes = 15,
             windowStart = LocalTime.of(9, 0),
             windowEnd = LocalTime.of(17, 0),
-            alertMode = AlertMode.VIBRATION,
             vibrationPattern = VibrationPatternType.LONG_PULSE,
+            ringtoneUri = "content://media/ringtone/1",
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+
+        assertEquals(AlarmFiredOutcome.FIRED, outcome)
+        verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
+        verify { alertPlayer.playRingtone("content://media/ringtone/1") }
+    }
+
+    @Test
+    fun `a pattern with no ringtone only vibrates`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+            ringtoneUri = null,
         )
         every { settingsRepository.settings } returns flowOf(settings)
         val scheduledAt = scheduledInstant(10, 0)
@@ -57,12 +76,12 @@ class TriggerReminderUseCaseTest {
     }
 
     @Test
-    fun `enabled and ringtone mode plays ringtone`() = runTest {
+    fun `a silent pattern with a ringtone only rings`() = runTest {
         val settings = ReminderSettings(
             enabled = true,
             windowStart = LocalTime.of(9, 0),
             windowEnd = LocalTime.of(17, 0),
-            alertMode = AlertMode.RINGTONE,
+            vibrationPattern = VibrationPatternType.SILENT,
             ringtoneUri = "content://media/ringtone/1",
         )
         every { settingsRepository.settings } returns flowOf(settings)
@@ -76,13 +95,13 @@ class TriggerReminderUseCaseTest {
     }
 
     @Test
-    fun `ringtone mode with no ringtone set skips alert but still reschedules`() = runTest {
+    fun `both channels silent skips the alert but still reschedules`() = runTest {
         val settings = ReminderSettings(
             enabled = true,
             intervalMinutes = 15,
             windowStart = LocalTime.of(9, 0),
             windowEnd = LocalTime.of(17, 0),
-            alertMode = AlertMode.RINGTONE,
+            vibrationPattern = VibrationPatternType.SILENT,
             ringtoneUri = null,
         )
         every { settingsRepository.settings } returns flowOf(settings)
@@ -90,7 +109,7 @@ class TriggerReminderUseCaseTest {
 
         val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
-        assertEquals(AlarmFiredOutcome.NO_RINGTONE_URI, outcome)
+        assertEquals(AlarmFiredOutcome.NO_ALERT_SELECTED, outcome)
         verify(exactly = 0) { alertPlayer.playRingtone(any()) }
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
         coVerify { alarmScheduler.scheduleNext(any()) }

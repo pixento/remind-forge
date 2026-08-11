@@ -1,7 +1,6 @@
 package nl.pixento.remindforge.ui.settings.components
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -15,34 +14,72 @@ class VibrationPatternPickerTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    @Test
-    fun selectingAPatternInvokesOnSelect() {
-        var selected: VibrationPatternType? = null
-        composeRule.setContent {
-            VibrationPatternPicker(
-                selected = VibrationPatternType.SHORT_PULSE,
-                onSelect = { selected = it },
-                onPreview = {},
-            )
-        }
-        composeRule.onNodeWithText(VibrationPatternType.LONG_PULSE.label).performClick()
-        assertEquals(VibrationPatternType.LONG_PULSE, selected)
-    }
+    private var selected: VibrationPatternType? = null
+    private var previewed: VibrationPatternType? = null
 
-    @Test
-    fun previewButtonInvokesOnPreviewWithoutChangingSelection() {
-        var selected: VibrationPatternType? = null
-        var previewed: VibrationPatternType? = null
+    private fun setPicker(current: VibrationPatternType = VibrationPatternType.SHORT_PULSE) {
         composeRule.setContent {
             VibrationPatternPicker(
-                selected = VibrationPatternType.SHORT_PULSE,
+                selected = current,
                 onSelect = { selected = it },
                 onPreview = { previewed = it },
             )
         }
-        // Rows render in VibrationPatternType.entries order; index 1 is LONG_PULSE's preview button.
-        composeRule.onAllNodesWithText("Preview")[1].performClick()
+    }
+
+    @Test
+    fun rowShowsTheSelectedPatternAndOpensTheDialogWithoutSelecting() {
+        setPicker(current = VibrationPatternType.DOUBLE_PULSE)
+
+        composeRule.onNodeWithText(VibrationPatternType.DOUBLE_PULSE.label).performClick()
+
+        composeRule.onNodeWithText("Vibration pattern").assertExists()
+        assertNull(selected)
+    }
+
+    @Test
+    fun tappingAPatternPreviewsItButDoesNotCommitUntilOk() {
+        setPicker()
+        composeRule.onNodeWithText(VibrationPatternType.SHORT_PULSE.label).performClick()
+
+        composeRule.onNodeWithText(VibrationPatternType.LONG_PULSE.label).performClick()
+
         assertEquals(VibrationPatternType.LONG_PULSE, previewed)
         assertNull(selected)
+    }
+
+    @Test
+    fun okCommitsTheTappedPattern() {
+        setPicker()
+        composeRule.onNodeWithText(VibrationPatternType.SHORT_PULSE.label).performClick()
+        composeRule.onNodeWithText(VibrationPatternType.LONG_PULSE.label).performClick()
+
+        composeRule.onNodeWithText("OK").performClick()
+
+        assertEquals(VibrationPatternType.LONG_PULSE, selected)
+        composeRule.onNodeWithText("Vibration pattern").assertDoesNotExist()
+    }
+
+    @Test
+    fun cancelDiscardsTheTappedPattern() {
+        setPicker()
+        composeRule.onNodeWithText(VibrationPatternType.SHORT_PULSE.label).performClick()
+        composeRule.onNodeWithText(VibrationPatternType.LONG_PULSE.label).performClick()
+
+        composeRule.onNodeWithText("Cancel").performClick()
+
+        assertNull(selected)
+        composeRule.onNodeWithText("Vibration pattern").assertDoesNotExist()
+    }
+
+    @Test
+    fun silentIsOfferedAsAPattern() {
+        setPicker()
+        composeRule.onNodeWithText(VibrationPatternType.SHORT_PULSE.label).performClick()
+
+        composeRule.onNodeWithText(VibrationPatternType.SILENT.label).performClick()
+        composeRule.onNodeWithText("OK").performClick()
+
+        assertEquals(VibrationPatternType.SILENT, selected)
     }
 }

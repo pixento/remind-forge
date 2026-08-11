@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.AndroidAlertPlayer
 import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.data.datastore.AlertModeMigration
 import nl.pixento.remindforge.data.datastore.SettingsRepositoryImpl
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.TriggerReminderUseCase
@@ -28,6 +29,7 @@ class AppContainer(context: Context) {
 
     private val settingsDataStore: DataStore<Preferences> by lazy {
         PreferenceDataStoreFactory.create(
+            migrations = listOf(AlertModeMigration),
             produceFile = { File(appContext.filesDir, "datastore/$SETTINGS_DATASTORE_FILE_NAME") },
         )
     }

@@ -4,7 +4,6 @@ import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import nl.pixento.remindforge.data.SettingsRepository
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 
@@ -37,10 +36,6 @@ class FakeSettingsRepository(
 
     override suspend fun setWindowEnd(time: LocalTime) {
         state.value = state.value.copy(windowEnd = time)
-    }
-
-    override suspend fun setAlertMode(mode: AlertMode) {
-        state.value = state.value.copy(alertMode = mode)
     }
 
     override suspend fun setVibrationPattern(pattern: VibrationPatternType) {

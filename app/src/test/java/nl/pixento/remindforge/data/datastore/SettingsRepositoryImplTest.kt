@@ -9,7 +9,6 @@ import java.io.File
 import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertEquals
@@ -45,7 +44,6 @@ class SettingsRepositoryImplTest {
         repository.setIntervalMinutes(20)
         repository.setWindowStart(LocalTime.of(8, 30))
         repository.setWindowEnd(LocalTime.of(20, 15))
-        repository.setAlertMode(AlertMode.RINGTONE)
         repository.setVibrationPattern(VibrationPatternType.LONG_PULSE)
         repository.setRingtoneUri("content://media/ringtone/1")
 
@@ -54,7 +52,6 @@ class SettingsRepositoryImplTest {
         assertEquals(20, result.intervalMinutes)
         assertEquals(LocalTime.of(8, 30), result.windowStart)
         assertEquals(LocalTime.of(20, 15), result.windowEnd)
-        assertEquals(AlertMode.RINGTONE, result.alertMode)
         assertEquals(VibrationPatternType.LONG_PULSE, result.vibrationPattern)
         assertEquals("content://media/ringtone/1", result.ringtoneUri)
     }
@@ -85,13 +82,6 @@ class SettingsRepositoryImplTest {
             ReminderSettings.MAX_INTERVAL_MINUTES,
             repository.settings.first().intervalMinutes
         )
-    }
-
-    @Test
-    fun `corrupted alert mode string falls back to default`() = runTest {
-        setUp()
-        dataStore.edit { it[stringPreferencesKey("alert_mode")] = "NOT_A_REAL_MODE" }
-        assertEquals(ReminderSettings().alertMode, repository.settings.first().alertMode)
     }
 
     @Test

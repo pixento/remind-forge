@@ -1,13 +1,10 @@
 package nl.pixento.remindforge.ui.settings.components
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 
@@ -18,22 +15,29 @@ fun VibrationPatternPicker(
     onPreview: (VibrationPatternType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        VibrationPatternType.entries.forEach { pattern ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected = selected == pattern,
-                        onClick = { onSelect(pattern) },
-                    ),
-            ) {
-                RadioButton(selected = selected == pattern, onClick = { onSelect(pattern) })
-                Text(pattern.label, modifier = Modifier.weight(1f))
-                TextButton(onClick = { onPreview(pattern) }) {
-                    Text("Preview")
-                }
-            }
-        }
+    var showDialog by remember { mutableStateOf(false) }
+
+    SettingsRow(
+        title = "Vibration",
+        value = selected.label,
+        onClick = { showDialog = true },
+        modifier = modifier,
+    )
+
+    if (showDialog) {
+        RadioChoiceDialog(
+            title = "Vibration pattern",
+            options = VibrationPatternType.entries,
+            selected = selected,
+            label = { it.label },
+            // Tapping a pattern buzzes it straight away, the way the system ringtone picker
+            // auditions a sound - SILENT is a no-op inside the player.
+            onPreview = onPreview,
+            onConfirm = {
+                onSelect(it)
+                showDialog = false
+            },
+            onDismiss = { showDialog = false },
+        )
     }
 }

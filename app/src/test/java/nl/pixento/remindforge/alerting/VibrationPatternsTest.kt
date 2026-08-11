@@ -2,6 +2,7 @@ package nl.pixento.remindforge.alerting
 
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class VibrationPatternsTest {
@@ -39,9 +40,16 @@ class VibrationPatternsTest {
     }
 
     @Test
-    fun `every pattern type has a waveform mapped`() {
-        VibrationPatternType.entries.forEach { pattern ->
-            assert(VibrationPatterns.waveformFor(pattern).isNotEmpty())
-        }
+    fun `silent has no waveform`() {
+        assertNull(VibrationPatterns.waveformFor(VibrationPatternType.SILENT))
+    }
+
+    @Test
+    fun `every audible pattern type has a waveform mapped`() {
+        VibrationPatternType.entries
+            .filter { it != VibrationPatternType.SILENT }
+            .forEach { pattern ->
+                assert(VibrationPatterns.waveformFor(pattern)?.isNotEmpty() == true)
+            }
     }
 }

@@ -45,7 +45,9 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // LICENSE.md/LICENSE-notice.md come from the JUnit 5 jars mockk-android drags into
+            // androidTest; without excluding them the androidTest APK fails to package.
+            excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
     }
 }

@@ -25,6 +25,13 @@ class RingtonePickerLauncherTest {
     }
 
     @Test
+    fun `picker intent offers Silent so the sound channel can be switched off`() {
+        val intent = buildRingtonePickerIntent(currentUri = null)
+
+        assertTrue(intent.getBooleanExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false))
+    }
+
+    @Test
     fun `null current uri omits the existing-uri extra`() {
         val intent = buildRingtonePickerIntent(currentUri = null)
 

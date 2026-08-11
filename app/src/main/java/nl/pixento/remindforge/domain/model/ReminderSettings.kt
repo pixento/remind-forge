@@ -7,8 +7,9 @@ data class ReminderSettings(
     val intervalMinutes: Int = 15,
     val windowStart: LocalTime = LocalTime.of(9, 0),
     val windowEnd: LocalTime = LocalTime.of(17, 0),
-    val alertMode: AlertMode = AlertMode.VIBRATION,
+    /** [VibrationPatternType.SILENT] silences the vibration channel. */
     val vibrationPattern: VibrationPatternType = VibrationPatternType.SHORT_PULSE,
+    /** `null` silences the sound channel; the two channels are independent and can both play. */
     val ringtoneUri: String? = null,
 ) {
     companion object {

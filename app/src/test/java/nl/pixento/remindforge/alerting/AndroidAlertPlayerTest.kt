@@ -8,6 +8,7 @@ import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +33,15 @@ class AndroidAlertPlayerTest {
 
         val attributes = shadowVibrator.vibrationAttributesFromLastVibration as VibrationAttributes
         assertEquals(VibrationAttributes.USAGE_ALARM, attributes.usage)
+    }
+
+    @Test
+    fun `the silent pattern does not vibrate at all`() {
+        player.playVibration(VibrationPatternType.SILENT)
+
+        val vibratorManager =
+            context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        assertFalse(shadowOf(vibratorManager.defaultVibrator).isVibrating)
     }
 
     @Test

@@ -6,7 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import nl.pixento.remindforge.domain.model.AlertMode
+import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -28,11 +28,9 @@ class SettingsScreenTest {
                 onIntervalChanged = {},
                 onWindowStartChanged = {},
                 onWindowEndChanged = {},
-                onAlertModeChanged = {},
                 onVibrationPatternSelected = {},
                 onPreviewVibration = {},
                 onRingtoneSelected = {},
-                onPreviewRingtone = {},
                 onRequestExactAlarmPermission = onRequestExactAlarmPermission,
             )
         }
@@ -79,15 +77,52 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun vibrationSectionShownForVibrationMode() {
-        setScreen(uiState = SettingsUiState(alertMode = AlertMode.VIBRATION))
-        composeRule.onNodeWithText("Short pulse").assertExists()
+    fun bothAlertChannelsAreAlwaysShownWithTheirCurrentValue() {
+        setScreen(
+            uiState = SettingsUiState(
+                vibrationPattern = VibrationPatternType.DOUBLE_PULSE,
+                ringtoneUri = "content://media/ringtone/1",
+                ringtoneTitle = "Galaxy Bells",
+            ),
+        )
+
+        composeRule.onNodeWithText("Vibration").assertExists()
+        composeRule.onNodeWithText(VibrationPatternType.DOUBLE_PULSE.label).assertExists()
+        composeRule.onNodeWithText("Sound").assertExists()
+        composeRule.onNodeWithText("Galaxy Bells").assertExists()
     }
 
     @Test
-    fun ringtoneSectionShownForRingtoneMode() {
-        setScreen(uiState = SettingsUiState(alertMode = AlertMode.RINGTONE))
-        composeRule.onNodeWithText("Choose ringtone").assertExists()
-        composeRule.onNodeWithText("Short pulse").assertDoesNotExist()
+    fun soundRowReadsSilentWithNoRingtoneSelected() {
+        setScreen(uiState = SettingsUiState(ringtoneUri = null, ringtoneTitle = null))
+        composeRule.onNodeWithText("Silent").assertExists()
+    }
+
+    @Test
+    fun warningHiddenWhileEitherChannelStillAlerts() {
+        setScreen(
+            uiState = SettingsUiState(
+                vibrationPattern = VibrationPatternType.SILENT,
+                ringtoneUri = "content://media/ringtone/1",
+                ringtoneTitle = "Galaxy Bells",
+            ),
+        )
+        composeRule.onNodeWithText(NO_ALERT_WARNING).assertDoesNotExist()
+    }
+
+    @Test
+    fun warningShownWhenBothChannelsAreSilent() {
+        setScreen(
+            uiState = SettingsUiState(
+                vibrationPattern = VibrationPatternType.SILENT,
+                ringtoneUri = null,
+            ),
+        )
+        composeRule.onNodeWithText(NO_ALERT_WARNING).assertExists()
+    }
+
+    private companion object {
+        const val NO_ALERT_WARNING =
+            "No vibration or sound selected - reminders will fire silently."
     }
 }

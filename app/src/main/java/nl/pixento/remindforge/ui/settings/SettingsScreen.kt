@@ -1,5 +1,6 @@
 package nl.pixento.remindforge.ui.settings
 
+import android.app.Activity
 import android.media.RingtoneManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -7,14 +8,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,14 +35,15 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 import nl.pixento.remindforge.domain.NextTriggerCalculator
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
-import nl.pixento.remindforge.ui.settings.components.AlertModeSelector
 import nl.pixento.remindforge.ui.settings.components.BatteryOptimizationBanner
 import nl.pixento.remindforge.ui.settings.components.ExactAlarmPermissionBanner
-import nl.pixento.remindforge.ui.settings.components.IntervalStepper
+import nl.pixento.remindforge.ui.settings.components.IntervalPicker
+import nl.pixento.remindforge.ui.settings.components.SettingsDivider
+import nl.pixento.remindforge.ui.settings.components.SettingsGroup
+import nl.pixento.remindforge.ui.settings.components.SettingsRow
 import nl.pixento.remindforge.ui.settings.components.TimeWindowPicker
 import nl.pixento.remindforge.ui.settings.components.VibrationPatternPicker
 import nl.pixento.remindforge.ui.settings.components.buildRingtonePickerIntent
@@ -56,11 +59,9 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
         onIntervalChanged = viewModel::onIntervalChanged,
         onWindowStartChanged = viewModel::onWindowStartChanged,
         onWindowEndChanged = viewModel::onWindowEndChanged,
-        onAlertModeChanged = viewModel::onAlertModeChanged,
         onVibrationPatternSelected = viewModel::onVibrationPatternSelected,
         onPreviewVibration = viewModel::onPreviewVibration,
         onRingtoneSelected = viewModel::onRingtoneSelected,
-        onPreviewRingtone = viewModel::onPreviewRingtone,
         onRequestExactAlarmPermission = {
             context.startActivity(ExactAlarmPermission.buildRequestIntent(context))
         },
@@ -79,11 +80,9 @@ fun SettingsScreen(
     onIntervalChanged: (Int) -> Unit,
     onWindowStartChanged: (LocalTime) -> Unit,
     onWindowEndChanged: (LocalTime) -> Unit,
-    onAlertModeChanged: (AlertMode) -> Unit,
     onVibrationPatternSelected: (VibrationPatternType) -> Unit,
     onPreviewVibration: (VibrationPatternType) -> Unit,
-    onRingtoneSelected: (Uri) -> Unit,
-    onPreviewRingtone: (Uri) -> Unit,
+    onRingtoneSelected: (Uri?) -> Unit,
     onRequestExactAlarmPermission: () -> Unit,
     modifier: Modifier = Modifier,
     onRequestBatteryOptimizationExemption: () -> Unit = {},
@@ -92,14 +91,19 @@ fun SettingsScreen(
     val ringtoneLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
-        val uri = result.data?.let {
-            IntentCompat.getParcelableExtra(
-                it,
-                RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
-                Uri::class.java
-            )
-        }
-        if (uri != null) onRingtoneSelected(uri)
+        // Picking "Silent" returns RESULT_OK with a null URI, which is exactly how the sound
+        // channel is switched off - so the result code, not the URI, is what distinguishes a real
+        // choice from a cancelled picker.
+        if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
+        onRingtoneSelected(
+            result.data?.let {
+                IntentCompat.getParcelableExtra(
+                    it,
+                    RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                    Uri::class.java,
+                )
+            },
+        )
     }
 
     LazyColumn(
@@ -123,79 +127,71 @@ fun SettingsScreen(
         }
 
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Enabled", style = MaterialTheme.typography.titleMedium)
-                Switch(
-                    checked = uiState.enabled,
-                    onCheckedChange = onEnabledChanged,
-                    modifier = Modifier.testTag("enabledSwitch"),
+            SettingsGroup {
+                SettingsRow(
+                    title = "Reminders",
+                    value = nextReminderText(uiState),
+                    trailing = {
+                        Switch(
+                            checked = uiState.enabled,
+                            onCheckedChange = onEnabledChanged,
+                            modifier = Modifier.testTag("enabledSwitch"),
+                        )
+                    },
                 )
             }
         }
 
-        if (uiState.enabled) {
-            item {
-                NextReminderEstimate(uiState)
-            }
-        }
-
         item {
-            Column {
-                Text("Interval", style = MaterialTheme.typography.titleMedium)
-                IntervalStepper(uiState.intervalMinutes, onIntervalChanged)
-            }
-        }
-
-        item {
-            Column {
-                Text("Active window", style = MaterialTheme.typography.titleMedium)
+            SettingsGroup {
+                IntervalPicker(uiState.intervalMinutes, onIntervalChanged)
+                SettingsDivider()
                 TimeWindowPicker(
                     uiState.windowStart,
                     uiState.windowEnd,
                     onWindowStartChanged,
-                    onWindowEndChanged
+                    onWindowEndChanged,
                 )
             }
         }
 
         item {
-            Column {
-                Text("Alert", style = MaterialTheme.typography.titleMedium)
-                AlertModeSelector(uiState.alertMode, onAlertModeChanged)
-            }
-        }
-
-        if (uiState.alertMode == AlertMode.VIBRATION) {
-            item {
+            SettingsGroup {
                 VibrationPatternPicker(
                     selected = uiState.vibrationPattern,
                     onSelect = onVibrationPatternSelected,
                     onPreview = onPreviewVibration,
                 )
+                SettingsDivider()
+                SettingsRow(
+                    title = "Sound",
+                    value = uiState.ringtoneTitle ?: "Silent",
+                    onClick = {
+                        ringtoneLauncher.launch(
+                            buildRingtonePickerIntent(uiState.ringtoneUri?.let(Uri::parse)),
+                        )
+                    },
+                )
             }
-        } else {
-            item {
-                Column {
-                    Text(uiState.ringtoneTitle ?: "No ringtone selected")
-                    Row {
-                        TextButton(onClick = {
-                            val currentUri = uiState.ringtoneUri?.let(Uri::parse)
-                            ringtoneLauncher.launch(buildRingtonePickerIntent(currentUri))
-                        }) {
-                            Text("Choose ringtone")
-                        }
-                        val ringtoneUri = uiState.ringtoneUri
-                        if (ringtoneUri != null) {
-                            TextButton(onClick = { onPreviewRingtone(Uri.parse(ringtoneUri)) }) {
-                                Text("Preview")
-                            }
-                        }
-                    }
-                }
-            }
+        }
+
+        if (uiState.hasNoAlertSelected) {
+            item { NoAlertSelectedWarning() }
+        }
+    }
+}
+
+@Composable
+private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("No vibration or sound selected - reminders will fire silently.")
         }
     }
 }
@@ -207,11 +203,11 @@ fun SettingsScreen(
  * so the estimate doesn't go stale (and drift into the past) while the screen sits idle.
  */
 @Composable
-private fun NextReminderEstimate(uiState: SettingsUiState, modifier: Modifier = Modifier) {
+private fun nextReminderText(uiState: SettingsUiState): String? {
     val zone = remember { ZoneId.systemDefault() }
     var now by remember { mutableStateOf(Instant.now()) }
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(uiState.enabled) {
+        while (uiState.enabled) {
             delay(30_000)
             now = Instant.now()
         }
@@ -226,9 +222,9 @@ private fun NextReminderEstimate(uiState: SettingsUiState, modifier: Modifier = 
         )
     }
     val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    Text(
-        "Next reminder around ${formatter.format(next.atZone(zone))}",
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier,
-    )
+    return if (uiState.enabled) {
+        "Next reminder around ${formatter.format(next.atZone(zone))}"
+    } else {
+        null
+    }
 }

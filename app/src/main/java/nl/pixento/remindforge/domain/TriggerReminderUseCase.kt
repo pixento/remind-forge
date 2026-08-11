@@ -5,12 +5,12 @@ import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.data.SettingsRepository
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
+import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
 
 /** Why a given alarm-chain tick did or didn't play an alert, for the receiver to log. */
-enum class AlarmFiredOutcome { FIRED, DISABLED, OUTSIDE_WINDOW, NO_RINGTONE_URI }
+enum class AlarmFiredOutcome { FIRED, DISABLED, OUTSIDE_WINDOW, NO_ALERT_SELECTED }
 
 /**
  * Handles a single alarm-chain tick: re-checks current settings (they may have changed since
@@ -54,14 +54,21 @@ class TriggerReminderUseCase(
         return outcome
     }
 
+    /**
+     * Vibration and sound are independent channels, so a tick can buzz, ring, or do both. Silencing
+     * both is a legitimate (if odd) configuration the settings screen warns about, not an error -
+     * the chain still reschedules either way.
+     */
     private fun playAlert(settings: ReminderSettings): AlarmFiredOutcome {
-        when (settings.alertMode) {
-            AlertMode.VIBRATION -> alertPlayer.playVibration(settings.vibrationPattern)
-            AlertMode.RINGTONE -> {
-                val uri = settings.ringtoneUri ?: return AlarmFiredOutcome.NO_RINGTONE_URI
-                alertPlayer.playRingtone(uri)
-            }
+        var played = false
+        if (settings.vibrationPattern != VibrationPatternType.SILENT) {
+            alertPlayer.playVibration(settings.vibrationPattern)
+            played = true
         }
-        return AlarmFiredOutcome.FIRED
+        settings.ringtoneUri?.let { uri ->
+            alertPlayer.playRingtone(uri)
+            played = true
+        }
+        return if (played) AlarmFiredOutcome.FIRED else AlarmFiredOutcome.NO_ALERT_SELECTED
     }
 }

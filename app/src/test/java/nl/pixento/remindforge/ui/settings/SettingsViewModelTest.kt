@@ -18,7 +18,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
@@ -26,6 +25,7 @@ import nl.pixento.remindforge.scheduling.ExactAlarmPermission
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -109,16 +109,6 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `alert mode switch updates state`() {
-        val vm = viewModel()
-        assertEquals(AlertMode.VIBRATION, vm.uiState.value.alertMode)
-
-        vm.onAlertModeChanged(AlertMode.RINGTONE)
-
-        assertEquals(AlertMode.RINGTONE, vm.uiState.value.alertMode)
-    }
-
-    @Test
     fun `vibration pattern selection updates state`() {
         val vm = viewModel()
         vm.onVibrationPatternSelected(VibrationPatternType.TRIPLE_PULSE)
@@ -144,14 +134,29 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `preview ringtone delegates to AlertPlayer with the given uri`() {
+    fun `selecting the silent ringtone clears the stored uri`() {
         val vm = viewModel()
         val uri = mockk<Uri>()
-        every { uri.toString() } returns "content://media/ringtone/7"
+        every { uri.toString() } returns "content://media/ringtone/42"
+        vm.onRingtoneSelected(uri)
 
-        vm.onPreviewRingtone(uri)
+        vm.onRingtoneSelected(null)
 
-        verify { alertPlayer.playRingtone("content://media/ringtone/7") }
+        assertNull(vm.uiState.value.ringtoneUri)
+    }
+
+    @Test
+    fun `no alert is flagged only when both channels are silent`() {
+        val vm = viewModel()
+        assertFalse(vm.uiState.value.hasNoAlertSelected)
+
+        vm.onVibrationPatternSelected(VibrationPatternType.SILENT)
+        assertTrue(vm.uiState.value.hasNoAlertSelected)
+
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns "content://media/ringtone/42"
+        vm.onRingtoneSelected(uri)
+        assertFalse(vm.uiState.value.hasNoAlertSelected)
     }
 
     @Test

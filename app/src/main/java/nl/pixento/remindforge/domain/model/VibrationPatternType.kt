@@ -5,4 +5,7 @@ enum class VibrationPatternType(val label: String) {
     LONG_PULSE("Long pulse"),
     DOUBLE_PULSE("Double pulse"),
     TRIPLE_PULSE("Triple pulse"),
+
+    /** No buzz at all - the way to silence the vibration channel while keeping a ringtone. */
+    SILENT("Silent"),
 }

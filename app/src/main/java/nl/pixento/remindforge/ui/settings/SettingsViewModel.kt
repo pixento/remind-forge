@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
-import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -39,7 +38,6 @@ class SettingsViewModel(
                     intervalMinutes = settings.intervalMinutes,
                     windowStart = settings.windowStart,
                     windowEnd = settings.windowEnd,
-                    alertMode = settings.alertMode,
                     vibrationPattern = settings.vibrationPattern,
                     ringtoneUri = settings.ringtoneUri,
                     ringtoneTitle = resolveRingtoneTitle(settings.ringtoneUri),
@@ -60,19 +58,14 @@ class SettingsViewModel(
 
     fun onWindowEndChanged(time: LocalTime) = persist { setWindowEnd(time) }
 
-    fun onAlertModeChanged(mode: AlertMode) = persist { setAlertMode(mode) }
-
     fun onVibrationPatternSelected(pattern: VibrationPatternType) =
         persist { setVibrationPattern(pattern) }
 
-    fun onRingtoneSelected(uri: Uri) = persist { setRingtoneUri(uri.toString()) }
+    /** A null [uri] is the picker's "Silent" choice, which switches the sound channel off. */
+    fun onRingtoneSelected(uri: Uri?) = persist { setRingtoneUri(uri?.toString()) }
 
     fun onPreviewVibration(pattern: VibrationPatternType) {
         alertPlayer.playVibration(pattern)
-    }
-
-    fun onPreviewRingtone(uri: Uri) {
-        alertPlayer.playRingtone(uri.toString())
     }
 
     fun onStopPreview() {

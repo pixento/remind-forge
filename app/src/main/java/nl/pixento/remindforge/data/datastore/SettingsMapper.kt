@@ -28,10 +28,6 @@ internal object SettingsMapper {
                 preferences[PreferencesKeys.WINDOW_END],
                 defaults.windowEnd
             ),
-            alertMode = parseEnumOrDefault(
-                preferences[PreferencesKeys.ALERT_MODE],
-                defaults.alertMode
-            ),
             vibrationPattern = parseEnumOrDefault(
                 preferences[PreferencesKeys.VIBRATION_PATTERN],
                 defaults.vibrationPattern,

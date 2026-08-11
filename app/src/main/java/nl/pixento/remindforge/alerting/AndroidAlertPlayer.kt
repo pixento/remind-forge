@@ -48,7 +48,9 @@ class AndroidAlertPlayer(
     }
 
     override fun playVibration(pattern: VibrationPatternType) {
-        val waveform = VibrationPatterns.waveformFor(pattern)
+        // Guarding here rather than at each call site covers both the alarm chain and the
+        // settings-screen preview in one place.
+        val waveform = VibrationPatterns.waveformFor(pattern) ?: return
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
                 val effect = VibrationEffect.createWaveform(waveform, -1)

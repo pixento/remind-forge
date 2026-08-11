@@ -11,43 +11,39 @@ class TimeWindowPickerTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    @Test
-    fun overnightWrapLabelShownWhenStartAfterEnd() {
+    private fun setPicker(windowStart: LocalTime, windowEnd: LocalTime) {
         composeRule.setContent {
             TimeWindowPicker(
-                windowStart = LocalTime.of(22, 0),
-                windowEnd = LocalTime.of(6, 0),
+                windowStart = windowStart,
+                windowEnd = windowEnd,
                 onWindowStartChange = {},
                 onWindowEndChange = {},
             )
         }
-        composeRule.onNodeWithText("Overnight window (wraps past midnight)").assertExists()
     }
 
     @Test
-    fun overnightWrapLabelHiddenForSameDayWindow() {
-        composeRule.setContent {
-            TimeWindowPicker(
-                windowStart = LocalTime.of(9, 0),
-                windowEnd = LocalTime.of(17, 0),
-                onWindowStartChange = {},
-                onWindowEndChange = {},
-            )
-        }
-        composeRule.onNodeWithText("Overnight window (wraps past midnight)").assertDoesNotExist()
+    fun rowsShowFormattedTimes() {
+        setPicker(windowStart = LocalTime.of(8, 5), windowEnd = LocalTime.of(20, 30))
+
+        composeRule.onNodeWithText("Start time").assertExists()
+        composeRule.onNodeWithText("08:05").assertExists()
+        composeRule.onNodeWithText("End time").assertExists()
+        composeRule.onNodeWithText("20:30").assertExists()
     }
 
     @Test
-    fun timeButtonsShowFormattedValues() {
-        composeRule.setContent {
-            TimeWindowPicker(
-                windowStart = LocalTime.of(8, 5),
-                windowEnd = LocalTime.of(20, 30),
-                onWindowStartChange = {},
-                onWindowEndChange = {},
-            )
-        }
-        composeRule.onNodeWithText("Start: 08:05").assertExists()
-        composeRule.onNodeWithText("End: 20:30").assertExists()
+    fun endTimeIsMarkedNextDayWhenTheWindowWrapsPastMidnight() {
+        setPicker(windowStart = LocalTime.of(22, 0), windowEnd = LocalTime.of(6, 0))
+
+        composeRule.onNodeWithText("06:00 (next day)").assertExists()
+    }
+
+    @Test
+    fun endTimeIsNotMarkedNextDayForASameDayWindow() {
+        setPicker(windowStart = LocalTime.of(9, 0), windowEnd = LocalTime.of(17, 0))
+
+        composeRule.onNodeWithText("17:00").assertExists()
+        composeRule.onNodeWithText("17:00 (next day)").assertDoesNotExist()
     }
 }
