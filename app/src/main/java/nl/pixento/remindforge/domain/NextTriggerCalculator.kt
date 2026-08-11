@@ -1,5 +1,6 @@
 package nl.pixento.remindforge.domain
 
+import nl.pixento.remindforge.domain.model.ReminderSettings
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
@@ -30,8 +31,10 @@ object NextTriggerCalculator {
         windowEnd: LocalTime,
         now: Instant = referenceInstant,
     ): Instant {
-        require(intervalMinutes in 5..30) {
-            "intervalMinutes must be between 5 and 30, was $intervalMinutes"
+        val supported = ReminderSettings.MIN_INTERVAL_MINUTES..ReminderSettings.MAX_INTERVAL_MINUTES
+        require(intervalMinutes in supported) {
+            "intervalMinutes must be between ${supported.first} and ${supported.last}, " +
+                    "was $intervalMinutes"
         }
 
         val naive = firstSlotAfter(

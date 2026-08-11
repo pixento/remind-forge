@@ -17,6 +17,8 @@
     <!-- Interval picker -->
     <string name="interval_title">Intervalle</string>
     <string name="interval_value">Toutes les %1$d minutes</string>
+    <string name="interval_input_hint">Minutes (%1$d–%2$d)</string>
+    <string name="interval_input_error">Saisissez un nombre entre %1$d et %2$d</string>
 
     <!-- Time window picker -->
     <string name="time_window_start">Heure de début</string>

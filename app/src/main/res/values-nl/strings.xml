@@ -17,6 +17,8 @@
     <!-- Interval picker -->
     <string name="interval_title">Interval</string>
     <string name="interval_value">Elke %1$d minuten</string>
+    <string name="interval_input_hint">Minuten (%1$d–%2$d)</string>
+    <string name="interval_input_error">Voer een getal tussen %1$d en %2$d in</string>
 
     <!-- Time window picker -->
     <string name="time_window_start">Starttijd</string>

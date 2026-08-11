@@ -10,8 +10,6 @@ import androidx.compose.ui.res.stringResource
 import nl.pixento.remindforge.R
 import nl.pixento.remindforge.domain.model.ReminderSettings
 
-private const val INTERVAL_STEP_MINUTES = 5
-
 @Composable
 fun IntervalPicker(
     intervalMinutes: Int,
@@ -19,6 +17,7 @@ fun IntervalPicker(
     modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    val range = ReminderSettings.MIN_INTERVAL_MINUTES..ReminderSettings.MAX_INTERVAL_MINUTES
 
     SettingsRow(
         title = stringResource(R.string.interval_title),
@@ -28,15 +27,20 @@ fun IntervalPicker(
     )
 
     if (showDialog) {
-        RadioChoiceDialog(
+        NumberInputDialog(
             title = stringResource(R.string.interval_title),
-            // Offering a fixed list instead of a stepper makes the min/max clamp structural.
-            options = (
-                ReminderSettings.MIN_INTERVAL_MINUTES..ReminderSettings.MAX_INTERVAL_MINUTES
-                    step INTERVAL_STEP_MINUTES
-                ).toList(),
-            selected = intervalMinutes,
-            label = { stringResource(R.string.interval_value, it) },
+            initialValue = intervalMinutes,
+            range = range,
+            supportingText = stringResource(
+                R.string.interval_input_hint,
+                range.first,
+                range.last,
+            ),
+            errorText = stringResource(
+                R.string.interval_input_error,
+                range.first,
+                range.last,
+            ),
             onConfirm = {
                 onIntervalChange(it)
                 showDialog = false

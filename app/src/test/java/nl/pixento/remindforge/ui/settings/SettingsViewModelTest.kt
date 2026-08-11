@@ -77,17 +77,17 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `interval below minimum is clamped to 5`() {
+    fun `interval below minimum is clamped to 2`() {
         val vm = viewModel()
-        vm.onIntervalChanged(2)
-        assertEquals(5, vm.uiState.value.intervalMinutes)
+        vm.onIntervalChanged(1)
+        assertEquals(2, vm.uiState.value.intervalMinutes)
     }
 
     @Test
-    fun `interval above maximum is clamped to 30`() {
+    fun `interval above maximum is clamped to 120`() {
         val vm = viewModel()
-        vm.onIntervalChanged(100)
-        assertEquals(30, vm.uiState.value.intervalMinutes)
+        vm.onIntervalChanged(999)
+        assertEquals(120, vm.uiState.value.intervalMinutes)
     }
 
     @Test

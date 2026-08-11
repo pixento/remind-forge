@@ -287,7 +287,7 @@ class NextTriggerCalculatorTest {
             NextTriggerCalculator.nextTrigger(
                 referenceInstant = instantAt(day, LocalTime.NOON),
                 zone = utc,
-                intervalMinutes = 4,
+                intervalMinutes = 1,
                 windowStart = LocalTime.of(9, 0),
                 windowEnd = LocalTime.of(17, 0),
             )
@@ -300,7 +300,7 @@ class NextTriggerCalculatorTest {
             NextTriggerCalculator.nextTrigger(
                 referenceInstant = instantAt(day, LocalTime.NOON),
                 zone = utc,
-                intervalMinutes = 31,
+                intervalMinutes = 121,
                 windowStart = LocalTime.of(9, 0),
                 windowEnd = LocalTime.of(17, 0),
             )
@@ -308,16 +308,29 @@ class NextTriggerCalculatorTest {
     }
 
     @Test
-    fun `interval boundary values 5 and 30 are accepted`() {
+    fun `interval boundary values 2 and 120 are accepted`() {
         val reference = instantAt(day, LocalTime.of(10, 0))
-        val fiveMin = NextTriggerCalculator.nextTrigger(
-            reference, utc, 5, LocalTime.of(9, 0), LocalTime.of(17, 0),
+        val twoMin = NextTriggerCalculator.nextTrigger(
+            reference, utc, 2, LocalTime.of(9, 0), LocalTime.of(17, 0),
         )
-        val thirtyMin = NextTriggerCalculator.nextTrigger(
-            reference, utc, 30, LocalTime.of(9, 0), LocalTime.of(17, 0),
+        val twoHours = NextTriggerCalculator.nextTrigger(
+            reference, utc, 120, LocalTime.of(9, 0), LocalTime.of(17, 0),
         )
-        assertEquals(instantAt(day, LocalTime.of(10, 5)), fiveMin)
-        assertEquals(instantAt(day, LocalTime.of(10, 30)), thirtyMin)
+        assertEquals(instantAt(day, LocalTime.of(10, 2)), twoMin)
+        assertEquals(instantAt(day, LocalTime.of(12, 0)), twoHours)
+    }
+
+    @Test
+    fun `interval that is not a multiple of five walks its own cadence`() {
+        val start = instantAt(day, LocalTime.of(10, 0))
+        val second = NextTriggerCalculator.nextTrigger(
+            start, utc, 7, LocalTime.of(9, 0), LocalTime.of(17, 0),
+        )
+        val third = NextTriggerCalculator.nextTrigger(
+            second, utc, 7, LocalTime.of(9, 0), LocalTime.of(17, 0),
+        )
+        assertEquals(instantAt(day, LocalTime.of(10, 7)), second)
+        assertEquals(instantAt(day, LocalTime.of(10, 14)), third)
     }
 
     // --- DST edge cases (Europe/Amsterdam) ---

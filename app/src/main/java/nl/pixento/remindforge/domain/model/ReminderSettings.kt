@@ -25,7 +25,7 @@ data class ReminderSettings(
                 windowEnd == other.windowEnd
 
     companion object {
-        const val MIN_INTERVAL_MINUTES = 5
-        const val MAX_INTERVAL_MINUTES = 30
+        const val MIN_INTERVAL_MINUTES = 2
+        const val MAX_INTERVAL_MINUTES = 120
     }
 }

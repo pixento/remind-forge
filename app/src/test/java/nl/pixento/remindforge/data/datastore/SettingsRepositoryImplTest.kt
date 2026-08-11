@@ -67,7 +67,7 @@ class SettingsRepositoryImplTest {
     @Test
     fun `interval below minimum is clamped up on write`() = runTest {
         setUp()
-        repository.setIntervalMinutes(2)
+        repository.setIntervalMinutes(1)
         assertEquals(
             ReminderSettings.MIN_INTERVAL_MINUTES,
             repository.settings.first().intervalMinutes
@@ -77,7 +77,7 @@ class SettingsRepositoryImplTest {
     @Test
     fun `interval above maximum is clamped down on write`() = runTest {
         setUp()
-        repository.setIntervalMinutes(100)
+        repository.setIntervalMinutes(999)
         assertEquals(
             ReminderSettings.MAX_INTERVAL_MINUTES,
             repository.settings.first().intervalMinutes
