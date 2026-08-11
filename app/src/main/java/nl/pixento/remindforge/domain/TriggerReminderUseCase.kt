@@ -4,6 +4,7 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.alerting.AlertPlayer
+import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -20,6 +21,7 @@ enum class AlarmFiredOutcome { FIRED, DISABLED, OUTSIDE_WINDOW, NO_ALERT_SELECTE
  */
 class TriggerReminderUseCase(
     private val settingsRepository: SettingsRepository,
+    private val scheduleStateRepository: ScheduleStateRepository,
     private val alertPlayer: AlertPlayer,
     private val alarmScheduler: AlarmScheduler,
     private val zone: ZoneId = ZoneId.systemDefault(),
@@ -28,7 +30,11 @@ class TriggerReminderUseCase(
 
     suspend fun onAlarmFired(scheduledAtMillis: Long): AlarmFiredOutcome {
         val settings = settingsRepository.settings.first()
-        if (!settings.enabled) return AlarmFiredOutcome.DISABLED
+        if (!settings.enabled) {
+            // The chain ends here, so nothing is pending any more.
+            scheduleStateRepository.setNextTriggerAtMillis(null)
+            return AlarmFiredOutcome.DISABLED
+        }
 
         // One reading of the clock for both the window check and the catch-up below, so a tick
         // can't be judged in-window and then rescheduled against a slightly different "now".
@@ -56,6 +62,7 @@ class TriggerReminderUseCase(
             now = firedAt,
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())
+        scheduleStateRepository.setNextTriggerAtMillis(next.toEpochMilli())
         return outcome
     }
 

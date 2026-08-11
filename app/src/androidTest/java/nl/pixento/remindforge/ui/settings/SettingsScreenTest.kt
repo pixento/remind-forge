@@ -6,6 +6,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -118,6 +121,27 @@ class SettingsScreenTest {
             ),
         )
         composeRule.onNodeWithText(NO_ALERT_WARNING).assertExists()
+    }
+
+    @Test
+    fun nextReminderShowsThePendingAlarmTime() {
+        val trigger = Instant.now().plusSeconds(600)
+        setScreen(
+            uiState = SettingsUiState(
+                enabled = true,
+                nextTriggerAtMillis = trigger.toEpochMilli(),
+            ),
+        )
+
+        val expected = DateTimeFormatter.ofPattern("HH:mm")
+            .format(trigger.atZone(ZoneId.systemDefault()))
+        composeRule.onNodeWithText("Next reminder around $expected").assertExists()
+    }
+
+    @Test
+    fun nextReminderHiddenWhenNothingIsScheduled() {
+        setScreen(uiState = SettingsUiState(enabled = true, nextTriggerAtMillis = null))
+        composeRule.onNodeWithText("Next reminder", substring = true).assertDoesNotExist()
     }
 
     private companion object {

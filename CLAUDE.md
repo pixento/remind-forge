@@ -78,9 +78,19 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   every tick. Re-reads current settings (may have changed since this alarm was scheduled), fires the
   alert only if still enabled and within window, then always computes+schedules the next tick.
 - `ReminderScheduleCoordinator.rescheduleFromNow()` — the *other* entry point into the chain, used
-  whenever the chain needs to restart fresh from "now" rather than continue: on enable, on any
-  settings change while enabled, on disable (cancels), and on boot / app update. Called from
-  `SettingsViewModel.persist()` after every settings write, and from `BootCompletedReceiver`.
+  whenever the chain needs to restart fresh from "now" rather than continue: on enable, on disable
+  (cancels), on a change to one of the settings the chain is *computed from* (interval, window
+  start/end), and on boot / app update. Called from `SettingsViewModel.persist()` and
+  `BootCompletedReceiver`. Deliberately **not** called for the alert-channel settings (vibration
+  pattern, ringtone), or when a picker re-confirms the value it already had: every tick re-reads
+  settings anyway, so restarting the chain there would only push the next reminder a full interval
+  away. `ReminderSettings.schedulesSameAs` is the predicate that decides this.
+- Whatever schedules a tick also records its instant through `ScheduleStateRepository`, since
+  `AlarmManager` has no cross-process query for a pending alarm's trigger time and the Settings
+  screen would otherwise have to guess ("now + interval") — a guess that drifts away from the real
+  chain and made merely opening the app *look* like it reset the countdown. `healIfNeeded()` treats
+  a pending alarm with no recorded instant as a broken chain and restarts it (this happens once, on
+  upgrade from a version that didn't record it).
 - `AndroidAlarmScheduler` wraps `AlarmManager.setExactAndAllowWhileIdle` behind a single stable
   `PendingIntent` (fixed request code) so there is never more than one alarm pending; it explicitly
   cancels before rescheduling rather than relying on `FLAG_UPDATE_CURRENT` alone.
@@ -99,7 +109,9 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `Preferences` and `ReminderSettings`). `AlertModeMigration` is a one-shot `DataMigration` that
   translates the removed `alert_mode` preference into the two independent channels below; keep
   schema changes to one-shot migrations rather than fallbacks in `SettingsMapper`, which would
-  re-apply on every read.
+  re-apply on every read. `ScheduleStateRepository` (+ `ScheduleStateRepositoryImpl`) shares the same
+  DataStore but holds alarm-chain *state* rather than user settings — currently just the pending
+  alarm's trigger instant. Keep it out of `ReminderSettings`, which is the user's settings only.
 - `alerting/` — `AlertPlayer`/`AndroidAlertPlayer` (Vibrator + RingtoneManager, played
   programmatically; no notification channel or tray notification is involved — the alarm chain is a
   plain `BroadcastReceiver` and needs neither), `VibrationPatterns`. Vibration and sound are two
@@ -114,9 +126,12 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
 - `receivers/` — `ReminderAlarmReceiver` (alarm chain tick) and `BootCompletedReceiver` (restarts the
   chain after reboot/app update, since `AlarmManager` alarms don't survive reboot).
 - `ui/settings/` — single-screen Compose UI. `SettingsViewModel` holds `SettingsUiState`, collects
-  `SettingsRepository.settings` and writes through `persist { ... }`, which always follows a
-  settings write with `scheduleCoordinator.rescheduleFromNow()` so a change takes effect immediately
-  instead of waiting for the in-flight chain to finish its current interval. `ui/settings/components/`
+  `SettingsRepository.settings` and writes through `persist { ... }`, which compares the settings
+  before and after the write and calls `scheduleCoordinator.rescheduleFromNow()` only when the write
+  actually changed the chain's inputs — so an interval/window change takes effect immediately
+  instead of waiting for the in-flight chain, while an alert-channel change leaves the countdown
+  running. The screen's "next reminder" line shows the recorded pending instant
+  (`SettingsUiState.nextTriggerAtMillis`), not a recomputed estimate. `ui/settings/components/`
   holds the individual controls (interval picker, time window picker, ringtone picker launcher,
   permission banners), and `ui/settings/vibration/` the vibration pattern picker.
 

@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
                             SettingsViewModel(
                                 appContext = applicationContext,
                                 settingsRepository = container.settingsRepository,
+                                scheduleStateRepository = container.scheduleStateRepository,
                                 scheduleCoordinator = container.scheduleCoordinator,
                             )
                         }

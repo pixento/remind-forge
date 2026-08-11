@@ -33,6 +33,7 @@ class SettingsViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeSettingsRepository
+    private lateinit var scheduleState: FakeScheduleStateRepository
     private lateinit var coordinator: ReminderScheduleCoordinator
     private lateinit var context: Context
 
@@ -40,6 +41,7 @@ class SettingsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeSettingsRepository()
+        scheduleState = FakeScheduleStateRepository()
         coordinator = mockk(relaxed = true)
         context = mockk(relaxed = true)
 
@@ -59,7 +61,7 @@ class SettingsViewModelTest {
         unmockkAll()
     }
 
-    private fun viewModel() = SettingsViewModel(context, repository, coordinator)
+    private fun viewModel() = SettingsViewModel(context, repository, scheduleState, coordinator)
 
     @Test
     fun `initial state mirrors repository defaults`() {
@@ -98,10 +100,52 @@ class SettingsViewModelTest {
 
     @Test
     fun `disabling triggers a coordinator reschedule`() = runTest {
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
         val vm = viewModel()
         vm.onEnabledChanged(false)
         assertFalse(vm.uiState.value.enabled)
         coVerify { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `changing the interval or window triggers a coordinator reschedule`() = runTest {
+        val vm = viewModel()
+
+        vm.onIntervalChanged(ReminderSettings().intervalMinutes + 5)
+        vm.onWindowStartChanged(ReminderSettings().windowStart.plusHours(1))
+        vm.onWindowEndChanged(ReminderSettings().windowEnd.plusHours(1))
+
+        coVerify(exactly = 3) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `alert channel changes leave the running chain alone`() = runTest {
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns "content://media/ringtone/42"
+
+        vm.onVibrationPatternSelected(VibrationPatternType.TRIPLE_PULSE)
+        vm.onRingtoneSelected(uri)
+
+        coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `re-picking the same interval leaves the running chain alone`() = runTest {
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+
+        vm.onIntervalChanged(ReminderSettings().intervalMinutes)
+
+        coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `the pending alarm's trigger time is surfaced in state`() = runTest {
+        scheduleState = FakeScheduleStateRepository(initial = 1_800_000L)
+        val vm = viewModel()
+        assertEquals(1_800_000L, vm.uiState.value.nextTriggerAtMillis)
     }
 
     @Test

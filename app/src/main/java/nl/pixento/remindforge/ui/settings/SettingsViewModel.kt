@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -20,6 +22,7 @@ import nl.pixento.remindforge.scheduling.ExactAlarmPermission
 class SettingsViewModel(
     private val appContext: Context,
     private val settingsRepository: SettingsRepository,
+    private val scheduleStateRepository: ScheduleStateRepository,
     private val scheduleCoordinator: ReminderScheduleCoordinator,
 ) : ViewModel() {
 
@@ -40,6 +43,11 @@ class SettingsViewModel(
                     ringtoneUri = settings.ringtoneUri,
                     ringtoneTitle = resolveRingtoneTitle(settings.ringtoneUri),
                 )
+            }
+        }
+        viewModelScope.launch {
+            scheduleStateRepository.nextTriggerAtMillis.collectLatest { millis ->
+                _uiState.value = _uiState.value.copy(nextTriggerAtMillis = millis)
             }
         }
         refreshPermissionState()
@@ -89,10 +97,20 @@ class SettingsViewModel(
         }
     }
 
+    /**
+     * Writes a settings change, then restarts the alarm chain only if the change actually altered
+     * it. Rescheduling always restarts the interval from now, so doing it unconditionally would
+     * push the next reminder a full interval away every time an unrelated setting (vibration
+     * pattern, ringtone) was touched - or re-confirmed with the same value.
+     */
     private fun persist(write: suspend SettingsRepository.() -> Unit) {
         viewModelScope.launch {
+            val before = settingsRepository.settings.first()
             settingsRepository.write()
-            scheduleCoordinator.rescheduleFromNow()
+            val after = settingsRepository.settings.first()
+            if (!after.schedulesSameAs(before)) {
+                scheduleCoordinator.rescheduleFromNow()
+            }
         }
     }
 }

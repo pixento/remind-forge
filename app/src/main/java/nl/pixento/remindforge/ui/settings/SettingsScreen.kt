@@ -18,11 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -33,8 +30,6 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.delay
-import nl.pixento.remindforge.domain.NextTriggerCalculator
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -200,34 +195,16 @@ private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
 }
 
 /**
- * Live estimate of the next reminder time, computed from current settings - not the actual
- * persisted alarm-chain instant (AlarmManager has no reliable cross-process query for that).
- * Recomputed on every relevant settings change AND periodically as wall-clock time passes,
- * so the estimate doesn't go stale (and drift into the past) while the screen sits idle.
+ * The instant the pending alarm will actually fire, as recorded by whoever scheduled it - not a
+ * fresh now + interval estimate, which would silently disagree with the running chain (and appear
+ * to push the next reminder forward) every time this screen was opened.
  */
 @Composable
 private fun nextReminderText(uiState: SettingsUiState): String? {
     val zone = remember { ZoneId.systemDefault() }
-    var now by remember { mutableStateOf(Instant.now()) }
-    LaunchedEffect(uiState.enabled) {
-        while (uiState.enabled) {
-            delay(30_000)
-            now = Instant.now()
-        }
-    }
-    val next = remember(uiState.intervalMinutes, uiState.windowStart, uiState.windowEnd, now) {
-        NextTriggerCalculator.nextTrigger(
-            referenceInstant = now,
-            zone = zone,
-            intervalMinutes = uiState.intervalMinutes,
-            windowStart = uiState.windowStart,
-            windowEnd = uiState.windowEnd,
-        )
-    }
     val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    return if (uiState.enabled) {
-        "Next reminder around ${formatter.format(next.atZone(zone))}"
-    } else {
-        null
-    }
+    if (!uiState.enabled) return null
+    val next = uiState.nextTriggerAtMillis ?: return null
+    return "Next reminder around " +
+            formatter.format(Instant.ofEpochMilli(next).atZone(zone))
 }

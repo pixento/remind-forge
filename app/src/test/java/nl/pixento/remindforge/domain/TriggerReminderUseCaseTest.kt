@@ -10,6 +10,7 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.alerting.AlertPlayer
+import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -21,11 +22,13 @@ class TriggerReminderUseCaseTest {
 
     private val zone = ZoneOffset.UTC
     private val settingsRepository = mockk<SettingsRepository>()
+    private val scheduleStateRepository = mockk<ScheduleStateRepository>(relaxUnitFun = true)
     private val alertPlayer = mockk<AlertPlayer>(relaxUnitFun = true)
     private val alarmScheduler = mockk<AlarmScheduler>(relaxUnitFun = true)
 
     private fun useCase(fixedNow: Instant) = TriggerReminderUseCase(
         settingsRepository = settingsRepository,
+        scheduleStateRepository = scheduleStateRepository,
         alertPlayer = alertPlayer,
         alarmScheduler = alarmScheduler,
         zone = zone,
@@ -165,6 +168,17 @@ class TriggerReminderUseCaseTest {
 
         val expectedNext = scheduledAt.plusSeconds(15 * 60).toEpochMilli()
         verify { alarmScheduler.scheduleNext(expectedNext) }
+        coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
+    }
+
+    @Test
+    fun `a tick that finds the reminder disabled clears the recorded trigger`() = runTest {
+        every { settingsRepository.settings } returns flowOf(ReminderSettings(enabled = false))
+        val scheduledAt = scheduledInstant(10, 0)
+
+        useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+
+        coVerify { scheduleStateRepository.setNextTriggerAtMillis(null) }
     }
 
     @Test

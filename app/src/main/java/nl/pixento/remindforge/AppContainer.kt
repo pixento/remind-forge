@@ -10,8 +10,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.AndroidAlertPlayer
+import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.data.datastore.AlertModeMigration
+import nl.pixento.remindforge.data.datastore.ScheduleStateRepositoryImpl
 import nl.pixento.remindforge.data.datastore.SettingsRepositoryImpl
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.TriggerReminderUseCase
@@ -35,14 +37,22 @@ class AppContainer(context: Context) {
     }
 
     val settingsRepository: SettingsRepository by lazy { SettingsRepositoryImpl(settingsDataStore) }
+    val scheduleStateRepository: ScheduleStateRepository by lazy {
+        ScheduleStateRepositoryImpl(settingsDataStore)
+    }
     val alarmScheduler: AlarmScheduler by lazy { AndroidAlarmScheduler(appContext) }
     val alertPlayer: AlertPlayer by lazy { AndroidAlertPlayer(appContext) }
 
     val triggerReminderUseCase: TriggerReminderUseCase by lazy {
-        TriggerReminderUseCase(settingsRepository, alertPlayer, alarmScheduler)
+        TriggerReminderUseCase(
+            settingsRepository,
+            scheduleStateRepository,
+            alertPlayer,
+            alarmScheduler,
+        )
     }
 
     val scheduleCoordinator: ReminderScheduleCoordinator by lazy {
-        ReminderScheduleCoordinator(settingsRepository, alarmScheduler)
+        ReminderScheduleCoordinator(settingsRepository, scheduleStateRepository, alarmScheduler)
     }
 }

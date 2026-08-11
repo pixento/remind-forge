@@ -11,6 +11,8 @@ data class SettingsUiState(
     val vibrationPattern: VibrationPatternType = VibrationPatternType.SHORT_PULSE,
     val ringtoneUri: String? = null,
     val ringtoneTitle: String? = null,
+    /** Epoch millis of the alarm actually pending in the chain; null when nothing is scheduled. */
+    val nextTriggerAtMillis: Long? = null,
     val needsExactAlarmPermission: Boolean = false,
     val showBatteryOptimizationBanner: Boolean = false,
 ) {
