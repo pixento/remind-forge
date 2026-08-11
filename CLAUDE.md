@@ -118,3 +118,7 @@ rather than via an `ActivityResultContract` callback.
 
 Don't commit automatically after making changes. Only commit when the user explicitly asks for it,
 and when they do, use a short, single-sentence, imperative style, descriptive commit message.
+
+Commit to whatever branch is currently checked out. Don't create a branch first — not even when the
+current branch is the default one, which would normally call for it. Only branch when the user
+explicitly asks for a branch.
