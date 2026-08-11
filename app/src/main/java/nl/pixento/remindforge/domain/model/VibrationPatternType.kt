@@ -1,18 +1,20 @@
 package nl.pixento.remindforge.domain.model
 
-enum class VibrationPatternType(val label: String) {
-    SHORT_PULSE("Short pulse"),
-    LONG_PULSE("Long pulse"),
-    DOUBLE_PULSE("Double pulse"),
-    TRIPLE_PULSE("Triple pulse"),
+// Display labels live in the UI layer (ui/settings/vibration/VibrationPatternLabels.kt) as string
+// resources, keeping this enum framework-free and translatable.
+enum class VibrationPatternType {
+    SHORT_PULSE,
+    LONG_PULSE,
+    DOUBLE_PULSE,
+    TRIPLE_PULSE,
 
     // Mixed-length rhythms - easier to tell apart at a glance than the evenly-spaced pulses above,
     // so a buzz in your pocket is recognisable without looking at the phone.
-    LONG_SHORT_SHORT("Long-short-short"),
-    SHORT_SHORT_LONG("Short-short-long"),
-    SHORT_LONG_SHORT("Short-long-short"),
-    LONG_SHORT_LONG("Long-short-long"),
+    LONG_SHORT_SHORT,
+    SHORT_SHORT_LONG,
+    SHORT_LONG_SHORT,
+    LONG_SHORT_LONG,
 
     /** No buzz at all - the way to silence the vibration channel while keeping a ringtone. */
-    SILENT("Silent"),
+    SILENT,
 }

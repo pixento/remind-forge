@@ -101,3 +101,28 @@ fun SettingsDivider(modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.outlineVariant,
     )
 }
+
+/**
+ * Title + short description shown above a [SettingsGroup] card, naming what its rows are for -
+ * the platform Settings idiom of a section header sitting outside the grouped card rather than
+ * inside it.
+ */
+@Composable
+fun SettingsSectionHeader(
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.padding(horizontal = 4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}

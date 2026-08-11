@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">RemindForge</string>
+
+    <!-- Settings screen -->
+    <string name="settings_description">Recordatorios periódicos que vibran o suenan dentro de una franja horaria diaria.</string>
+    <string name="settings_reminders_enabled">Recordatorios activados</string>
+    <string name="settings_schedule_title">Programación</string>
+    <string name="settings_schedule_description">Elige con qué frecuencia y en qué horas quieres que te recuerden.</string>
+    <string name="settings_alerts_title">Alertas</string>
+    <string name="settings_alerts_description">Elige cómo se te avisa — vibración, sonido o ambos.</string>
+    <string name="vibration_label">Vibración</string>
+    <string name="sound_label">Sonido</string>
+    <string name="silent_label">Silencio</string>
+    <string name="no_alert_warning">No se ha seleccionado vibración ni sonido - los recordatorios sonarán en silencio.</string>
+    <string name="next_reminder_around">Próximo recordatorio alrededor de las %1$s</string>
+
+    <!-- Interval picker -->
+    <string name="interval_title">Intervalo</string>
+    <string name="interval_value">Cada %1$d minutos</string>
+
+    <!-- Time window picker -->
+    <string name="time_window_start">Hora de inicio</string>
+    <string name="time_window_end">Hora de fin</string>
+    <string name="time_window_next_day_suffix">" (día siguiente)"</string>
+
+    <!-- Permission banners -->
+    <string name="exact_alarm_banner_message">Los recordatorios necesitan permiso para programar alarmas exactas y así sonar a tiempo.</string>
+    <string name="exact_alarm_banner_action">Conceder permiso</string>
+    <string name="battery_optimization_banner_message">Algunos teléfonos eliminan agresivamente los recordatorios programados para ahorrar batería. Excluir esta app de la optimización hace que los recordatorios sean más fiables (opcional).</string>
+    <string name="battery_optimization_banner_action">Abrir ajustes de batería</string>
+    <string name="battery_optimization_banner_dismiss">Ahora no</string>
+
+    <!-- Generic dialog buttons -->
+    <string name="dialog_ok">Aceptar</string>
+    <string name="dialog_cancel">Cancelar</string>
+
+    <!-- Vibration picker screen -->
+    <string name="vibration_picker_back">Atrás</string>
+
+    <!-- Vibration pattern labels -->
+    <string name="vibration_pattern_short_pulse">Pulso corto</string>
+    <string name="vibration_pattern_long_pulse">Pulso largo</string>
+    <string name="vibration_pattern_double_pulse">Pulso doble</string>
+    <string name="vibration_pattern_triple_pulse">Pulso triple</string>
+    <string name="vibration_pattern_long_short_short">Largo-corto-corto</string>
+    <string name="vibration_pattern_short_short_long">Corto-corto-largo</string>
+    <string name="vibration_pattern_short_long_short">Corto-largo-corto</string>
+    <string name="vibration_pattern_long_short_long">Largo-corto-largo</string>
+</resources>

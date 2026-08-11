@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">RemindForge</string>
+
+    <!-- Settings screen -->
+    <string name="settings_description">Periodieke herinneringen die trillen of rinkelen binnen een dagelijks tijdvenster.</string>
+    <string name="settings_reminders_enabled">Herinneringen ingeschakeld</string>
+    <string name="settings_schedule_title">Schema</string>
+    <string name="settings_schedule_description">Kies hoe vaak en tijdens welke uren je herinnerd wilt worden.</string>
+    <string name="settings_alerts_title">Meldingen</string>
+    <string name="settings_alerts_description">Kies hoe je gewaarschuwd wordt — trillen, geluid, of beide.</string>
+    <string name="vibration_label">Trillen</string>
+    <string name="sound_label">Geluid</string>
+    <string name="silent_label">Stil</string>
+    <string name="no_alert_warning">Geen trilling of geluid geselecteerd - herinneringen gaan stil af.</string>
+    <string name="next_reminder_around">Volgende herinnering rond %1$s</string>
+
+    <!-- Interval picker -->
+    <string name="interval_title">Interval</string>
+    <string name="interval_value">Elke %1$d minuten</string>
+
+    <!-- Time window picker -->
+    <string name="time_window_start">Starttijd</string>
+    <string name="time_window_end">Eindtijd</string>
+    <string name="time_window_next_day_suffix">" (volgende dag)"</string>
+
+    <!-- Permission banners -->
+    <string name="exact_alarm_banner_message">Herinneringen hebben toestemming nodig om exacte alarmen te plannen, zodat ze op tijd afgaan.</string>
+    <string name="exact_alarm_banner_action">Toestemming geven</string>
+    <string name="battery_optimization_banner_message">Sommige telefoons stoppen geplande herinneringen agressief om de batterij te sparen. Deze app uitsluiten houdt herinneringen betrouwbaar (optioneel).</string>
+    <string name="battery_optimization_banner_action">Batterij-instellingen openen</string>
+    <string name="battery_optimization_banner_dismiss">Niet nu</string>
+
+    <!-- Generic dialog buttons -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Annuleren</string>
+
+    <!-- Vibration picker screen -->
+    <string name="vibration_picker_back">Terug</string>
+
+    <!-- Vibration pattern labels -->
+    <string name="vibration_pattern_short_pulse">Korte trilling</string>
+    <string name="vibration_pattern_long_pulse">Lange trilling</string>
+    <string name="vibration_pattern_double_pulse">Dubbele trilling</string>
+    <string name="vibration_pattern_triple_pulse">Drievoudige trilling</string>
+    <string name="vibration_pattern_long_short_short">Lang-kort-kort</string>
+    <string name="vibration_pattern_short_short_long">Kort-kort-lang</string>
+    <string name="vibration_pattern_short_long_short">Kort-lang-kort</string>
+    <string name="vibration_pattern_long_short_long">Lang-kort-lang</string>
+</resources>

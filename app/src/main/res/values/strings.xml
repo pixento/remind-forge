@@ -1,3 +1,49 @@
 <resources>
     <string name="app_name">RemindForge</string>
+
+    <!-- Settings screen -->
+    <string name="settings_description">Periodic reminders that buzz or ring within a daily time window.</string>
+    <string name="settings_reminders_enabled">Reminders enabled</string>
+    <string name="settings_schedule_title">Schedule</string>
+    <string name="settings_schedule_description">Choose how often to be reminded and during which hours.</string>
+    <string name="settings_alerts_title">Alerts</string>
+    <string name="settings_alerts_description">Choose how you\'re notified — vibration, sound, or both.</string>
+    <string name="vibration_label">Vibration</string>
+    <string name="sound_label">Sound</string>
+    <string name="silent_label">Silent</string>
+    <string name="no_alert_warning">No vibration or sound selected - reminders will fire silently.</string>
+    <string name="next_reminder_around">Next reminder around %1$s</string>
+
+    <!-- Interval picker -->
+    <string name="interval_title">Interval</string>
+    <string name="interval_value">Every %1$d minutes</string>
+
+    <!-- Time window picker -->
+    <string name="time_window_start">Start time</string>
+    <string name="time_window_end">End time</string>
+    <string name="time_window_next_day_suffix">" (next day)"</string>
+
+    <!-- Permission banners -->
+    <string name="exact_alarm_banner_message">Reminders need permission to schedule exact alarms so they stay on time.</string>
+    <string name="exact_alarm_banner_action">Grant permission</string>
+    <string name="battery_optimization_banner_message">Some phones aggressively kill scheduled reminders to save battery. Exempting this app keeps reminders reliable (optional).</string>
+    <string name="battery_optimization_banner_action">Open battery settings</string>
+    <string name="battery_optimization_banner_dismiss">Not now</string>
+
+    <!-- Generic dialog buttons -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+
+    <!-- Vibration picker screen -->
+    <string name="vibration_picker_back">Back</string>
+
+    <!-- Vibration pattern labels -->
+    <string name="vibration_pattern_short_pulse">Short pulse</string>
+    <string name="vibration_pattern_long_pulse">Long pulse</string>
+    <string name="vibration_pattern_double_pulse">Double pulse</string>
+    <string name="vibration_pattern_triple_pulse">Triple pulse</string>
+    <string name="vibration_pattern_long_short_short">Long-short-short</string>
+    <string name="vibration_pattern_short_short_long">Short-short-long</string>
+    <string name="vibration_pattern_short_long_short">Short-long-short</string>
+    <string name="vibration_pattern_long_short_long">Long-short-long</string>
 </resources>

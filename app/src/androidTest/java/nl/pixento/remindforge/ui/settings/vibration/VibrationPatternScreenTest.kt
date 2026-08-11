@@ -6,6 +6,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.test.core.app.ApplicationProvider
+import nl.pixento.remindforge.R
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -17,6 +19,11 @@ class VibrationPatternScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    private val VibrationPatternType.label: String
+        get() = context.getString(labelRes())
 
     private var selected: VibrationPatternType? = null
     private var backPressed = false
@@ -75,7 +82,8 @@ class VibrationPatternScreenTest {
     fun theBackArrowLeavesWithoutPicking() {
         setScreen()
 
-        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.vibration_picker_back))
+            .performClick()
 
         assertTrue(backPressed)
         assertNull(selected)

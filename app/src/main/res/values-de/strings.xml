@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">RemindForge</string>
+
+    <!-- Settings screen -->
+    <string name="settings_description">Wiederkehrende Erinnerungen, die innerhalb eines täglichen Zeitfensters vibrieren oder klingeln.</string>
+    <string name="settings_reminders_enabled">Erinnerungen aktiviert</string>
+    <string name="settings_schedule_title">Zeitplan</string>
+    <string name="settings_schedule_description">Wähle, wie oft und in welchem Zeitraum du erinnert werden möchtest.</string>
+    <string name="settings_alerts_title">Benachrichtigungen</string>
+    <string name="settings_alerts_description">Wähle, wie du benachrichtigt wirst — Vibration, Ton oder beides.</string>
+    <string name="vibration_label">Vibration</string>
+    <string name="sound_label">Ton</string>
+    <string name="silent_label">Lautlos</string>
+    <string name="no_alert_warning">Keine Vibration oder Ton ausgewählt - Erinnerungen bleiben lautlos.</string>
+    <string name="next_reminder_around">Nächste Erinnerung gegen %1$s</string>
+
+    <!-- Interval picker -->
+    <string name="interval_title">Intervall</string>
+    <string name="interval_value">Alle %1$d Minuten</string>
+
+    <!-- Time window picker -->
+    <string name="time_window_start">Startzeit</string>
+    <string name="time_window_end">Endzeit</string>
+    <string name="time_window_next_day_suffix">" (nächster Tag)"</string>
+
+    <!-- Permission banners -->
+    <string name="exact_alarm_banner_message">Erinnerungen benötigen die Berechtigung, exakte Alarme zu planen, damit sie pünktlich ausgelöst werden.</string>
+    <string name="exact_alarm_banner_action">Berechtigung erteilen</string>
+    <string name="battery_optimization_banner_message">Manche Telefone beenden geplante Erinnerungen aggressiv, um Akku zu sparen. Diese App von der Optimierung auszunehmen macht Erinnerungen zuverlässiger (optional).</string>
+    <string name="battery_optimization_banner_action">Akku-Einstellungen öffnen</string>
+    <string name="battery_optimization_banner_dismiss">Nicht jetzt</string>
+
+    <!-- Generic dialog buttons -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Abbrechen</string>
+
+    <!-- Vibration picker screen -->
+    <string name="vibration_picker_back">Zurück</string>
+
+    <!-- Vibration pattern labels -->
+    <string name="vibration_pattern_short_pulse">Kurzer Impuls</string>
+    <string name="vibration_pattern_long_pulse">Langer Impuls</string>
+    <string name="vibration_pattern_double_pulse">Doppelter Impuls</string>
+    <string name="vibration_pattern_triple_pulse">Dreifacher Impuls</string>
+    <string name="vibration_pattern_long_short_short">Lang-kurz-kurz</string>
+    <string name="vibration_pattern_short_short_long">Kurz-kurz-lang</string>
+    <string name="vibration_pattern_short_long_short">Kurz-lang-kurz</string>
+    <string name="vibration_pattern_long_short_long">Lang-kurz-lang</string>
+</resources>

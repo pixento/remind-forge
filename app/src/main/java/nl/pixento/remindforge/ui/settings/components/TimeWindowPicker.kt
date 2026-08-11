@@ -4,7 +4,9 @@ import android.app.TimePickerDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import java.time.LocalTime
+import nl.pixento.remindforge.R
 
 /**
  * The two ends of the daily active window as a pair of settings rows, with the divider between
@@ -21,7 +23,7 @@ fun TimeWindowPicker(
     val context = LocalContext.current
 
     SettingsRow(
-        title = "Start time",
+        title = stringResource(R.string.time_window_start),
         value = formatTime(windowStart),
         onClick = {
             TimePickerDialog(
@@ -36,10 +38,11 @@ fun TimeWindowPicker(
     )
     SettingsDivider()
     SettingsRow(
-        title = "End time",
+        title = stringResource(R.string.time_window_end),
         // An end before the start means the window wraps past midnight; say so on the value line
         // rather than in a separate note, so the row carries its own explanation.
-        value = formatTime(windowEnd) + if (windowStart > windowEnd) " (next day)" else "",
+        value = formatTime(windowEnd) +
+            if (windowStart > windowEnd) stringResource(R.string.time_window_next_day_suffix) else "",
         onClick = {
             TimePickerDialog(
                 context,

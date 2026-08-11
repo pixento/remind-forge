@@ -19,7 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import nl.pixento.remindforge.R
 
 /**
  * Single-choice picker shaped like the system ringtone picker: a titled dialog, a radio list, and
@@ -31,7 +33,7 @@ fun <T> RadioChoiceDialog(
     title: String,
     options: List<T>,
     selected: T,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onConfirm: (T) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -73,10 +75,10 @@ fun <T> RadioChoiceDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(draft) }) { Text("OK") }
+            TextButton(onClick = { onConfirm(draft) }) { Text(stringResource(R.string.dialog_ok)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.dialog_cancel)) }
         },
     )
 }

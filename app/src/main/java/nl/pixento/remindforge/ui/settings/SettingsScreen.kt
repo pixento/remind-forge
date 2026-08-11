@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +31,7 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import nl.pixento.remindforge.R
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -39,9 +41,11 @@ import nl.pixento.remindforge.ui.settings.components.IntervalPicker
 import nl.pixento.remindforge.ui.settings.components.SettingsDivider
 import nl.pixento.remindforge.ui.settings.components.SettingsGroup
 import nl.pixento.remindforge.ui.settings.components.SettingsRow
+import nl.pixento.remindforge.ui.settings.components.SettingsSectionHeader
 import nl.pixento.remindforge.ui.settings.components.TimeWindowPicker
 import nl.pixento.remindforge.ui.settings.components.buildRingtonePickerIntent
 import nl.pixento.remindforge.ui.settings.vibration.PickVibrationPattern
+import nl.pixento.remindforge.ui.settings.vibration.label
 
 @Composable
 fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
@@ -109,6 +113,21 @@ fun SettingsScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item {
+            Column {
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.settings_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         if (uiState.needsExactAlarmPermission) {
             item {
                 ExactAlarmPermissionBanner(onRequestPermission = onRequestExactAlarmPermission)
@@ -127,7 +146,7 @@ fun SettingsScreen(
         item {
             SettingsGroup {
                 SettingsRow(
-                    title = "Reminders",
+                    title = stringResource(R.string.settings_reminders_enabled),
                     value = nextReminderText(uiState),
                     trailing = {
                         Switch(
@@ -141,35 +160,47 @@ fun SettingsScreen(
         }
 
         item {
-            SettingsGroup {
-                IntervalPicker(uiState.intervalMinutes, onIntervalChanged)
-                SettingsDivider()
-                TimeWindowPicker(
-                    uiState.windowStart,
-                    uiState.windowEnd,
-                    onWindowStartChanged,
-                    onWindowEndChanged,
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingsSectionHeader(
+                    title = stringResource(R.string.settings_schedule_title),
+                    description = stringResource(R.string.settings_schedule_description),
                 )
+                SettingsGroup {
+                    IntervalPicker(uiState.intervalMinutes, onIntervalChanged)
+                    SettingsDivider()
+                    TimeWindowPicker(
+                        uiState.windowStart,
+                        uiState.windowEnd,
+                        onWindowStartChanged,
+                        onWindowEndChanged,
+                    )
+                }
             }
         }
 
         item {
-            SettingsGroup {
-                SettingsRow(
-                    title = "Vibration",
-                    value = uiState.vibrationPattern.label,
-                    onClick = { vibrationLauncher.launch(uiState.vibrationPattern) },
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingsSectionHeader(
+                    title = stringResource(R.string.settings_alerts_title),
+                    description = stringResource(R.string.settings_alerts_description),
                 )
-                SettingsDivider()
-                SettingsRow(
-                    title = "Sound",
-                    value = uiState.ringtoneTitle ?: "Silent",
-                    onClick = {
-                        ringtoneLauncher.launch(
-                            buildRingtonePickerIntent(uiState.ringtoneUri?.let(Uri::parse)),
-                        )
-                    },
-                )
+                SettingsGroup {
+                    SettingsRow(
+                        title = stringResource(R.string.vibration_label),
+                        value = uiState.vibrationPattern.label,
+                        onClick = { vibrationLauncher.launch(uiState.vibrationPattern) },
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        title = stringResource(R.string.sound_label),
+                        value = uiState.ringtoneTitle ?: stringResource(R.string.silent_label),
+                        onClick = {
+                            ringtoneLauncher.launch(
+                                buildRingtonePickerIntent(uiState.ringtoneUri?.let(Uri::parse)),
+                            )
+                        },
+                    )
+                }
             }
         }
 
@@ -189,7 +220,7 @@ private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
         ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("No vibration or sound selected - reminders will fire silently.")
+            Text(stringResource(R.string.no_alert_warning))
         }
     }
 }
@@ -205,6 +236,8 @@ private fun nextReminderText(uiState: SettingsUiState): String? {
     val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
     if (!uiState.enabled) return null
     val next = uiState.nextTriggerAtMillis ?: return null
-    return "Next reminder around " +
-            formatter.format(Instant.ofEpochMilli(next).atZone(zone))
+    return stringResource(
+        R.string.next_reminder_around,
+        formatter.format(Instant.ofEpochMilli(next).atZone(zone)),
+    )
 }

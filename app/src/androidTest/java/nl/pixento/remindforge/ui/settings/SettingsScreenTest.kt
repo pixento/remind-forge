@@ -6,10 +6,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import nl.pixento.remindforge.R
 import nl.pixento.remindforge.domain.model.VibrationPatternType
+import nl.pixento.remindforge.ui.settings.vibration.labelRes
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -18,6 +21,10 @@ class SettingsScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    private fun string(resId: Int, vararg formatArgs: Any) = context.getString(resId, *formatArgs)
 
     private fun setScreen(
         uiState: SettingsUiState = SettingsUiState(),
@@ -41,13 +48,13 @@ class SettingsScreenTest {
     @Test
     fun permissionBannerHiddenWhenNotNeeded() {
         setScreen(uiState = SettingsUiState(needsExactAlarmPermission = false))
-        composeRule.onNodeWithText("Grant permission").assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).assertDoesNotExist()
     }
 
     @Test
     fun permissionBannerShownWhenNeeded() {
         setScreen(uiState = SettingsUiState(needsExactAlarmPermission = true))
-        composeRule.onNodeWithText("Grant permission").assertExists()
+        composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).assertExists()
     }
 
     @Test
@@ -57,7 +64,7 @@ class SettingsScreenTest {
             uiState = SettingsUiState(needsExactAlarmPermission = true),
             onRequestExactAlarmPermission = { requested = true },
         )
-        composeRule.onNodeWithText("Grant permission").performClick()
+        composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).performClick()
         assertTrue(requested)
     }
 
@@ -88,16 +95,16 @@ class SettingsScreenTest {
             ),
         )
 
-        composeRule.onNodeWithText("Vibration").assertExists()
-        composeRule.onNodeWithText(VibrationPatternType.DOUBLE_PULSE.label).assertExists()
-        composeRule.onNodeWithText("Sound").assertExists()
+        composeRule.onNodeWithText(string(R.string.vibration_label)).assertExists()
+        composeRule.onNodeWithText(string(VibrationPatternType.DOUBLE_PULSE.labelRes())).assertExists()
+        composeRule.onNodeWithText(string(R.string.sound_label)).assertExists()
         composeRule.onNodeWithText("Galaxy Bells").assertExists()
     }
 
     @Test
     fun soundRowReadsSilentWithNoRingtoneSelected() {
         setScreen(uiState = SettingsUiState(ringtoneUri = null, ringtoneTitle = null))
-        composeRule.onNodeWithText("Silent").assertExists()
+        composeRule.onNodeWithText(string(R.string.silent_label)).assertExists()
     }
 
     @Test
@@ -109,7 +116,7 @@ class SettingsScreenTest {
                 ringtoneTitle = "Galaxy Bells",
             ),
         )
-        composeRule.onNodeWithText(NO_ALERT_WARNING).assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.no_alert_warning)).assertDoesNotExist()
     }
 
     @Test
@@ -120,7 +127,7 @@ class SettingsScreenTest {
                 ringtoneUri = null,
             ),
         )
-        composeRule.onNodeWithText(NO_ALERT_WARNING).assertExists()
+        composeRule.onNodeWithText(string(R.string.no_alert_warning)).assertExists()
     }
 
     @Test
@@ -135,17 +142,15 @@ class SettingsScreenTest {
 
         val expected = DateTimeFormatter.ofPattern("HH:mm")
             .format(trigger.atZone(ZoneId.systemDefault()))
-        composeRule.onNodeWithText("Next reminder around $expected").assertExists()
+        composeRule.onNodeWithText(string(R.string.next_reminder_around, expected)).assertExists()
     }
 
     @Test
     fun nextReminderHiddenWhenNothingIsScheduled() {
         setScreen(uiState = SettingsUiState(enabled = true, nextTriggerAtMillis = null))
-        composeRule.onNodeWithText("Next reminder", substring = true).assertDoesNotExist()
-    }
-
-    private companion object {
-        const val NO_ALERT_WARNING =
-            "No vibration or sound selected - reminders will fire silently."
+        // The raw template ("Next reminder around %1$s") with the placeholder stripped, so this
+        // stays a substring match regardless of where the locale puts the placeholder.
+        val prefix = context.getString(R.string.next_reminder_around).substringBefore("%").trim()
+        composeRule.onNodeWithText(prefix, substring = true).assertDoesNotExist()
     }
 }

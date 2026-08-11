@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import nl.pixento.remindforge.R
 
 @Composable
 fun ExactAlarmPermissionBanner(
@@ -17,9 +19,9 @@ fun ExactAlarmPermissionBanner(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Reminders need permission to schedule exact alarms so they stay on time.")
+            Text(stringResource(R.string.exact_alarm_banner_message))
             TextButton(onClick = onRequestPermission) {
-                Text("Grant permission")
+                Text(stringResource(R.string.exact_alarm_banner_action))
             }
         }
     }
@@ -33,15 +35,12 @@ fun BatteryOptimizationBanner(
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Some phones aggressively kill scheduled reminders to save battery. " +
-                        "Exempting this app keeps reminders reliable (optional).",
-            )
+            Text(stringResource(R.string.battery_optimization_banner_message))
             TextButton(onClick = onRequestExemption) {
-                Text("Open battery settings")
+                Text(stringResource(R.string.battery_optimization_banner_action))
             }
             TextButton(onClick = onDismiss) {
-                Text("Not now")
+                Text(stringResource(R.string.battery_optimization_banner_dismiss))
             }
         }
     }
