@@ -49,6 +49,11 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
 - `NextTriggerCalculator` (domain, pure/framework-free) — given a reference instant, interval, and
   daily window, computes the next trigger instant, clamping into the window (including overnight
   windows where `windowEnd < windowStart`, and `windowStart == windowEnd` meaning "always active").
+  It also takes `now` (defaulting to the reference, which is right for the compute-fresh case) and
+  skips whole intervals that already elapsed: doze routinely delivers an exact alarm minutes late,
+  and without that the next slot would land in the past, fire immediately, and make the chain replay
+  every missed tick back to back. Skipping whole intervals rather than restarting from `now` keeps
+  the chain on its original cadence.
 - `TriggerReminderUseCase.onAlarmFired(scheduledAtMillis)` — called by `ReminderAlarmReceiver` on
   every tick. Re-reads current settings (may have changed since this alarm was scheduled), fires the
   alert only if still enabled and within window, then always computes+schedules the next tick.

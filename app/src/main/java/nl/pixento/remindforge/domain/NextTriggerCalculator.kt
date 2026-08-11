@@ -18,6 +18,9 @@ object NextTriggerCalculator {
      *   (e.g. on enable or settings change).
      * @param windowEnd if before [windowStart], the window is treated as wrapping past midnight
      *   (e.g. 22:00-06:00). If equal to [windowStart], the window is treated as always-active.
+     * @param now the current instant, used only to skip slots that are already in the past when
+     *   the firing alarm was itself delivered late. Defaults to [referenceInstant], which is
+     *   correct for the compute-fresh case where the reference already *is* now.
      */
     fun nextTrigger(
         referenceInstant: Instant,
@@ -25,12 +28,17 @@ object NextTriggerCalculator {
         intervalMinutes: Int,
         windowStart: LocalTime,
         windowEnd: LocalTime,
+        now: Instant = referenceInstant,
     ): Instant {
         require(intervalMinutes in 5..30) {
             "intervalMinutes must be between 5 and 30, was $intervalMinutes"
         }
 
-        val naive = referenceInstant.plus(Duration.ofMinutes(intervalMinutes.toLong()))
+        val naive = firstSlotAfter(
+            referenceInstant,
+            Duration.ofMinutes(intervalMinutes.toLong()),
+            now,
+        )
         val naiveZoned = ZonedDateTime.ofInstant(naive, zone)
 
         return if (isWithinWindow(naiveZoned.toLocalTime(), windowStart, windowEnd)) {
@@ -59,6 +67,24 @@ object NextTriggerCalculator {
             // Overnight wrap: active from `start` through midnight to `end`.
             time >= start || time < end
         }
+    }
+
+    /**
+     * The earliest `reference + k * interval` (k >= 1) that is still in the future.
+     *
+     * Doze can hold an exact alarm well past its scheduled time - deferrals of several minutes are
+     * routine on an idle device. Since the chain keys off the *scheduled* time, the naive next slot
+     * can then already be in the past, and AlarmManager fires a past-dated alarm immediately: the
+     * chain replays every missed tick back to back, buzzing repeatedly within seconds. Skipping
+     * whole intervals rather than restarting from [now] keeps the original cadence (a 15-minute
+     * chain started at :02 still lands on :17, :32, ...) while never scheduling into the past.
+     */
+    private fun firstSlotAfter(reference: Instant, interval: Duration, now: Instant): Instant {
+        val naive = reference.plus(interval)
+        if (naive.isAfter(now)) return naive
+
+        val missed = Duration.between(reference, now).toMillis() / interval.toMillis()
+        return reference.plus(interval.multipliedBy(missed + 1))
     }
 
     private fun nextWindowStart(from: ZonedDateTime, windowStart: LocalTime): Instant {

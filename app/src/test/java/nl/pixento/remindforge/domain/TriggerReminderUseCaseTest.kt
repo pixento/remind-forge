@@ -166,4 +166,23 @@ class TriggerReminderUseCaseTest {
         val expectedNext = scheduledAt.plusSeconds(15 * 60).toEpochMilli()
         verify { alarmScheduler.scheduleNext(expectedNext) }
     }
+
+    @Test
+    fun `a tick delivered late reschedules into the future, not the past`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+        // Doze held the alarm well past the 10:15 slot; scheduling it would fire instantly and
+        // the chain would replay every missed tick back to back.
+        val lateFireTime = scheduledInstant(10, 32)
+
+        useCase(fixedNow = lateFireTime).onAlarmFired(scheduledAt.toEpochMilli())
+
+        verify { alarmScheduler.scheduleNext(scheduledInstant(10, 45).toEpochMilli()) }
+    }
 }

@@ -195,6 +195,92 @@ class NextTriggerCalculatorTest {
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
     }
 
+    // --- Late delivery (doze) catch-up ---
+
+    @Test
+    fun `tick delivered late skips the slots that already passed`() {
+        val reference = instantAt(day, LocalTime.of(10, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            now = instantAt(day, LocalTime.of(10, 32)), // held by doze for 32 minutes
+        )
+        // Not 10:15 (already past, would fire instantly) and not 10:47 (restarting from now).
+        assertEquals(instantAt(day, LocalTime.of(10, 45)), result)
+    }
+
+    @Test
+    fun `catch-up keeps the original cadence rather than restarting from now`() {
+        val start = LocalTime.of(9, 0)
+        val end = LocalTime.of(17, 0)
+        val reference = instantAt(day, LocalTime.of(10, 2))
+
+        val first = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = start,
+            windowEnd = end,
+            now = instantAt(day, LocalTime.of(10, 40)),
+        )
+        assertEquals(instantAt(day, LocalTime.of(10, 47)), first)
+
+        val second = NextTriggerCalculator.nextTrigger(
+            referenceInstant = first,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = start,
+            windowEnd = end,
+            now = instantAt(day, LocalTime.of(10, 47)),
+        )
+        assertEquals(instantAt(day, LocalTime.of(11, 2)), second)
+    }
+
+    @Test
+    fun `now exactly on a slot boundary advances to the following slot`() {
+        val reference = instantAt(day, LocalTime.of(10, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            now = instantAt(day, LocalTime.of(10, 15)),
+        )
+        assertEquals(instantAt(day, LocalTime.of(10, 30)), result)
+    }
+
+    @Test
+    fun `catch-up landing past the window end rolls to the next window start`() {
+        val reference = instantAt(day, LocalTime.of(16, 30))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            now = instantAt(day, LocalTime.of(19, 5)), // dozed clean past the window
+        )
+        assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
+    }
+
+    @Test
+    fun `now before the reference (clock moved back) still advances one interval`() {
+        val reference = instantAt(day, LocalTime.of(10, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            now = instantAt(day, LocalTime.of(9, 50)),
+        )
+        assertEquals(instantAt(day, LocalTime.of(10, 15)), result)
+    }
+
     @Test
     fun `interval below minimum throws`() {
         assertThrows(IllegalArgumentException::class.java) {

@@ -30,9 +30,13 @@ class TriggerReminderUseCase(
         val settings = settingsRepository.settings.first()
         if (!settings.enabled) return AlarmFiredOutcome.DISABLED
 
+        // One reading of the clock for both the window check and the catch-up below, so a tick
+        // can't be judged in-window and then rescheduled against a slightly different "now".
+        val firedAt = now()
+
         val outcome = if (
             NextTriggerCalculator.isWithinWindow(
-                now(),
+                firedAt,
                 zone,
                 settings.windowStart,
                 settings.windowEnd
@@ -49,6 +53,7 @@ class TriggerReminderUseCase(
             intervalMinutes = settings.intervalMinutes,
             windowStart = settings.windowStart,
             windowEnd = settings.windowEnd,
+            now = firedAt,
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())
         return outcome
