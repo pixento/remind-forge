@@ -30,7 +30,27 @@ Notes on the build:
   can't parse class files from very new JDKs. Don't "fix" this pinning if a newer local JDK is
   present; it's intentional (see comments in `app/build.gradle.kts`).
 - Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK,
-  Turbine (for Flow testing), and JUnit4.
+  Turbine (for Flow testing), and JUnit4. MockK is deliberately a `testImplementation`-only
+  dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB page aligned, which makes
+  the emulator pop up an alignment warning on every instrumented run.
+
+## Verifying a change
+
+Finishing an implementation means running it on the emulator, not just going green on tests. After
+the build and tests pass, always:
+
+```bash
+export PATH="$HOME/Library/Android/sdk/platform-tools:$HOME/Library/Android/sdk/emulator:$PATH"
+adb devices                                        # or: emulator -avd Medium_Phone &
+./gradlew connectedDebugAndroidTest                 # instrumented tests on the running emulator
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n nl.pixento.remindforge/.MainActivity
+```
+
+Then drive the actual UI to the screen that changed and look at it — `adb shell input tap X Y`,
+`adb shell uiautomator dump /sdcard/ui.xml` to find tap targets and read back radio/switch state, and
+`adb shell screencap -p /sdcard/s.png` + `adb pull` to view the result. Report what the screenshots
+showed. Vibration itself can't be verified on an emulator; say so rather than implying it was checked.
 
 ## Architecture
 
@@ -97,8 +117,8 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `SettingsRepository.settings` and writes through `persist { ... }`, which always follows a
   settings write with `scheduleCoordinator.rescheduleFromNow()` so a change takes effect immediately
   instead of waiting for the in-flight chain to finish its current interval. `ui/settings/components/`
-  holds the individual controls (interval picker, time window picker, vibration pattern picker,
-  ringtone picker launcher, permission banners).
+  holds the individual controls (interval picker, time window picker, ringtone picker launcher,
+  permission banners), and `ui/settings/vibration/` the vibration pattern picker.
 
   The screen follows the platform sound-and-vibration settings idiom: rounded grouped cards of rows,
   each row a title over its current value in the accent colour, the whole row tappable to open a
@@ -106,6 +126,12 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `SettingsDivider`) and `components/RadioChoiceDialog.kt` rather than adding bespoke inline
   controls — `RadioChoiceDialog` keeps the choice as a draft until OK so `onPreview` can audition an
   option that Cancel then discards, mirroring the system ringtone picker.
+
+  Both alert channels open a *separate picker activity*, so the two rows behave alike: Sound launches
+  the system `ACTION_RINGTONE_PICKER`, Vibration launches `VibrationPickerActivity` through the
+  `PickVibrationPattern` result contract. The vibration picker applies on tap (it buzzes the pattern
+  and updates its activity result) but deliberately doesn't write settings itself — the result is
+  delivered when the screen finishes, and `SettingsViewModel.persist()` stays the single write path.
 
 ### Permission model
 

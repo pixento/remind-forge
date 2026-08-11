@@ -9,14 +9,12 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -36,7 +34,6 @@ class SettingsViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeSettingsRepository
     private lateinit var coordinator: ReminderScheduleCoordinator
-    private lateinit var alertPlayer: AlertPlayer
     private lateinit var context: Context
 
     @Before
@@ -44,7 +41,6 @@ class SettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = FakeSettingsRepository()
         coordinator = mockk(relaxed = true)
-        alertPlayer = mockk(relaxUnitFun = true)
         context = mockk(relaxed = true)
 
         mockkObject(ExactAlarmPermission)
@@ -63,7 +59,7 @@ class SettingsViewModelTest {
         unmockkAll()
     }
 
-    private fun viewModel() = SettingsViewModel(context, repository, coordinator, alertPlayer)
+    private fun viewModel() = SettingsViewModel(context, repository, coordinator)
 
     @Test
     fun `initial state mirrors repository defaults`() {
@@ -124,13 +120,6 @@ class SettingsViewModelTest {
         vm.onRingtoneSelected(uri)
 
         assertEquals("content://media/ringtone/42", vm.uiState.value.ringtoneUri)
-    }
-
-    @Test
-    fun `preview vibration delegates to AlertPlayer with the given pattern`() {
-        val vm = viewModel()
-        vm.onPreviewVibration(VibrationPatternType.DOUBLE_PULSE)
-        verify { alertPlayer.playVibration(VibrationPatternType.DOUBLE_PULSE) }
     }
 
     @Test

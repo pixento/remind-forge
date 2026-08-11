@@ -45,8 +45,8 @@ import nl.pixento.remindforge.ui.settings.components.SettingsDivider
 import nl.pixento.remindforge.ui.settings.components.SettingsGroup
 import nl.pixento.remindforge.ui.settings.components.SettingsRow
 import nl.pixento.remindforge.ui.settings.components.TimeWindowPicker
-import nl.pixento.remindforge.ui.settings.components.VibrationPatternPicker
 import nl.pixento.remindforge.ui.settings.components.buildRingtonePickerIntent
+import nl.pixento.remindforge.ui.settings.vibration.PickVibrationPattern
 
 @Composable
 fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
@@ -60,7 +60,6 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
         onWindowStartChanged = viewModel::onWindowStartChanged,
         onWindowEndChanged = viewModel::onWindowEndChanged,
         onVibrationPatternSelected = viewModel::onVibrationPatternSelected,
-        onPreviewVibration = viewModel::onPreviewVibration,
         onRingtoneSelected = viewModel::onRingtoneSelected,
         onRequestExactAlarmPermission = {
             context.startActivity(ExactAlarmPermission.buildRequestIntent(context))
@@ -81,13 +80,17 @@ fun SettingsScreen(
     onWindowStartChanged: (LocalTime) -> Unit,
     onWindowEndChanged: (LocalTime) -> Unit,
     onVibrationPatternSelected: (VibrationPatternType) -> Unit,
-    onPreviewVibration: (VibrationPatternType) -> Unit,
     onRingtoneSelected: (Uri?) -> Unit,
     onRequestExactAlarmPermission: () -> Unit,
     modifier: Modifier = Modifier,
     onRequestBatteryOptimizationExemption: () -> Unit = {},
     onDismissBatteryOptimizationBanner: () -> Unit = {},
 ) {
+    // Null means the picker was left without choosing, i.e. no change.
+    val vibrationLauncher = rememberLauncherForActivityResult(PickVibrationPattern) { pattern ->
+        pattern?.let(onVibrationPatternSelected)
+    }
+
     val ringtoneLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
@@ -157,10 +160,10 @@ fun SettingsScreen(
 
         item {
             SettingsGroup {
-                VibrationPatternPicker(
-                    selected = uiState.vibrationPattern,
-                    onSelect = onVibrationPatternSelected,
-                    onPreview = onPreviewVibration,
+                SettingsRow(
+                    title = "Vibration",
+                    value = uiState.vibrationPattern.label,
+                    onClick = { vibrationLauncher.launch(uiState.vibrationPattern) },
                 )
                 SettingsDivider()
                 SettingsRow(

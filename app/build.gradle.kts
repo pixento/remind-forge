@@ -45,8 +45,8 @@ android {
     }
     packaging {
         resources {
-            // LICENSE.md/LICENSE-notice.md come from the JUnit 5 jars mockk-android drags into
-            // androidTest; without excluding them the androidTest APK fails to package.
+            // Duplicate license/notice entries from overlapping test jars; without excluding them
+            // the androidTest APK fails to package.
             excludes += "/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}"
         }
     }
@@ -81,7 +81,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.mockk.android)
     androidTestImplementation(libs.kotlinx.coroutines.test)
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)

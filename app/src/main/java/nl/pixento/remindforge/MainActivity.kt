@@ -36,7 +36,6 @@ class MainActivity : ComponentActivity() {
                                 appContext = applicationContext,
                                 settingsRepository = container.settingsRepository,
                                 scheduleCoordinator = container.scheduleCoordinator,
-                                alertPlayer = container.alertPlayer,
                             )
                         }
                     },

@@ -29,7 +29,6 @@ class SettingsScreenTest {
                 onWindowStartChanged = {},
                 onWindowEndChanged = {},
                 onVibrationPatternSelected = {},
-                onPreviewVibration = {},
                 onRingtoneSelected = {},
                 onRequestExactAlarmPermission = onRequestExactAlarmPermission,
             )

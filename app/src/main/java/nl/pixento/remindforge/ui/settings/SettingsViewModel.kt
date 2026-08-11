@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.model.VibrationPatternType
@@ -22,7 +21,6 @@ class SettingsViewModel(
     private val appContext: Context,
     private val settingsRepository: SettingsRepository,
     private val scheduleCoordinator: ReminderScheduleCoordinator,
-    private val alertPlayer: AlertPlayer,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -63,14 +61,6 @@ class SettingsViewModel(
 
     /** A null [uri] is the picker's "Silent" choice, which switches the sound channel off. */
     fun onRingtoneSelected(uri: Uri?) = persist { setRingtoneUri(uri?.toString()) }
-
-    fun onPreviewVibration(pattern: VibrationPatternType) {
-        alertPlayer.playVibration(pattern)
-    }
-
-    fun onStopPreview() {
-        alertPlayer.stopPreview()
-    }
 
     fun onDismissBatteryOptimizationBanner() {
         batteryBannerDismissed = true
