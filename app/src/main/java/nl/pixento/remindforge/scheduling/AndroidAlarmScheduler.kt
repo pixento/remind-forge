@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import nl.pixento.remindforge.receivers.ReminderAlarmReceiver
 
 /**
@@ -32,6 +33,11 @@ class AndroidAlarmScheduler(
             // SCHEDULE_EXACT_ALARM not granted (default on API 33+ until the user opts in via
             // system settings) - keep the chain alive with a less precise, permission-free alarm
             // rather than letting it die silently.
+            Log.w(
+                TAG,
+                "SCHEDULE_EXACT_ALARM denied; falling back to inexact alarm, which Doze may defer",
+                e,
+            )
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 triggerAtMillis,
@@ -71,6 +77,7 @@ class AndroidAlarmScheduler(
     }
 
     companion object {
+        private const val TAG = "AndroidAlarmScheduler"
         private const val REQUEST_CODE = 1001
     }
 }

@@ -15,6 +15,7 @@ import nl.pixento.remindforge.domain.model.AlertMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TriggerReminderUseCaseTest {
@@ -48,8 +49,9 @@ class TriggerReminderUseCaseTest {
         every { settingsRepository.settings } returns flowOf(settings)
         val scheduledAt = scheduledInstant(10, 0)
 
-        useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+        val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
+        assertEquals(AlarmFiredOutcome.FIRED, outcome)
         verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
         verify(exactly = 0) { alertPlayer.playRingtone(any()) }
     }
@@ -66,10 +68,32 @@ class TriggerReminderUseCaseTest {
         every { settingsRepository.settings } returns flowOf(settings)
         val scheduledAt = scheduledInstant(10, 0)
 
-        useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+        val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
+        assertEquals(AlarmFiredOutcome.FIRED, outcome)
         verify { alertPlayer.playRingtone("content://media/ringtone/1") }
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
+    }
+
+    @Test
+    fun `ringtone mode with no ringtone set skips alert but still reschedules`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            alertMode = AlertMode.RINGTONE,
+            ringtoneUri = null,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+
+        assertEquals(AlarmFiredOutcome.NO_RINGTONE_URI, outcome)
+        verify(exactly = 0) { alertPlayer.playRingtone(any()) }
+        verify(exactly = 0) { alertPlayer.playVibration(any()) }
+        coVerify { alarmScheduler.scheduleNext(any()) }
     }
 
     @Test
@@ -78,8 +102,9 @@ class TriggerReminderUseCaseTest {
         every { settingsRepository.settings } returns flowOf(settings)
         val scheduledAt = scheduledInstant(10, 0)
 
-        useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
+        val outcome = useCase(fixedNow = scheduledAt).onAlarmFired(scheduledAt.toEpochMilli())
 
+        assertEquals(AlarmFiredOutcome.DISABLED, outcome)
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
         verify(exactly = 0) { alertPlayer.playRingtone(any()) }
         verify(exactly = 0) { alarmScheduler.scheduleNext(any()) }
@@ -98,8 +123,9 @@ class TriggerReminderUseCaseTest {
         // "now" has drifted outside the window even though the alarm was scheduled inside it.
         val driftedNow = scheduledInstant(20, 0)
 
-        useCase(fixedNow = driftedNow).onAlarmFired(scheduledAt.toEpochMilli())
+        val outcome = useCase(fixedNow = driftedNow).onAlarmFired(scheduledAt.toEpochMilli())
 
+        assertEquals(AlarmFiredOutcome.OUTSIDE_WINDOW, outcome)
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
         coVerify { alarmScheduler.scheduleNext(any()) }
     }
