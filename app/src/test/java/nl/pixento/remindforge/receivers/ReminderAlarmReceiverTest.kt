@@ -45,8 +45,8 @@ class ReminderAlarmReceiverTest {
 
         fireTick(scheduledAt)
 
-        val scheduled = shadowOf(alarmManager).nextScheduledAlarm!!
-        assertEquals(scheduledAt + INTERVAL_MILLIS, scheduled.triggerAtTime)
+        val scheduled = shadowOf(alarmManager).peekNextScheduledAlarm()!!
+        assertEquals(scheduledAt + INTERVAL_MILLIS, scheduled.triggerAtMs)
     }
 
     @Test
@@ -58,7 +58,7 @@ class ReminderAlarmReceiverTest {
 
         fireTick(scheduledAt)
 
-        val triggerAt = shadowOf(alarmManager).nextScheduledAlarm!!.triggerAtTime
+        val triggerAt = shadowOf(alarmManager).peekNextScheduledAlarm()!!.triggerAtMs
         assertTrue("expected a future trigger, got $triggerAt", triggerAt > System.currentTimeMillis())
         assertEquals(
             "expected the original cadence to be preserved",
@@ -72,7 +72,7 @@ class ReminderAlarmReceiverTest {
         val intent = Intent(app, ReminderAlarmReceiver::class.java)
         ReminderAlarmReceiver().onReceive(app, intent)
 
-        assertNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     @Test
@@ -81,7 +81,7 @@ class ReminderAlarmReceiverTest {
 
         fireTick(1_780_000_000_000L)
 
-        assertNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     private companion object {

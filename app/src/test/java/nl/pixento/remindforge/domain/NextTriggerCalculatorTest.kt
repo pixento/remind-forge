@@ -73,6 +73,7 @@ class NextTriggerCalculatorTest {
 
     @Test
     fun `non-wrap window, naive after end jumps to tomorrow's start`() {
+        // Also the freshly-enabled-outside-the-window case: on enable the reference *is* "now".
         val reference = instantAt(day, LocalTime.of(20, 0))
         val result = NextTriggerCalculator.nextTrigger(
             referenceInstant = reference,
@@ -180,19 +181,6 @@ class NextTriggerCalculatorTest {
             windowEnd = end,
         )
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), third)
-    }
-
-    @Test
-    fun `freshly enabled outside window jumps forward to next window start`() {
-        val reference = instantAt(day, LocalTime.of(20, 0)) // "now" at enable time
-        val result = NextTriggerCalculator.nextTrigger(
-            referenceInstant = reference,
-            zone = utc,
-            intervalMinutes = 5,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
-        )
-        assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
     }
 
     // --- Late delivery (doze) catch-up ---
@@ -308,29 +296,22 @@ class NextTriggerCalculatorTest {
     }
 
     @Test
-    fun `interval boundary values 2 and 120 are accepted`() {
+    fun `any accepted interval walks its own cadence, boundaries included`() {
+        // The interval is free numeric entry, not a preset: nothing snaps it to a five-minute grid,
+        // and both ends of the accepted 2..120 range work.
         val reference = instantAt(day, LocalTime.of(10, 0))
-        val twoMin = NextTriggerCalculator.nextTrigger(
-            reference, utc, 2, LocalTime.of(9, 0), LocalTime.of(17, 0),
+        val expected = mapOf(
+            2 to LocalTime.of(10, 2),
+            7 to LocalTime.of(10, 7),
+            120 to LocalTime.of(12, 0),
         )
-        val twoHours = NextTriggerCalculator.nextTrigger(
-            reference, utc, 120, LocalTime.of(9, 0), LocalTime.of(17, 0),
-        )
-        assertEquals(instantAt(day, LocalTime.of(10, 2)), twoMin)
-        assertEquals(instantAt(day, LocalTime.of(12, 0)), twoHours)
-    }
 
-    @Test
-    fun `interval that is not a multiple of five walks its own cadence`() {
-        val start = instantAt(day, LocalTime.of(10, 0))
-        val second = NextTriggerCalculator.nextTrigger(
-            start, utc, 7, LocalTime.of(9, 0), LocalTime.of(17, 0),
-        )
-        val third = NextTriggerCalculator.nextTrigger(
-            second, utc, 7, LocalTime.of(9, 0), LocalTime.of(17, 0),
-        )
-        assertEquals(instantAt(day, LocalTime.of(10, 7)), second)
-        assertEquals(instantAt(day, LocalTime.of(10, 14)), third)
+        expected.forEach { (intervalMinutes, expectedTime) ->
+            val result = NextTriggerCalculator.nextTrigger(
+                reference, utc, intervalMinutes, LocalTime.of(9, 0), LocalTime.of(17, 0),
+            )
+            assertEquals("interval $intervalMinutes", instantAt(day, expectedTime), result)
+        }
     }
 
     // --- DST edge cases (Europe/Amsterdam) ---

@@ -32,7 +32,7 @@ class BootCompletedReceiverTest {
 
         BootCompletedReceiver().onReceive(app, Intent(Intent.ACTION_BOOT_COMPLETED))
 
-        assertNotNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNotNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     @Test
@@ -41,7 +41,18 @@ class BootCompletedReceiverTest {
 
         BootCompletedReceiver().onReceive(app, Intent(Intent.ACTION_MY_PACKAGE_REPLACED))
 
-        assertNotNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNotNull(shadowOf(alarmManager).peekNextScheduledAlarm())
+    }
+
+    @Test
+    fun `QUICKBOOT_POWERON also reschedules when enabled`() {
+        // Some OEM ROMs deliver this instead of BOOT_COMPLETED after a fast boot; without it the
+        // chain would stay dead on those devices until the app is opened.
+        enableAlwaysActive()
+
+        BootCompletedReceiver().onReceive(app, Intent("android.intent.action.QUICKBOOT_POWERON"))
+
+        assertNotNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     @Test
@@ -50,15 +61,17 @@ class BootCompletedReceiverTest {
 
         BootCompletedReceiver().onReceive(app, Intent(Intent.ACTION_BOOT_COMPLETED))
 
-        assertNull(shadowOf(alarmManager).nextScheduledAlarm)
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 
     @Test
-    fun `ignores unrelated actions`() {
+    fun `ignores unrelated and missing actions`() {
         enableAlwaysActive()
 
         BootCompletedReceiver().onReceive(app, Intent("some.other.action"))
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
 
-        assertNull(shadowOf(alarmManager).nextScheduledAlarm)
+        BootCompletedReceiver().onReceive(app, Intent())
+        assertNull(shadowOf(alarmManager).peekNextScheduledAlarm())
     }
 }

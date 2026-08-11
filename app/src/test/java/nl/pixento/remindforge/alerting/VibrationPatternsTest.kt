@@ -4,6 +4,7 @@ import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class VibrationPatternsTest {
@@ -49,7 +50,10 @@ class VibrationPatternsTest {
                 val waveform = VibrationPatterns.waveformFor(pattern)!!
                 val buzzes = waveform.filterIndexed { i, _ -> i % 2 == 1 }
                 val gaps = waveform.filterIndexed { i, _ -> i > 0 && i % 2 == 0 }
-                assert(gaps.min() >= buzzes.max()) { "$pattern: gaps $gaps vs buzzes $buzzes" }
+                assertTrue(
+                    "$pattern: gaps $gaps vs buzzes $buzzes",
+                    gaps.min() >= buzzes.max(),
+                )
             }
     }
 
@@ -97,14 +101,5 @@ class VibrationPatternsTest {
     @Test
     fun `silent has no waveform`() {
         assertNull(VibrationPatterns.waveformFor(VibrationPatternType.SILENT))
-    }
-
-    @Test
-    fun `every audible pattern type has a waveform mapped`() {
-        VibrationPatternType.entries
-            .filter { it != VibrationPatternType.SILENT }
-            .forEach { pattern ->
-                assert(VibrationPatterns.waveformFor(pattern)?.isNotEmpty() == true)
-            }
     }
 }

@@ -53,6 +53,24 @@ class AlertModeMigrationTest {
     }
 
     @Test
+    fun `an unrecognized legacy mode is treated as vibration`() = runTest {
+        // Only "RINGTONE" means the ringtone was the live channel. Anything else - including a value
+        // this build has never heard of - has to leave the sound channel off rather than start
+        // playing a ringtone the user last heard under different settings.
+        val migrated = AlertModeMigration.migrate(
+            mutablePreferencesOf(
+                legacyAlertMode to "SOMETHING_ELSE",
+                PreferencesKeys.VIBRATION_PATTERN to VibrationPatternType.LONG_PULSE.name,
+                PreferencesKeys.RINGTONE_URI to "content://media/ringtone/1",
+            ),
+        )
+
+        val settings = SettingsMapper.fromPreferences(migrated)
+        assertEquals(VibrationPatternType.LONG_PULSE, settings.vibrationPattern)
+        assertNull(settings.ringtoneUri)
+    }
+
+    @Test
     fun `legacy key is removed so the migration never runs twice`() = runTest {
         val migrated = AlertModeMigration.migrate(mutablePreferencesOf(legacyAlertMode to "RINGTONE"))
 

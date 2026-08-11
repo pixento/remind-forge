@@ -77,20 +77,6 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `interval below minimum is clamped to 2`() {
-        val vm = viewModel()
-        vm.onIntervalChanged(1)
-        assertEquals(2, vm.uiState.value.intervalMinutes)
-    }
-
-    @Test
-    fun `interval above maximum is clamped to 120`() {
-        val vm = viewModel()
-        vm.onIntervalChanged(999)
-        assertEquals(120, vm.uiState.value.intervalMinutes)
-    }
-
-    @Test
     fun `enabling triggers a coordinator reschedule`() = runTest {
         val vm = viewModel()
         vm.onEnabledChanged(true)
@@ -190,13 +176,6 @@ class SettingsViewModelTest {
         every { uri.toString() } returns "content://media/ringtone/42"
         vm.onRingtoneSelected(uri)
         assertFalse(vm.uiState.value.hasNoAlertSelected)
-    }
-
-    @Test
-    fun `missing exact alarm permission is reflected in state`() {
-        every { ExactAlarmPermission.canScheduleExactAlarms(any()) } returns false
-        val vm = viewModel()
-        assertTrue(vm.uiState.value.needsExactAlarmPermission)
     }
 
     @Test

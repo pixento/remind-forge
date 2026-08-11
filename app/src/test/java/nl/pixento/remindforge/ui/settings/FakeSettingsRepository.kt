@@ -15,8 +15,6 @@ class FakeSettingsRepository(
     private val state = MutableStateFlow(initial)
     override val settings: Flow<ReminderSettings> = state
 
-    val current: ReminderSettings get() = state.value
-
     override suspend fun setEnabled(enabled: Boolean) {
         state.value = state.value.copy(enabled = enabled)
     }

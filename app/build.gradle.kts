@@ -70,7 +70,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.turbine)
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.junit)
@@ -78,8 +77,10 @@ dependencies {
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Not used directly - this is a version pin. The Compose test rule drags in espresso-core
+    // transitively at 3.5.0, whose event injection calls the InputManager.getInstance method that
+    // newer platforms removed, and every Compose test then dies on its first interaction.
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.kotlinx.coroutines.test)
 

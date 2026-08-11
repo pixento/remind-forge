@@ -29,10 +29,10 @@ Notes on the build:
   target 11, independent of whatever JDK the Gradle daemon itself uses — Robolectric's bundled ASM
   can't parse class files from very new JDKs. Don't "fix" this pinning if a newer local JDK is
   present; it's intentional (see comments in `app/build.gradle.kts`).
-- Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK,
-  Turbine (for Flow testing), and JUnit4. MockK is deliberately a `testImplementation`-only
-  dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB page aligned, which makes
-  the emulator pop up an alignment warning on every instrumented run.
+- Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK
+  and JUnit4; instrumented tests use the Compose test rule. MockK is deliberately a
+  `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB
+  page aligned, which makes the emulator pop up an alignment warning on every instrumented run.
 
 ## Verifying a change
 

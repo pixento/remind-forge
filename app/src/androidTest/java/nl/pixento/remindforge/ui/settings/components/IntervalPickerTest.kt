@@ -36,11 +36,16 @@ class IntervalPickerTest {
         }
     }
 
-    /** Opens the dialog on [current] and returns the number field. */
-    private fun openDialog(current: Int = 15) = run {
-        setPicker(current)
+    /** Taps the collapsed row (which reads [current]) and returns the dialog's number field. */
+    private fun tapRow(current: Int = 15) = run {
         composeRule.onNodeWithText(intervalValue(current)).performClick()
         composeRule.onNode(hasSetTextAction())
+    }
+
+    /** Mounts the picker and opens its dialog on [current], returning the number field. */
+    private fun openDialog(current: Int = 15) = run {
+        setPicker(current)
+        tapRow(current)
     }
 
     private fun okButton() = composeRule.onNodeWithText(context.getString(R.string.dialog_ok))
@@ -74,13 +79,21 @@ class IntervalPickerTest {
     }
 
     @Test
-    fun okCommitsTheTypedInterval() {
-        val field = openDialog()
+    fun okCommitsAnyValueInTheAcceptedRange() {
+        // Entry is a free number rather than a preset, so what matters is the whole range: an
+        // everyday value, one off the old five-minute grid, and both ends of 2..120.
+        setPicker(current = 15)
 
-        field.performTextReplacement("45")
-        okButton().performClick()
+        listOf(45, 7, ReminderSettings.MIN_INTERVAL_MINUTES, ReminderSettings.MAX_INTERVAL_MINUTES)
+            .forEach { minutes ->
+                chosen = null
 
-        assertEquals(45, chosen)
+                // The row is stateless here, so it still reads 15 after each commit.
+                tapRow().performTextReplacement(minutes.toString())
+                okButton().performClick()
+
+                assertEquals(minutes, chosen)
+            }
     }
 
     @Test
@@ -91,36 +104,6 @@ class IntervalPickerTest {
         composeRule.onNodeWithText(context.getString(R.string.dialog_cancel)).performClick()
 
         assertNull(chosen)
-    }
-
-    @Test
-    fun anIntervalOffTheOldFiveMinuteGridIsAccepted() {
-        val field = openDialog()
-
-        field.performTextReplacement("7")
-        okButton().performClick()
-
-        assertEquals(7, chosen)
-    }
-
-    @Test
-    fun theMinimumIsAccepted() {
-        val field = openDialog()
-
-        field.performTextReplacement(ReminderSettings.MIN_INTERVAL_MINUTES.toString())
-        okButton().performClick()
-
-        assertEquals(ReminderSettings.MIN_INTERVAL_MINUTES, chosen)
-    }
-
-    @Test
-    fun theMaximumIsAccepted() {
-        val field = openDialog()
-
-        field.performTextReplacement(ReminderSettings.MAX_INTERVAL_MINUTES.toString())
-        okButton().performClick()
-
-        assertEquals(ReminderSettings.MAX_INTERVAL_MINUTES, chosen)
     }
 
     @Test

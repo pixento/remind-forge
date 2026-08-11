@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import java.io.File
 import java.time.LocalTime
@@ -99,5 +100,39 @@ class SettingsRepositoryImplTest {
         setUp()
         dataStore.edit { it[stringPreferencesKey("window_start")] = "not-a-time" }
         assertEquals(ReminderSettings().windowStart, repository.settings.first().windowStart)
+    }
+
+    @Test
+    fun `corrupted window end string falls back to default too`() = runTest {
+        setUp()
+        dataStore.edit { it[stringPreferencesKey("window_end")] = "not-a-time" }
+        assertEquals(ReminderSettings().windowEnd, repository.settings.first().windowEnd)
+    }
+
+    @Test
+    fun `a single-digit hour is not a valid stored time`() = runTest {
+        // Times are stored strictly as HH:mm, so "9:00" is corruption rather than a lenient 09:00 -
+        // silently accepting it would let two encodings of the same time into the store.
+        setUp()
+        dataStore.edit { it[stringPreferencesKey("window_start")] = "9:00" }
+        assertEquals(ReminderSettings().windowStart, repository.settings.first().windowStart)
+    }
+
+    @Test
+    fun `an out-of-range stored interval is clamped on read`() = runTest {
+        // The setter clamps too, but a value written by an older build (or straight into the file)
+        // still has to come back inside the range the calculator will accept.
+        setUp()
+        dataStore.edit { it[intPreferencesKey("interval_minutes")] = 999 }
+        assertEquals(
+            ReminderSettings.MAX_INTERVAL_MINUTES,
+            repository.settings.first().intervalMinutes,
+        )
+
+        dataStore.edit { it[intPreferencesKey("interval_minutes")] = 0 }
+        assertEquals(
+            ReminderSettings.MIN_INTERVAL_MINUTES,
+            repository.settings.first().intervalMinutes,
+        )
     }
 }

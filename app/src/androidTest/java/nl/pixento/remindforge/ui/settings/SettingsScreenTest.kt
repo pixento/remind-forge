@@ -30,6 +30,8 @@ class SettingsScreenTest {
         uiState: SettingsUiState = SettingsUiState(),
         onEnabledChanged: (Boolean) -> Unit = {},
         onRequestExactAlarmPermission: () -> Unit = {},
+        onRequestBatteryOptimizationExemption: () -> Unit = {},
+        onDismissBatteryOptimizationBanner: () -> Unit = {},
     ) {
         composeRule.setContent {
             SettingsScreen(
@@ -41,6 +43,8 @@ class SettingsScreenTest {
                 onVibrationPatternSelected = {},
                 onRingtoneSelected = {},
                 onRequestExactAlarmPermission = onRequestExactAlarmPermission,
+                onRequestBatteryOptimizationExemption = onRequestBatteryOptimizationExemption,
+                onDismissBatteryOptimizationBanner = onDismissBatteryOptimizationBanner,
             )
         }
     }
@@ -66,6 +70,30 @@ class SettingsScreenTest {
         )
         composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).performClick()
         assertTrue(requested)
+    }
+
+    @Test
+    fun batteryOptimizationActionInvokesCallback() {
+        var requested = false
+        setScreen(
+            uiState = SettingsUiState(showBatteryOptimizationBanner = true),
+            onRequestBatteryOptimizationExemption = { requested = true },
+        )
+        composeRule.onNodeWithText(string(R.string.battery_optimization_banner_action)).performClick()
+        assertTrue(requested)
+    }
+
+    @Test
+    fun batteryOptimizationDismissInvokesCallback() {
+        // Dismissal is the only way out of this banner - the exemption is optional, so a dead
+        // button would leave the nudge on screen for good.
+        var dismissed = false
+        setScreen(
+            uiState = SettingsUiState(showBatteryOptimizationBanner = true),
+            onDismissBatteryOptimizationBanner = { dismissed = true },
+        )
+        composeRule.onNodeWithText(string(R.string.battery_optimization_banner_dismiss)).performClick()
+        assertTrue(dismissed)
     }
 
     @Test
