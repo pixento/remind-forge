@@ -1,14 +1,15 @@
 package nl.pixento.remindforge.ui.settings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasScrollToNodeAction
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import java.time.Instant
 import java.time.ZoneId
@@ -37,18 +38,24 @@ class SettingsScreenTest {
         onDismissBatteryOptimizationBanner: () -> Unit = {},
     ) {
         composeRule.setContent {
-            SettingsScreen(
-                uiState = uiState,
+            // The screen is a LazyColumn, so an item below the fold is never composed and an
+            // assertDoesNotExist on it would pass for the wrong reason (and an assertExists fail
+            // for the wrong reason) depending only on the device's screen height. Give it a
+            // viewport taller than the content so presence and absence both mean what they say.
+            Box(modifier = Modifier.requiredHeight(2000.dp)) {
+                SettingsScreen(
+                    uiState = uiState,
                 onEnabledChanged = onEnabledChanged,
-                onIntervalChanged = {},
-                onWindowStartChanged = {},
-                onWindowEndChanged = {},
-                onVibrationPatternSelected = {},
-                onRingtoneSelected = {},
-                onRequestExactAlarmPermission = onRequestExactAlarmPermission,
-                onRequestBatteryOptimizationExemption = onRequestBatteryOptimizationExemption,
-                onDismissBatteryOptimizationBanner = onDismissBatteryOptimizationBanner,
-            )
+                    onIntervalChanged = {},
+                    onWindowStartChanged = {},
+                    onWindowEndChanged = {},
+                    onVibrationPatternSelected = {},
+                    onRingtoneSelected = {},
+                    onRequestExactAlarmPermission = onRequestExactAlarmPermission,
+                    onRequestBatteryOptimizationExemption = onRequestBatteryOptimizationExemption,
+                    onDismissBatteryOptimizationBanner = onDismissBatteryOptimizationBanner,
+                )
+            }
         }
     }
 
@@ -158,10 +165,6 @@ class SettingsScreenTest {
                 ringtoneUri = null,
             ),
         )
-        // The warning is the last item of the LazyColumn, so on a short screen it is never
-        // composed until scrolled to.
-        composeRule.onNode(hasScrollToNodeAction())
-            .performScrollToNode(hasText(string(R.string.no_alert_warning)))
         composeRule.onNodeWithText(string(R.string.no_alert_warning)).assertExists()
     }
 
