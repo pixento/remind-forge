@@ -28,7 +28,7 @@ class VibrationPatternsTest {
     @Test
     fun `double pulse waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 150, 250, 150),
+            longArrayOf(0, 150, 300, 150),
             VibrationPatterns.waveformFor(VibrationPatternType.DOUBLE_PULSE),
         )
     }
@@ -36,7 +36,7 @@ class VibrationPatternsTest {
     @Test
     fun `triple pulse waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 150, 250, 150, 250, 150),
+            longArrayOf(0, 150, 300, 150, 300, 150),
             VibrationPatterns.waveformFor(VibrationPatternType.TRIPLE_PULSE),
         )
     }
@@ -60,7 +60,7 @@ class VibrationPatternsTest {
     @Test
     fun `long-short-short waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 500, 250, 150, 250, 150),
+            longArrayOf(0, 700, 300, 150, 300, 150),
             VibrationPatterns.waveformFor(VibrationPatternType.LONG_SHORT_SHORT),
         )
     }
@@ -68,7 +68,7 @@ class VibrationPatternsTest {
     @Test
     fun `short-short-long waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 150, 250, 150, 250, 500),
+            longArrayOf(0, 150, 300, 150, 300, 700),
             VibrationPatterns.waveformFor(VibrationPatternType.SHORT_SHORT_LONG),
         )
     }
@@ -76,7 +76,7 @@ class VibrationPatternsTest {
     @Test
     fun `short-long-short waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 150, 250, 500, 250, 150),
+            longArrayOf(0, 150, 300, 700, 300, 150),
             VibrationPatterns.waveformFor(VibrationPatternType.SHORT_LONG_SHORT),
         )
     }
@@ -84,7 +84,7 @@ class VibrationPatternsTest {
     @Test
     fun `long-short-long waveform`() {
         assertArrayEquals(
-            longArrayOf(0, 500, 250, 150, 250, 500),
+            longArrayOf(0, 700, 300, 150, 300, 700),
             VibrationPatterns.waveformFor(VibrationPatternType.LONG_SHORT_LONG),
         )
     }
