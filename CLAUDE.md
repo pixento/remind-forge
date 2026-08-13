@@ -67,8 +67,11 @@ fired alarm computes and schedules exactly one next alarm, always keyed off the 
 time (not actual fire time) to avoid drift accumulating over a long-running chain.
 
 - `NextTriggerCalculator` (domain, pure/framework-free) — given a reference instant, interval, and
-  daily window, computes the next trigger instant, clamping into the window (including overnight
-  windows where `windowEnd < windowStart`, and `windowStart == windowEnd` meaning "always active").
+  a `DailyWindow?`, computes the next trigger instant, clamping into the window (`DailyWindow.contains`
+  owns the semantics: start inclusive, end exclusive, overnight windows where `end < start`, and
+  `start == end` meaning "always active"). A **null** window means no time-of-day constraint at all,
+  which is how `ActiveWindowMode.DO_NOT_DISTURB_OFF` is expressed: whether DND is on can only be read
+  for *now*, never predicted for a future instant, so that mode can't clamp and is judged per tick.
   It also takes `now` (defaulting to the reference, which is right for the compute-fresh case) and
   skips whole intervals that already elapsed: doze routinely delivers an exact alarm minutes late,
   and without that the next slot would land in the past, fire immediately, and make the chain replay
@@ -76,11 +79,14 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   the chain on its original cadence.
 - `TriggerReminderUseCase.onAlarmFired(scheduledAtMillis)` — called by `ReminderAlarmReceiver` on
   every tick. Re-reads current settings (may have changed since this alarm was scheduled), fires the
-  alert only if still enabled and within window, then always computes+schedules the next tick.
+  alert only if still enabled and currently active, then always computes+schedules the next tick.
+  "Currently active" is the window check in `CUSTOM_TIMES` mode and a `DoNotDisturbMonitor` read in
+  `DO_NOT_DISTURB_OFF` mode (outcomes `OUTSIDE_WINDOW` / `DO_NOT_DISTURB`); both skip the alert and
+  still reschedule, so the chain keeps its cadence and resumes the moment the condition clears.
 - `ReminderScheduleCoordinator.rescheduleFromNow()` — the *other* entry point into the chain, used
   whenever the chain needs to restart fresh from "now" rather than continue: on enable, on disable
-  (cancels), on a change to one of the settings the chain is *computed from* (interval, window
-  start/end), and on boot / app update. Called from `SettingsViewModel.persist()` and
+  (cancels), on a change to one of the settings the chain is *computed from* (interval, active-window
+  mode, window start/end), and on boot / app update. Called from `SettingsViewModel.persist()` and
   `BootCompletedReceiver`. Deliberately **not** called for the alert-channel settings (vibration
   pattern, ringtone), or when a picker re-confirms the value it already had: every tick re-reads
   settings anyway, so restarting the chain there would only push the next reminder a full interval
@@ -102,8 +108,11 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
 ### Layers
 
 - `domain/` — pure logic and use cases (`NextTriggerCalculator`, `TriggerReminderUseCase`,
-  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`,
-  `VibrationPatternType`). No Android framework dependencies except where noted.
+  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`, `ActiveWindowMode`,
+  `DailyWindow`, `VibrationPatternType`). No Android framework dependencies except where noted.
+  `ReminderSettings.activeWindow` is the bridge between the mode and the calculator — it returns the
+  stored `DailyWindow` in `CUSTOM_TIMES` and `null` in `DO_NOT_DISTURB_OFF`. Both window times stay
+  stored in the DND mode (so switching back restores them) and stay in `schedulesSameAs`.
 - `data/` — `SettingsRepository` interface + `data/datastore/SettingsRepositoryImpl`, backed by
   Preferences DataStore (`data/datastore/PreferencesKeys`, `SettingsMapper` convert between
   `Preferences` and `ReminderSettings`). `AlertModeMigration` is a one-shot `DataMigration` that
@@ -119,6 +128,19 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `waveformFor` is `null`) silences the first, a null `ringtoneUri` the second; silencing both is a
   legal state that the Settings screen warns about and `TriggerReminderUseCase` reports as
   `AlarmFiredOutcome.NO_ALERT_SELECTED` while still rescheduling.
+
+  `DoNotDisturbMonitor`/`AndroidDoNotDisturbMonitor` reads `getCurrentInterruptionFilter()`. That
+  needs **no permission and no Do-Not-Disturb access grant** (only *changing* the policy does) and
+  dates to API 23, so there's nothing in the manifest and no SDK_INT gate. Anything but
+  `INTERRUPTION_FILTER_ALL` counts as DND, deliberately including `INTERRUPTION_FILTER_ALARMS` even
+  though the OS would let our alarm-classed alerts through it; `INTERRUPTION_FILTER_UNKNOWN` fails
+  open. Note the app cannot *read* the user's DND **schedule** — `getAutomaticZenRules()` returns
+  only rules the caller owns and the system's rule belongs to package `"android"` — so following DND
+  is necessarily a live per-tick read, not a set of times copied into `ReminderSettings`.
+  `DoNotDisturbSettings.buildRequestIntent` deep-links into the system DND screen, walking a
+  resolve-checked fallback chain (`android.settings.ZEN_MODE_SETTINGS`, whose `Settings` constant is
+  `@hide`, then the public `ACTION_ZEN_MODE_PRIORITY_SETTINGS`, then `ACTION_SOUND_SETTINGS`). The
+  manifest `<queries>` block is what keeps those resolvable under Android 11+ package visibility.
 - `scheduling/` — `AlarmScheduler`/`AndroidAlarmScheduler`, plus `ExactAlarmPermission` and
   `BatteryOptimization` helpers for the two runtime-permission-like states the Settings screen has to
   surface (SCHEDULE_EXACT_ALARM grant, battery optimization exemption) since both are granted via a
@@ -143,6 +165,19 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `range` can ever be committed (OK is disabled while the field is empty or out of range, which is
   why the interval row can offer free numeric entry without the caller clamping a surprise value).
   A radio-style chooser is a full screen rather than a dialog here — see `ui/settings/vibration/`.
+  `SettingsRow` also supports `checked` (a checkbox row, `Role.Checkbox`) and `enabled = false`,
+  which dims a row to Material's 0.38 alpha while keeping its click modifier, so the row is
+  *announced* as disabled rather than being silently inert.
+
+  The Schedule group is one card: interval, then `components/ActiveWindowPicker.kt` — the "Disable
+  when Do Not Disturb is on" checkbox, the two time rows, and the system-DND shortcut as the last
+  row. Ticking the checkbox **disables** the time rows rather than hiding them (they keep their
+  stored values, so unticking restores them, and the group doesn't jump around); the shortcut row
+  stays live either way, since it's also how you check what your DND schedule is before deciding.
+  `ActiveWindowPicker` emits a *run of sibling rows*, so it needs the `SettingsGroup` Column around
+  it — put it in a `Box` and the rows stack, leaving the last one to silently swallow every click.
+  Note also that `uiautomator dump` does not faithfully report Compose's `checked`/`enabled`
+  semantics for these rows; trust the Compose test assertions and screenshots, not the XML dump.
 
   Both alert channels open a *separate picker activity*, so the two rows behave alike: Sound launches
   the system `ACTION_RINGTONE_PICKER`, Vibration launches `VibrationPickerActivity` through the
@@ -154,8 +189,13 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
 
 No dangerous runtime permissions requiring a request dialog. `SCHEDULE_EXACT_ALARM` and battery
 optimization exemption are both granted through a system settings screen outside the app, so
-`MainActivity` re-checks their state in `onResume` (`SettingsViewModel.onExactAlarmPermissionResumeCheck`)
-rather than via an `ActivityResultContract` callback.
+`MainActivity` re-checks their state in `onResume` (`SettingsViewModel.onExactAlarmPermissionResumeCheck`
+→ `refreshDeviceState()`) rather than via an `ActivityResultContract` callback. The current Do Not
+Disturb state is re-read on the same hook — it needs no permission, but it changes outside the app
+(system settings, quick-settings tile, a schedule starting), so returning to the screen is when the
+"reminders are paused" notice gets refreshed. Live updates while the screen sits open would need a
+*runtime-registered* receiver for `ACTION_INTERRUPTION_FILTER_CHANGED`; a manifest `<receiver>`
+would never fire, since that broadcast carries `FLAG_RECEIVER_REGISTERED_ONLY`.
 
 ## Git workflow
 

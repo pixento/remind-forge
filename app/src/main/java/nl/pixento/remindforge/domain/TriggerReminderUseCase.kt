@@ -4,14 +4,22 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.alerting.AlertPlayer
+import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
 
 /** Why a given alarm-chain tick did or didn't play an alert, for the receiver to log. */
-enum class AlarmFiredOutcome { FIRED, DISABLED, OUTSIDE_WINDOW, NO_ALERT_SELECTED }
+enum class AlarmFiredOutcome {
+    FIRED,
+    DISABLED,
+    OUTSIDE_WINDOW,
+    DO_NOT_DISTURB,
+    NO_ALERT_SELECTED,
+}
 
 /**
  * Handles a single alarm-chain tick: re-checks current settings (they may have changed since
@@ -24,6 +32,7 @@ class TriggerReminderUseCase(
     private val scheduleStateRepository: ScheduleStateRepository,
     private val alertPlayer: AlertPlayer,
     private val alarmScheduler: AlarmScheduler,
+    private val doNotDisturbMonitor: DoNotDisturbMonitor,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val now: () -> Instant = Instant::now,
 ) {
@@ -40,25 +49,23 @@ class TriggerReminderUseCase(
         // can't be judged in-window and then rescheduled against a slightly different "now".
         val firedAt = now()
 
-        val outcome = if (
-            NextTriggerCalculator.isWithinWindow(
-                firedAt,
-                zone,
-                settings.windowStart,
-                settings.windowEnd
-            )
-        ) {
-            playAlert(settings)
-        } else {
-            AlarmFiredOutcome.OUTSIDE_WINDOW
+        val outcome = when {
+            // Only asked of the OS when the user opted into following it, so the custom-times mode
+            // keeps firing through Do Not Disturb exactly as it does today.
+            settings.activeWindowMode == ActiveWindowMode.DO_NOT_DISTURB_OFF &&
+                    doNotDisturbMonitor.isDoNotDisturbActive() -> AlarmFiredOutcome.DO_NOT_DISTURB
+
+            !NextTriggerCalculator.isWithinWindow(firedAt, zone, settings.activeWindow) ->
+                AlarmFiredOutcome.OUTSIDE_WINDOW
+
+            else -> playAlert(settings)
         }
 
         val next = NextTriggerCalculator.nextTrigger(
             referenceInstant = Instant.ofEpochMilli(scheduledAtMillis),
             zone = zone,
             intervalMinutes = settings.intervalMinutes,
-            windowStart = settings.windowStart,
-            windowEnd = settings.windowEnd,
+            window = settings.activeWindow,
             now = firedAt,
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())

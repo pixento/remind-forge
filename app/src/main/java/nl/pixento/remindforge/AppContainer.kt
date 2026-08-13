@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.AndroidAlertPlayer
+import nl.pixento.remindforge.alerting.AndroidDoNotDisturbMonitor
+import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.data.datastore.AlertModeMigration
@@ -37,6 +39,7 @@ class AppContainer(context: Context) {
     }
     val alarmScheduler: AlarmScheduler by lazy { AndroidAlarmScheduler(appContext) }
     val alertPlayer: AlertPlayer by lazy { AndroidAlertPlayer(appContext) }
+    val doNotDisturbMonitor: DoNotDisturbMonitor by lazy { AndroidDoNotDisturbMonitor(appContext) }
 
     val triggerReminderUseCase: TriggerReminderUseCase by lazy {
         TriggerReminderUseCase(
@@ -44,6 +47,7 @@ class AppContainer(context: Context) {
             scheduleStateRepository,
             alertPlayer,
             alarmScheduler,
+            doNotDisturbMonitor,
         )
     }
 

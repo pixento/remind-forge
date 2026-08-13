@@ -20,7 +20,13 @@
     <string name="interval_input_hint">Minutos (%1$d–%2$d)</string>
     <string name="interval_input_error">Introduce un número entre %1$d y %2$d</string>
 
-    <!-- Time window picker -->
+    <!-- Ventana activa / Active window picker -->
+    <string name="follow_do_not_disturb_schedule">Seguir la programación de No molestar</string>
+    <string name="do_not_disturb_settings_title">Ajustes de No molestar</string>
+    <string name="do_not_disturb_settings_value">Abre la programación de No molestar de tu teléfono</string>
+    <string name="do_not_disturb_paused_notice">No molestar está activado, así que los recordatorios están en pausa hasta que termine.</string>
+
+    <!-- Franja horaria / Time window picker -->
     <string name="time_window_start">Hora de inicio</string>
     <string name="time_window_end">Hora de fin</string>
     <string name="time_window_next_day_suffix">" (día siguiente)"</string>

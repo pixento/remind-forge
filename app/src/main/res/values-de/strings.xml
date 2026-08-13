@@ -20,7 +20,13 @@
     <string name="interval_input_hint">Minuten (%1$d–%2$d)</string>
     <string name="interval_input_error">Gib eine Zahl zwischen %1$d und %2$d ein</string>
 
-    <!-- Time window picker -->
+    <!-- Aktives Fenster / Active window picker -->
+    <string name="follow_do_not_disturb_schedule">Dem „Bitte nicht stören“-Zeitplan folgen</string>
+    <string name="do_not_disturb_settings_title">Einstellungen für „Bitte nicht stören“</string>
+    <string name="do_not_disturb_settings_value">Zeitplan für „Bitte nicht stören“ auf deinem Telefon öffnen</string>
+    <string name="do_not_disturb_paused_notice">„Bitte nicht stören“ ist an, daher pausieren die Erinnerungen bis es endet.</string>
+
+    <!-- Zeitfenster / Time window picker -->
     <string name="time_window_start">Startzeit</string>
     <string name="time_window_end">Endzeit</string>
     <string name="time_window_next_day_suffix">" (nächster Tag)"</string>

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 internal object PreferencesKeys {
     val ENABLED = booleanPreferencesKey("enabled")
     val INTERVAL_MINUTES = intPreferencesKey("interval_minutes")
+    val ACTIVE_WINDOW_MODE = stringPreferencesKey("active_window_mode")
     val WINDOW_START = stringPreferencesKey("window_start")
     val WINDOW_END = stringPreferencesKey("window_end")
     val VIBRATION_PATTERN = stringPreferencesKey("vibration_pattern")

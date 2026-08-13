@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -24,6 +26,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val scheduleStateRepository: ScheduleStateRepository,
     private val scheduleCoordinator: ReminderScheduleCoordinator,
+    private val doNotDisturbMonitor: DoNotDisturbMonitor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -37,6 +40,7 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     enabled = settings.enabled,
                     intervalMinutes = settings.intervalMinutes,
+                    activeWindowMode = settings.activeWindowMode,
                     windowStart = settings.windowStart,
                     windowEnd = settings.windowEnd,
                     vibrationPattern = settings.vibrationPattern,
@@ -50,7 +54,7 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(nextTriggerAtMillis = millis)
             }
         }
-        refreshPermissionState()
+        refreshDeviceState()
         viewModelScope.launch {
             scheduleCoordinator.healIfNeeded()
         }
@@ -59,6 +63,8 @@ class SettingsViewModel(
     fun onEnabledChanged(enabled: Boolean) = persist { setEnabled(enabled) }
 
     fun onIntervalChanged(minutes: Int) = persist { setIntervalMinutes(minutes) }
+
+    fun onActiveWindowModeChanged(mode: ActiveWindowMode) = persist { setActiveWindowMode(mode) }
 
     fun onWindowStartChanged(time: LocalTime) = persist { setWindowStart(time) }
 
@@ -75,16 +81,22 @@ class SettingsViewModel(
         _uiState.value = _uiState.value.copy(showBatteryOptimizationBanner = false)
     }
 
-    /** Call from Activity.onResume(): permission grants happen in a system settings screen. */
+    /**
+     * Call from Activity.onResume(). Every piece of device state this screen shows is changed
+     * elsewhere - the two permission grants in a system settings screen, Do Not Disturb in the
+     * settings screen or the quick-settings tile - so returning to the app is the moment to re-read
+     * all of it.
+     */
     fun onExactAlarmPermissionResumeCheck() {
-        refreshPermissionState()
+        refreshDeviceState()
     }
 
-    private fun refreshPermissionState() {
+    private fun refreshDeviceState() {
         _uiState.value = _uiState.value.copy(
             needsExactAlarmPermission = !ExactAlarmPermission.canScheduleExactAlarms(appContext),
             showBatteryOptimizationBanner = !batteryBannerDismissed &&
                     !BatteryOptimization.isIgnoringBatteryOptimizations(appContext),
+            doNotDisturbActive = doNotDisturbMonitor.isDoNotDisturbActive(),
         )
     }
 

@@ -15,6 +15,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import nl.pixento.remindforge.R
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.ui.settings.vibration.labelRes
 import org.junit.Assert.assertTrue
@@ -45,8 +46,9 @@ class SettingsScreenTest {
             Box(modifier = Modifier.requiredHeight(2000.dp)) {
                 SettingsScreen(
                     uiState = uiState,
-                onEnabledChanged = onEnabledChanged,
+                    onEnabledChanged = onEnabledChanged,
                     onIntervalChanged = {},
+                    onActiveWindowModeChanged = {},
                     onWindowStartChanged = {},
                     onWindowEndChanged = {},
                     onVibrationPatternSelected = {},
@@ -166,6 +168,32 @@ class SettingsScreenTest {
             ),
         )
         composeRule.onNodeWithText(string(R.string.no_alert_warning)).assertExists()
+    }
+
+    @Test
+    fun pausedNoticeShownWhileFollowingDoNotDisturbAndItIsOn() {
+        // Without this the enabled row would still promise a reminder at a specific time while
+        // every tick silently skips its alert.
+        setScreen(
+            uiState = SettingsUiState(
+                enabled = true,
+                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+                doNotDisturbActive = true,
+            ),
+        )
+        composeRule.onNodeWithTag("doNotDisturbPausedNotice").assertExists()
+    }
+
+    @Test
+    fun pausedNoticeHiddenOnCustomTimesEvenWhileDoNotDisturbIsOn() {
+        setScreen(
+            uiState = SettingsUiState(
+                enabled = true,
+                activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
+                doNotDisturbActive = true,
+            ),
+        )
+        composeRule.onNodeWithTag("doNotDisturbPausedNotice").assertDoesNotExist()
     }
 
     @Test

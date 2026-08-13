@@ -20,7 +20,13 @@
     <string name="interval_input_hint">Minutes (%1$d–%2$d)</string>
     <string name="interval_input_error">Saisissez un nombre entre %1$d et %2$d</string>
 
-    <!-- Time window picker -->
+    <!-- Fenêtre active / Active window picker -->
+    <string name="follow_do_not_disturb_schedule">Suivre la programmation Ne pas déranger</string>
+    <string name="do_not_disturb_settings_title">Paramètres Ne pas déranger</string>
+    <string name="do_not_disturb_settings_value">Ouvrir la programmation Ne pas déranger de votre téléphone</string>
+    <string name="do_not_disturb_paused_notice">Ne pas déranger est activé, les rappels sont donc en pause jusqu\'à ce qu\'il se termine.</string>
+
+    <!-- Plage horaire / Time window picker -->
     <string name="time_window_start">Heure de début</string>
     <string name="time_window_end">Heure de fin</string>
     <string name="time_window_next_day_suffix">" (jour suivant)"</string>

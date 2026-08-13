@@ -15,7 +15,9 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
@@ -36,6 +38,7 @@ class SettingsViewModelTest {
     private lateinit var scheduleState: FakeScheduleStateRepository
     private lateinit var coordinator: ReminderScheduleCoordinator
     private lateinit var context: Context
+    private lateinit var doNotDisturbMonitor: DoNotDisturbMonitor
 
     @Before
     fun setUp() {
@@ -44,6 +47,8 @@ class SettingsViewModelTest {
         scheduleState = FakeScheduleStateRepository()
         coordinator = mockk(relaxed = true)
         context = mockk(relaxed = true)
+        doNotDisturbMonitor = mockk()
+        every { doNotDisturbMonitor.isDoNotDisturbActive() } returns false
 
         mockkObject(ExactAlarmPermission)
         every { ExactAlarmPermission.canScheduleExactAlarms(any()) } returns true
@@ -61,7 +66,8 @@ class SettingsViewModelTest {
         unmockkAll()
     }
 
-    private fun viewModel() = SettingsViewModel(context, repository, scheduleState, coordinator)
+    private fun viewModel() =
+        SettingsViewModel(context, repository, scheduleState, coordinator, doNotDisturbMonitor)
 
     @Test
     fun `initial state mirrors repository defaults`() {
@@ -102,6 +108,59 @@ class SettingsViewModelTest {
         vm.onWindowEndChanged(ReminderSettings().windowEnd.plusHours(1))
 
         coVerify(exactly = 3) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `changing the active window mode triggers a coordinator reschedule`() = runTest {
+        val vm = viewModel()
+
+        vm.onActiveWindowModeChanged(ActiveWindowMode.DO_NOT_DISTURB_OFF)
+
+        assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, vm.uiState.value.activeWindowMode)
+        coVerify(exactly = 1) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `re-picking the same active window mode leaves the running chain alone`() = runTest {
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+
+        vm.onActiveWindowModeChanged(ActiveWindowMode.CUSTOM_TIMES)
+
+        coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `reminders read as paused only while following Do Not Disturb and it is on`() = runTest {
+        every { doNotDisturbMonitor.isDoNotDisturbActive() } returns true
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+
+        // Enabled and DND is on, but this mode doesn't consult it.
+        assertFalse(vm.uiState.value.remindersPausedByDoNotDisturb)
+
+        vm.onActiveWindowModeChanged(ActiveWindowMode.DO_NOT_DISTURB_OFF)
+        assertTrue(vm.uiState.value.remindersPausedByDoNotDisturb)
+
+        vm.onEnabledChanged(false)
+        assertFalse(vm.uiState.value.remindersPausedByDoNotDisturb)
+    }
+
+    @Test
+    fun `resume check picks up Do Not Disturb being turned off elsewhere`() = runTest {
+        // The filter is changed outside this app - system settings, the quick-settings tile, a
+        // schedule ending - so coming back to the screen is when it gets re-read.
+        every { doNotDisturbMonitor.isDoNotDisturbActive() } returns true
+        repository = FakeSettingsRepository(
+            ReminderSettings(enabled = true, activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF),
+        )
+        val vm = viewModel()
+        assertTrue(vm.uiState.value.remindersPausedByDoNotDisturb)
+
+        every { doNotDisturbMonitor.isDoNotDisturbActive() } returns false
+        vm.onExactAlarmPermissionResumeCheck()
+
+        assertFalse(vm.uiState.value.remindersPausedByDoNotDisturb)
     }
 
     @Test

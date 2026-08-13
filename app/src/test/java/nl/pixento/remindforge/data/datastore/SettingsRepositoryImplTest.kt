@@ -10,6 +10,7 @@ import java.io.File
 import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertEquals
@@ -43,6 +44,7 @@ class SettingsRepositoryImplTest {
         setUp()
         repository.setEnabled(true)
         repository.setIntervalMinutes(20)
+        repository.setActiveWindowMode(ActiveWindowMode.DO_NOT_DISTURB_OFF)
         repository.setWindowStart(LocalTime.of(8, 30))
         repository.setWindowEnd(LocalTime.of(20, 15))
         repository.setVibrationPattern(VibrationPatternType.LONG_PULSE)
@@ -51,6 +53,7 @@ class SettingsRepositoryImplTest {
         val result = repository.settings.first()
         assertEquals(true, result.enabled)
         assertEquals(20, result.intervalMinutes)
+        assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, result.activeWindowMode)
         assertEquals(LocalTime.of(8, 30), result.windowStart)
         assertEquals(LocalTime.of(20, 15), result.windowEnd)
         assertEquals(VibrationPatternType.LONG_PULSE, result.vibrationPattern)
@@ -93,6 +96,22 @@ class SettingsRepositoryImplTest {
             ReminderSettings().vibrationPattern,
             repository.settings.first().vibrationPattern
         )
+    }
+
+    @Test
+    fun `a store without the active window mode key reads as custom times`() = runTest {
+        // The key is purely additive, which is why it needs no DataMigration: every store written
+        // before it existed has to keep behaving exactly as it did.
+        setUp()
+        dataStore.edit { it[stringPreferencesKey("window_start")] = "08:00" }
+        assertEquals(ActiveWindowMode.CUSTOM_TIMES, repository.settings.first().activeWindowMode)
+    }
+
+    @Test
+    fun `corrupted active window mode string falls back to default`() = runTest {
+        setUp()
+        dataStore.edit { it[stringPreferencesKey("active_window_mode")] = "NOT_A_REAL_MODE" }
+        assertEquals(ActiveWindowMode.CUSTOM_TIMES, repository.settings.first().activeWindowMode)
     }
 
     @Test

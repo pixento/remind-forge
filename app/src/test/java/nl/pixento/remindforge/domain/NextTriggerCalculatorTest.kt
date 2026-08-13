@@ -5,9 +5,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import nl.pixento.remindforge.domain.model.DailyWindow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NextTriggerCalculatorTest {
@@ -26,8 +29,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(10, 15)), result)
     }
@@ -39,8 +41,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(9, 0)), result)
     }
@@ -52,8 +53,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
         )
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
     }
@@ -65,8 +65,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 30,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(9, 0)), result)
     }
@@ -79,8 +78,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 10,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
         )
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
     }
@@ -92,8 +90,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(22, 0),
-            windowEnd = LocalTime.of(6, 0),
+            window = DailyWindow(LocalTime.of(22, 0), LocalTime.of(6, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(23, 30)), result)
     }
@@ -105,8 +102,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(22, 0),
-            windowEnd = LocalTime.of(6, 0),
+            window = DailyWindow(LocalTime.of(22, 0), LocalTime.of(6, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(22, 0)), result)
     }
@@ -118,8 +114,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(22, 0),
-            windowEnd = LocalTime.of(6, 0),
+            window = DailyWindow(LocalTime.of(22, 0), LocalTime.of(6, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(22, 0)), result)
     }
@@ -131,8 +126,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(22, 0),
-            windowEnd = LocalTime.of(6, 0),
+            window = DailyWindow(LocalTime.of(22, 0), LocalTime.of(6, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(22, 0)), result)
     }
@@ -144,8 +138,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 20,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(9, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(9, 0)),
         )
         assertEquals(instantAt(day, LocalTime.of(3, 20)), result)
     }
@@ -159,8 +152,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = instantAt(day, LocalTime.of(9, 0)),
             zone = utc,
             intervalMinutes = 20,
-            windowStart = start,
-            windowEnd = end,
+            window = DailyWindow(start, end),
         )
         assertEquals(instantAt(day, LocalTime.of(9, 20)), first)
 
@@ -168,8 +160,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = first,
             zone = utc,
             intervalMinutes = 20,
-            windowStart = start,
-            windowEnd = end,
+            window = DailyWindow(start, end),
         )
         assertEquals(instantAt(day, LocalTime.of(9, 40)), second)
 
@@ -177,10 +168,60 @@ class NextTriggerCalculatorTest {
             referenceInstant = second,
             zone = utc,
             intervalMinutes = 20,
-            windowStart = start,
-            windowEnd = end,
+            window = DailyWindow(start, end),
         )
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), third)
+    }
+
+    // --- No window at all (the Do-Not-Disturb-following mode) ---
+
+    @Test
+    fun `null window never clamps, whatever the time of day`() {
+        // 03:00 is outside the default 09:00-17:00 window, so a window would have pushed this to
+        // 09:00; with none, the slot stands.
+        val reference = instantAt(day, LocalTime.of(3, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            window = null,
+        )
+        assertEquals(instantAt(day, LocalTime.of(3, 15)), result)
+    }
+
+    @Test
+    fun `null window still skips slots missed during a late delivery`() {
+        val reference = instantAt(day, LocalTime.of(3, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 15,
+            window = null,
+            now = instantAt(day, LocalTime.of(3, 32)),
+        )
+        assertEquals(instantAt(day, LocalTime.of(3, 45)), result)
+    }
+
+    @Test
+    fun `null window makes every instant within window`() {
+        assertTrue(
+            NextTriggerCalculator.isWithinWindow(
+                instantAt(day, LocalTime.of(3, 0)),
+                utc,
+                window = null,
+            ),
+        )
+    }
+
+    @Test
+    fun `isWithinWindow applies the window when there is one`() {
+        val window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0))
+        assertTrue(
+            NextTriggerCalculator.isWithinWindow(instantAt(day, LocalTime.of(10, 0)), utc, window),
+        )
+        assertFalse(
+            NextTriggerCalculator.isWithinWindow(instantAt(day, LocalTime.of(3, 0)), utc, window),
+        )
     }
 
     // --- Late delivery (doze) catch-up ---
@@ -192,8 +233,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             now = instantAt(day, LocalTime.of(10, 32)), // held by doze for 32 minutes
         )
         // Not 10:15 (already past, would fire instantly) and not 10:47 (restarting from now).
@@ -210,8 +250,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = start,
-            windowEnd = end,
+            window = DailyWindow(start, end),
             now = instantAt(day, LocalTime.of(10, 40)),
         )
         assertEquals(instantAt(day, LocalTime.of(10, 47)), first)
@@ -220,8 +259,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = first,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = start,
-            windowEnd = end,
+            window = DailyWindow(start, end),
             now = instantAt(day, LocalTime.of(10, 47)),
         )
         assertEquals(instantAt(day, LocalTime.of(11, 2)), second)
@@ -234,8 +272,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             now = instantAt(day, LocalTime.of(10, 15)),
         )
         assertEquals(instantAt(day, LocalTime.of(10, 30)), result)
@@ -248,8 +285,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             now = instantAt(day, LocalTime.of(19, 5)), // dozed clean past the window
         )
         assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
@@ -262,8 +298,7 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = utc,
             intervalMinutes = 15,
-            windowStart = LocalTime.of(9, 0),
-            windowEnd = LocalTime.of(17, 0),
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             now = instantAt(day, LocalTime.of(9, 50)),
         )
         assertEquals(instantAt(day, LocalTime.of(10, 15)), result)
@@ -276,8 +311,7 @@ class NextTriggerCalculatorTest {
                 referenceInstant = instantAt(day, LocalTime.NOON),
                 zone = utc,
                 intervalMinutes = 1,
-                windowStart = LocalTime.of(9, 0),
-                windowEnd = LocalTime.of(17, 0),
+                window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             )
         }
     }
@@ -289,8 +323,7 @@ class NextTriggerCalculatorTest {
                 referenceInstant = instantAt(day, LocalTime.NOON),
                 zone = utc,
                 intervalMinutes = 121,
-                windowStart = LocalTime.of(9, 0),
-                windowEnd = LocalTime.of(17, 0),
+                window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             )
         }
     }
@@ -308,7 +341,10 @@ class NextTriggerCalculatorTest {
 
         expected.forEach { (intervalMinutes, expectedTime) ->
             val result = NextTriggerCalculator.nextTrigger(
-                reference, utc, intervalMinutes, LocalTime.of(9, 0), LocalTime.of(17, 0),
+                reference,
+                utc,
+                intervalMinutes,
+                DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
             )
             assertEquals("interval $intervalMinutes", instantAt(day, expectedTime), result)
         }
@@ -329,15 +365,13 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = amsterdam,
             intervalMinutes = 5,
-            windowStart = LocalTime.of(2, 30),
-            windowEnd = LocalTime.of(5, 0),
+            window = DailyWindow(LocalTime.of(2, 30), LocalTime.of(5, 0)),
         )
         val second = NextTriggerCalculator.nextTrigger(
             referenceInstant = reference,
             zone = amsterdam,
             intervalMinutes = 5,
-            windowStart = LocalTime.of(2, 30),
-            windowEnd = LocalTime.of(5, 0),
+            window = DailyWindow(LocalTime.of(2, 30), LocalTime.of(5, 0)),
         )
         assertEquals(first, second)
     }
@@ -353,15 +387,13 @@ class NextTriggerCalculatorTest {
             referenceInstant = reference,
             zone = amsterdam,
             intervalMinutes = 5,
-            windowStart = LocalTime.of(2, 30),
-            windowEnd = LocalTime.of(5, 0),
+            window = DailyWindow(LocalTime.of(2, 30), LocalTime.of(5, 0)),
         )
         val second = NextTriggerCalculator.nextTrigger(
             referenceInstant = reference,
             zone = amsterdam,
             intervalMinutes = 5,
-            windowStart = LocalTime.of(2, 30),
-            windowEnd = LocalTime.of(5, 0),
+            window = DailyWindow(LocalTime.of(2, 30), LocalTime.of(5, 0)),
         )
         assertEquals(first, second)
         assertNotEquals(reference, first)

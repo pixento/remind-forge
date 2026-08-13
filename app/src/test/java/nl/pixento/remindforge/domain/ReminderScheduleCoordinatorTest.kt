@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.scheduling.AlarmScheduler
 import org.junit.Before
@@ -126,4 +127,23 @@ class ReminderScheduleCoordinatorTest {
         verify { alarmScheduler.scheduleNext(expectedNext) }
         coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
     }
+
+    @Test
+    fun `following Do Not Disturb schedules the plain interval, ignoring the stored window`() =
+        runTest {
+            // Whether a future slot is active can't be known now, so this mode never clamps: the
+            // window times are still stored but must not push the next tick to 09:00 tomorrow.
+            val settings = ReminderSettings(
+                enabled = true,
+                intervalMinutes = 15,
+                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+                windowStart = LocalTime.of(1, 0),
+                windowEnd = LocalTime.of(2, 0),
+            )
+            every { settingsRepository.settings } returns flowOf(settings)
+
+            coordinator().rescheduleFromNow()
+
+            verify { alarmScheduler.scheduleNext(fixedNow.plusSeconds(15 * 60).toEpochMilli()) }
+        }
 }

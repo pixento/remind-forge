@@ -10,8 +10,10 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.alerting.AlertPlayer
+import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
@@ -26,14 +28,20 @@ class TriggerReminderUseCaseTest {
     private val alertPlayer = mockk<AlertPlayer>(relaxUnitFun = true)
     private val alarmScheduler = mockk<AlarmScheduler>(relaxUnitFun = true)
 
-    private fun useCase(fixedNow: Instant) = TriggerReminderUseCase(
-        settingsRepository = settingsRepository,
-        scheduleStateRepository = scheduleStateRepository,
-        alertPlayer = alertPlayer,
-        alarmScheduler = alarmScheduler,
-        zone = zone,
-        now = { fixedNow },
-    )
+    private fun useCase(fixedNow: Instant, doNotDisturbActive: Boolean = false) =
+        TriggerReminderUseCase(
+            settingsRepository = settingsRepository,
+            scheduleStateRepository = scheduleStateRepository,
+            alertPlayer = alertPlayer,
+            alarmScheduler = alarmScheduler,
+            doNotDisturbMonitor = FakeDoNotDisturbMonitor(doNotDisturbActive),
+            zone = zone,
+            now = { fixedNow },
+        )
+
+    private class FakeDoNotDisturbMonitor(private val active: Boolean) : DoNotDisturbMonitor {
+        override fun isDoNotDisturbActive(): Boolean = active
+    }
 
     private fun scheduledInstant(hour: Int, minute: Int) =
         Instant.parse("2026-01-01T${"%02d".format(hour)}:${"%02d".format(minute)}:00Z")
@@ -150,6 +158,70 @@ class TriggerReminderUseCaseTest {
         assertEquals(AlarmFiredOutcome.OUTSIDE_WINDOW, outcome)
         verify(exactly = 0) { alertPlayer.playVibration(any()) }
         coVerify { alarmScheduler.scheduleNext(any()) }
+    }
+
+    @Test
+    fun `following Do Not Disturb, an active filter skips the alert but still reschedules`() =
+        runTest {
+            val settings = ReminderSettings(
+                enabled = true,
+                intervalMinutes = 15,
+                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+                vibrationPattern = VibrationPatternType.LONG_PULSE,
+                ringtoneUri = "content://media/ringtone/1",
+            )
+            every { settingsRepository.settings } returns flowOf(settings)
+            // 20:00 is outside the stored 09:00-17:00 window, which this mode must ignore, so a
+            // DO_NOT_DISTURB outcome here also proves the window isn't being consulted.
+            val scheduledAt = scheduledInstant(20, 0)
+
+            val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = true)
+                .onAlarmFired(scheduledAt.toEpochMilli())
+
+            assertEquals(AlarmFiredOutcome.DO_NOT_DISTURB, outcome)
+            verify(exactly = 0) { alertPlayer.playVibration(any()) }
+            verify(exactly = 0) { alertPlayer.playRingtone(any()) }
+            verify { alarmScheduler.scheduleNext(scheduledInstant(20, 15).toEpochMilli()) }
+        }
+
+    @Test
+    fun `following Do Not Disturb, an inactive filter fires whatever the time of day`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(3, 0) // outside the stored window, which doesn't apply
+
+        val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = false)
+            .onAlarmFired(scheduledAt.toEpochMilli())
+
+        assertEquals(AlarmFiredOutcome.FIRED, outcome)
+        verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
+    }
+
+    @Test
+    fun `on custom times, Do Not Disturb is ignored and the alert still fires`() = runTest {
+        // The two modes are a choice, not a combination: only the mode that opted in consults DND,
+        // so custom times keeps firing through it exactly as it always has.
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = true)
+            .onAlarmFired(scheduledAt.toEpochMilli())
+
+        assertEquals(AlarmFiredOutcome.FIRED, outcome)
+        verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
     }
 
     @Test

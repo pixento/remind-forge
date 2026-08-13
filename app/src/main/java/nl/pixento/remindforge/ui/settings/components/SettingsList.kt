@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -44,9 +46,15 @@ fun SettingsGroup(
 }
 
 /**
- * A settings row. [selected] turns the row into a radio-list entry: pass it (together with a
- * [leading] `RadioButton`) so the row is announced as a selectable option rather than a button, the
- * way the full-screen pickers use it.
+ * A settings row.
+ *
+ * [selected] turns the row into a radio-list entry and [checked] into a checkbox one: pass either
+ * (together with the matching [leading] or [trailing] control) so the row is announced as that kind
+ * of option rather than as a plain button.
+ *
+ * [enabled] `false` dims the row and stops it responding, for a setting that is still worth showing
+ * but doesn't currently apply. It keeps the click modifier so the row is *announced* as disabled
+ * rather than just silently inert.
  */
 @Composable
 fun SettingsRow(
@@ -54,18 +62,27 @@ fun SettingsRow(
     modifier: Modifier = Modifier,
     value: String? = null,
     onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
     selected: Boolean? = null,
+    checked: Boolean? = null,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     val clickModifier = when {
         onClick == null -> Modifier
+        checked != null -> Modifier.toggleable(
+            value = checked,
+            enabled = enabled,
+            role = Role.Checkbox,
+            onValueChange = { onClick() },
+        )
         selected != null -> Modifier.selectable(
             selected = selected,
+            enabled = enabled,
             role = Role.RadioButton,
             onClick = onClick,
         )
-        else -> Modifier.clickable(onClick = onClick)
+        else -> Modifier.clickable(enabled = enabled, onClick = onClick)
     }
     Row(
         modifier = modifier
@@ -80,19 +97,23 @@ fun SettingsRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface.applyIfDisabled(enabled),
             )
             if (value != null) {
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.primary.applyIfDisabled(enabled),
                 )
             }
         }
         trailing?.invoke()
     }
 }
+
+/** Material 3's disabled-content opacity, so a dimmed row matches the platform's own. */
+private fun Color.applyIfDisabled(enabled: Boolean): Color =
+    if (enabled) this else copy(alpha = 0.38f)
 
 @Composable
 fun SettingsDivider(modifier: Modifier = Modifier) {

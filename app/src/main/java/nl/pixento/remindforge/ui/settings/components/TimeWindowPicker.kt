@@ -11,6 +11,9 @@ import nl.pixento.remindforge.R
 /**
  * The two ends of the daily active window as a pair of settings rows, with the divider between
  * them, so it drops straight into a [SettingsGroup]. Both open the platform time picker.
+ *
+ * [enabled] `false` keeps the stored times on screen but dims them and stops them opening a picker,
+ * for when Do Not Disturb decides the active window instead and these no longer apply.
  */
 @Composable
 fun TimeWindowPicker(
@@ -19,12 +22,14 @@ fun TimeWindowPicker(
     onWindowStartChange: (LocalTime) -> Unit,
     onWindowEndChange: (LocalTime) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val context = LocalContext.current
 
     SettingsRow(
         title = stringResource(R.string.time_window_start),
         value = formatTime(windowStart),
+        enabled = enabled,
         onClick = {
             TimePickerDialog(
                 context,
@@ -43,6 +48,7 @@ fun TimeWindowPicker(
         // rather than in a separate note, so the row carries its own explanation.
         value = formatTime(windowEnd) +
             if (windowStart > windowEnd) stringResource(R.string.time_window_next_day_suffix) else "",
+        enabled = enabled,
         onClick = {
             TimePickerDialog(
                 context,

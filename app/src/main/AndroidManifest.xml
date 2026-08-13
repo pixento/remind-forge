@@ -7,6 +7,20 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!--
+        DoNotDisturbSettings picks whichever of these the device can handle. Without declaring them,
+        Android 11+ package-visibility filtering makes resolveActivity() return null for all of
+        them and every device would fall through to the last-resort sound settings.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.settings.ZEN_MODE_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ZEN_MODE_PRIORITY_SETTINGS" />
+        </intent>
+    </queries>
+
     <application
         android:name=".RemindForgeApplication"
         android:allowBackup="true"

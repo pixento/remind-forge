@@ -37,12 +37,14 @@ class MainActivity : ComponentActivity() {
                                 settingsRepository = container.settingsRepository,
                                 scheduleStateRepository = container.scheduleStateRepository,
                                 scheduleCoordinator = container.scheduleCoordinator,
+                                doNotDisturbMonitor = container.doNotDisturbMonitor,
                             )
                         }
                     },
                 )
 
-                // The exact-alarm grant happens in a system settings screen, so re-check on resume.
+                // Permission grants and Do Not Disturb are all changed outside this app, so
+                // re-read the device state whenever the user comes back to it.
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->

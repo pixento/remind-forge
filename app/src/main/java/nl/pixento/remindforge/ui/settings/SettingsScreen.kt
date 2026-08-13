@@ -32,9 +32,12 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import nl.pixento.remindforge.R
+import nl.pixento.remindforge.alerting.DoNotDisturbSettings
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
+import nl.pixento.remindforge.ui.settings.components.ActiveWindowPicker
 import nl.pixento.remindforge.ui.settings.components.BatteryOptimizationBanner
 import nl.pixento.remindforge.ui.settings.components.ExactAlarmPermissionBanner
 import nl.pixento.remindforge.ui.settings.components.IntervalPicker
@@ -42,7 +45,6 @@ import nl.pixento.remindforge.ui.settings.components.SettingsDivider
 import nl.pixento.remindforge.ui.settings.components.SettingsGroup
 import nl.pixento.remindforge.ui.settings.components.SettingsRow
 import nl.pixento.remindforge.ui.settings.components.SettingsSectionHeader
-import nl.pixento.remindforge.ui.settings.components.TimeWindowPicker
 import nl.pixento.remindforge.ui.settings.components.buildRingtonePickerIntent
 import nl.pixento.remindforge.ui.settings.vibration.PickVibrationPattern
 import nl.pixento.remindforge.ui.settings.vibration.label
@@ -56,10 +58,14 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
         uiState = uiState,
         onEnabledChanged = viewModel::onEnabledChanged,
         onIntervalChanged = viewModel::onIntervalChanged,
+        onActiveWindowModeChanged = viewModel::onActiveWindowModeChanged,
         onWindowStartChanged = viewModel::onWindowStartChanged,
         onWindowEndChanged = viewModel::onWindowEndChanged,
         onVibrationPatternSelected = viewModel::onVibrationPatternSelected,
         onRingtoneSelected = viewModel::onRingtoneSelected,
+        onOpenDoNotDisturbSettings = {
+            context.startActivity(DoNotDisturbSettings.buildRequestIntent(context))
+        },
         onRequestExactAlarmPermission = {
             context.startActivity(ExactAlarmPermission.buildRequestIntent(context))
         },
@@ -76,12 +82,14 @@ fun SettingsScreen(
     uiState: SettingsUiState,
     onEnabledChanged: (Boolean) -> Unit,
     onIntervalChanged: (Int) -> Unit,
+    onActiveWindowModeChanged: (ActiveWindowMode) -> Unit,
     onWindowStartChanged: (LocalTime) -> Unit,
     onWindowEndChanged: (LocalTime) -> Unit,
     onVibrationPatternSelected: (VibrationPatternType) -> Unit,
     onRingtoneSelected: (Uri?) -> Unit,
     onRequestExactAlarmPermission: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenDoNotDisturbSettings: () -> Unit = {},
     onRequestBatteryOptimizationExemption: () -> Unit = {},
     onDismissBatteryOptimizationBanner: () -> Unit = {},
 ) {
@@ -168,14 +176,21 @@ fun SettingsScreen(
                 SettingsGroup {
                     IntervalPicker(uiState.intervalMinutes, onIntervalChanged)
                     SettingsDivider()
-                    TimeWindowPicker(
-                        uiState.windowStart,
-                        uiState.windowEnd,
-                        onWindowStartChanged,
-                        onWindowEndChanged,
+                    ActiveWindowPicker(
+                        activeWindowMode = uiState.activeWindowMode,
+                        windowStart = uiState.windowStart,
+                        windowEnd = uiState.windowEnd,
+                        onActiveWindowModeChange = onActiveWindowModeChanged,
+                        onWindowStartChange = onWindowStartChanged,
+                        onWindowEndChange = onWindowEndChanged,
+                        onOpenDoNotDisturbSettings = onOpenDoNotDisturbSettings,
                     )
                 }
             }
+        }
+
+        if (uiState.remindersPausedByDoNotDisturb) {
+            item { DoNotDisturbPausedNotice() }
         }
 
         item {
@@ -206,6 +221,25 @@ fun SettingsScreen(
 
         if (uiState.hasNoAlertSelected) {
             item { NoAlertSelectedWarning() }
+        }
+    }
+}
+
+/**
+ * Not a warning: the chain is healthy and the countdown above is real, it just won't make a sound
+ * until Do Not Disturb ends. Says so in the calmer secondary colours rather than the error ones.
+ */
+@Composable
+private fun DoNotDisturbPausedNotice(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.fillMaxWidth().testTag("doNotDisturbPausedNotice"),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(stringResource(R.string.do_not_disturb_paused_notice))
         }
     }
 }

@@ -1,5 +1,6 @@
 package nl.pixento.remindforge.domain
 
+import nl.pixento.remindforge.domain.model.DailyWindow
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import java.time.Duration
 import java.time.Instant
@@ -17,8 +18,9 @@ object NextTriggerCalculator {
     /**
      * @param referenceInstant the prior scheduled trigger, or now() when computing fresh
      *   (e.g. on enable or settings change).
-     * @param windowEnd if before [windowStart], the window is treated as wrapping past midnight
-     *   (e.g. 22:00-06:00). If equal to [windowStart], the window is treated as always-active.
+     * @param window the daily window to clamp into, or `null` for no time-of-day constraint at all
+     *   - which is the Do-Not-Disturb-following mode, where whether a slot is active can only be
+     *   decided when it fires, not now.
      * @param now the current instant, used only to skip slots that are already in the past when
      *   the firing alarm was itself delivered late. Defaults to [referenceInstant], which is
      *   correct for the compute-fresh case where the reference already *is* now.
@@ -27,8 +29,7 @@ object NextTriggerCalculator {
         referenceInstant: Instant,
         zone: ZoneId,
         intervalMinutes: Int,
-        windowStart: LocalTime,
-        windowEnd: LocalTime,
+        window: DailyWindow?,
         now: Instant = referenceInstant,
     ): Instant {
         val supported = ReminderSettings.MIN_INTERVAL_MINUTES..ReminderSettings.MAX_INTERVAL_MINUTES
@@ -42,34 +43,23 @@ object NextTriggerCalculator {
             Duration.ofMinutes(intervalMinutes.toLong()),
             now,
         )
-        val naiveZoned = ZonedDateTime.ofInstant(naive, zone)
+        if (window == null) return naive
 
-        return if (isWithinWindow(naiveZoned.toLocalTime(), windowStart, windowEnd)) {
+        val naiveZoned = ZonedDateTime.ofInstant(naive, zone)
+        return if (window.contains(naiveZoned.toLocalTime())) {
             naive
         } else {
-            nextWindowStart(naiveZoned, windowStart)
+            nextWindowStart(naiveZoned, window.start)
         }
     }
 
-    /** Defensive re-check usable at alarm-fire time (e.g. after a clock change). */
-    fun isWithinWindow(
-        instant: Instant,
-        zone: ZoneId,
-        windowStart: LocalTime,
-        windowEnd: LocalTime
-    ): Boolean {
-        val time = ZonedDateTime.ofInstant(instant, zone).toLocalTime()
-        return isWithinWindow(time, windowStart, windowEnd)
-    }
-
-    private fun isWithinWindow(time: LocalTime, start: LocalTime, end: LocalTime): Boolean {
-        if (start == end) return true
-        return if (start < end) {
-            time >= start && time < end
-        } else {
-            // Overnight wrap: active from `start` through midnight to `end`.
-            time >= start || time < end
-        }
+    /**
+     * Defensive re-check usable at alarm-fire time (e.g. after a clock change). A `null` [window]
+     * imposes no constraint, so every instant is within it.
+     */
+    fun isWithinWindow(instant: Instant, zone: ZoneId, window: DailyWindow?): Boolean {
+        if (window == null) return true
+        return window.contains(ZonedDateTime.ofInstant(instant, zone).toLocalTime())
     }
 
     /**

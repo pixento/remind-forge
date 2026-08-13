@@ -20,7 +20,13 @@
     <string name="interval_input_hint">Minuten (%1$d–%2$d)</string>
     <string name="interval_input_error">Voer een getal tussen %1$d en %2$d in</string>
 
-    <!-- Time window picker -->
+    <!-- Actief venster / Active window picker -->
+    <string name="follow_do_not_disturb_schedule">Niet storen-schema volgen</string>
+    <string name="do_not_disturb_settings_title">Instellingen voor Niet storen</string>
+    <string name="do_not_disturb_settings_value">Open het Niet storen-schema van je telefoon</string>
+    <string name="do_not_disturb_paused_notice">Niet storen staat aan, dus herinneringen zijn gepauzeerd tot het eindigt.</string>
+
+    <!-- Tijdvenster / Time window picker -->
     <string name="time_window_start">Starttijd</string>
     <string name="time_window_end">Eindtijd</string>
     <string name="time_window_next_day_suffix">" (volgende dag)"</string>

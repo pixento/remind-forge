@@ -7,6 +7,7 @@ import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import nl.pixento.remindforge.data.SettingsRepository
+import nl.pixento.remindforge.domain.model.ActiveWindowMode
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 
@@ -27,6 +28,10 @@ class SettingsRepositoryImpl(
             ReminderSettings.MAX_INTERVAL_MINUTES,
         )
         dataStore.edit { it[PreferencesKeys.INTERVAL_MINUTES] = clamped }
+    }
+
+    override suspend fun setActiveWindowMode(mode: ActiveWindowMode) {
+        dataStore.edit { it[PreferencesKeys.ACTIVE_WINDOW_MODE] = mode.name }
     }
 
     override suspend fun setWindowStart(time: LocalTime) {

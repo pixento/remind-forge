@@ -20,6 +20,10 @@ internal object SettingsMapper {
                     ReminderSettings.MIN_INTERVAL_MINUTES,
                     ReminderSettings.MAX_INTERVAL_MINUTES
                 ),
+            activeWindowMode = parseEnumOrDefault(
+                preferences[PreferencesKeys.ACTIVE_WINDOW_MODE],
+                defaults.activeWindowMode,
+            ),
             windowStart = parseTimeOrDefault(
                 preferences[PreferencesKeys.WINDOW_START],
                 defaults.windowStart
