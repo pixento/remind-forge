@@ -29,6 +29,12 @@ import androidx.compose.ui.unit.dp
  * settings screens users already know - the whole row is the tap target and opens a picker, rather
  * than each setting carrying its own bespoke inline control.
  */
+/**
+ * Shared by every card on the settings screens - the grouped rows below as well as the notices and
+ * permission banners between them - so they read as one family rather than as cards of two radii.
+ */
+val SettingsCardShape = RoundedCornerShape(16.dp)
+
 @Composable
 fun SettingsGroup(
     modifier: Modifier = Modifier,
@@ -36,7 +42,7 @@ fun SettingsGroup(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = SettingsCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),

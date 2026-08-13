@@ -41,6 +41,7 @@ import nl.pixento.remindforge.ui.settings.components.ActiveWindowPicker
 import nl.pixento.remindforge.ui.settings.components.BatteryOptimizationBanner
 import nl.pixento.remindforge.ui.settings.components.ExactAlarmPermissionBanner
 import nl.pixento.remindforge.ui.settings.components.IntervalPicker
+import nl.pixento.remindforge.ui.settings.components.SettingsCardShape
 import nl.pixento.remindforge.ui.settings.components.SettingsDivider
 import nl.pixento.remindforge.ui.settings.components.SettingsGroup
 import nl.pixento.remindforge.ui.settings.components.SettingsRow
@@ -233,6 +234,7 @@ fun SettingsScreen(
 private fun DoNotDisturbPausedNotice(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth().testTag("doNotDisturbPausedNotice"),
+        shape = SettingsCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -248,6 +250,7 @@ private fun DoNotDisturbPausedNotice(modifier: Modifier = Modifier) {
 private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = SettingsCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,
