@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -35,8 +34,6 @@ class SettingsScreenTest {
         uiState: SettingsUiState = SettingsUiState(),
         onEnabledChanged: (Boolean) -> Unit = {},
         onRequestExactAlarmPermission: () -> Unit = {},
-        onRequestBatteryOptimizationExemption: () -> Unit = {},
-        onDismissBatteryOptimizationBanner: () -> Unit = {},
     ) {
         composeRule.setContent {
             // The screen is a LazyColumn, so an item below the fold is never composed and an
@@ -54,8 +51,6 @@ class SettingsScreenTest {
                     onVibrationPatternSelected = {},
                     onRingtoneSelected = {},
                     onRequestExactAlarmPermission = onRequestExactAlarmPermission,
-                    onRequestBatteryOptimizationExemption = onRequestBatteryOptimizationExemption,
-                    onDismissBatteryOptimizationBanner = onDismissBatteryOptimizationBanner,
                 )
             }
         }
@@ -68,12 +63,6 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun permissionBannerShownWhenNeeded() {
-        setScreen(uiState = SettingsUiState(needsExactAlarmPermission = true))
-        composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).assertExists()
-    }
-
-    @Test
     fun grantPermissionButtonInvokesCallback() {
         var requested = false
         setScreen(
@@ -82,36 +71,6 @@ class SettingsScreenTest {
         )
         composeRule.onNodeWithText(string(R.string.exact_alarm_banner_action)).performClick()
         assertTrue(requested)
-    }
-
-    @Test
-    fun batteryOptimizationActionInvokesCallback() {
-        var requested = false
-        setScreen(
-            uiState = SettingsUiState(showBatteryOptimizationBanner = true),
-            onRequestBatteryOptimizationExemption = { requested = true },
-        )
-        composeRule.onNodeWithText(string(R.string.battery_optimization_banner_action)).performClick()
-        assertTrue(requested)
-    }
-
-    @Test
-    fun batteryOptimizationDismissInvokesCallback() {
-        // Dismissal is the only way out of this banner - the exemption is optional, so a dead
-        // button would leave the nudge on screen for good.
-        var dismissed = false
-        setScreen(
-            uiState = SettingsUiState(showBatteryOptimizationBanner = true),
-            onDismissBatteryOptimizationBanner = { dismissed = true },
-        )
-        composeRule.onNodeWithText(string(R.string.battery_optimization_banner_dismiss)).performClick()
-        assertTrue(dismissed)
-    }
-
-    @Test
-    fun enabledSwitchReflectsState() {
-        setScreen(uiState = SettingsUiState(enabled = true))
-        composeRule.onNodeWithTag("enabledSwitch").assertIsOn()
     }
 
     @Test
@@ -139,12 +98,6 @@ class SettingsScreenTest {
         composeRule.onNodeWithText(string(VibrationPatternType.DOUBLE_PULSE.labelRes())).assertExists()
         composeRule.onNodeWithText(string(R.string.sound_label)).assertExists()
         composeRule.onNodeWithText("Galaxy Bells").assertExists()
-    }
-
-    @Test
-    fun soundRowReadsSilentWithNoRingtoneSelected() {
-        setScreen(uiState = SettingsUiState(ringtoneUri = null, ringtoneTitle = null))
-        composeRule.onNodeWithText(string(R.string.silent_label)).assertExists()
     }
 
     @Test

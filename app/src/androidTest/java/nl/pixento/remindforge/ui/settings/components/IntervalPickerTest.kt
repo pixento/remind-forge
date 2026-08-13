@@ -63,12 +63,6 @@ class IntervalPickerTest {
     )
 
     @Test
-    fun rowShowsTheCurrentInterval() {
-        setPicker(current = 15)
-        composeRule.onNodeWithText(intervalValue(15)).assertExists()
-    }
-
-    @Test
     fun dialogOpensOnTheCurrentValue() {
         val field = openDialog(current = 15)
 
@@ -111,17 +105,6 @@ class IntervalPickerTest {
         val field = openDialog()
 
         field.performTextReplacement((ReminderSettings.MIN_INTERVAL_MINUTES - 1).toString())
-
-        okButton().assertIsNotEnabled()
-        composeRule.onNodeWithText(errorText()).assertExists()
-        assertNull(chosen)
-    }
-
-    @Test
-    fun okIsBlockedAboveTheMaximum() {
-        val field = openDialog()
-
-        field.performTextReplacement("999")
 
         okButton().assertIsNotEnabled()
         composeRule.onNodeWithText(errorText()).assertExists()

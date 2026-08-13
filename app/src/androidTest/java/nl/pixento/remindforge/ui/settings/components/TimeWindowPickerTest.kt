@@ -28,6 +28,8 @@ class TimeWindowPickerTest {
 
     @Test
     fun rowsShowFormattedTimes() {
+        // A same-day window, and onNodeWithText matches exactly, so this also pins down that the
+        // end row carries no next-day suffix unless the window really wraps.
         setPicker(windowStart = LocalTime.of(8, 5), windowEnd = LocalTime.of(20, 30))
 
         composeRule.onNodeWithText(context.getString(R.string.time_window_start)).assertExists()
@@ -52,14 +54,5 @@ class TimeWindowPickerTest {
 
         val suffix = context.getString(R.string.time_window_next_day_suffix)
         composeRule.onNodeWithText("09:00$suffix").assertDoesNotExist()
-    }
-
-    @Test
-    fun endTimeIsNotMarkedNextDayForASameDayWindow() {
-        setPicker(windowStart = LocalTime.of(9, 0), windowEnd = LocalTime.of(17, 0))
-
-        val suffix = context.getString(R.string.time_window_next_day_suffix)
-        composeRule.onNodeWithText("17:00").assertExists()
-        composeRule.onNodeWithText("17:00$suffix").assertDoesNotExist()
     }
 }

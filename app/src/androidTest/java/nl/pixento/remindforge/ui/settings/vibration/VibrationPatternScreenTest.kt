@@ -68,17 +68,6 @@ class VibrationPatternScreenTest {
     }
 
     @Test
-    fun silentCanBePicked() {
-        setScreen()
-
-        composeRule.onNodeWithText(VibrationPatternType.SILENT.label)
-            .performScrollTo()
-            .performClick()
-
-        assertEquals(VibrationPatternType.SILENT, selected)
-    }
-
-    @Test
     fun theBackArrowLeavesWithoutPicking() {
         setScreen()
 

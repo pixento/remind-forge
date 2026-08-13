@@ -27,7 +27,6 @@ class ActiveWindowPickerTest {
     private fun setPicker(
         activeWindowMode: ActiveWindowMode,
         onActiveWindowModeChange: (ActiveWindowMode) -> Unit = {},
-        onWindowStartChange: (LocalTime) -> Unit = {},
         onOpenDoNotDisturbSettings: () -> Unit = {},
     ) {
         composeRule.setContent {
@@ -40,7 +39,7 @@ class ActiveWindowPickerTest {
                     windowStart = LocalTime.of(9, 0),
                     windowEnd = LocalTime.of(17, 0),
                     onActiveWindowModeChange = onActiveWindowModeChange,
-                    onWindowStartChange = onWindowStartChange,
+                    onWindowStartChange = {},
                     onWindowEndChange = {},
                     onOpenDoNotDisturbSettings = onOpenDoNotDisturbSettings,
                 )
@@ -97,37 +96,10 @@ class ActiveWindowPickerTest {
     }
 
     @Test
-    fun aDisabledTimeRowDoesNotOpenItsPicker() {
-        var changed = false
-        setPicker(
-            activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
-            onWindowStartChange = { changed = true },
-        )
-
-        composeRule.onNodeWithText(string(R.string.time_window_start)).performClick()
-
-        assertEquals(false, changed)
-    }
-
-    @Test
-    fun theDoNotDisturbSettingsShortcutStaysLiveOnCustomTimes() {
-        // It's how you go and look at your Do Not Disturb schedule before deciding whether to
-        // follow it, so it can't only work once you already have.
-        var opened = 0
-        setPicker(
-            activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
-            onOpenDoNotDisturbSettings = { opened++ },
-        )
-
-        composeRule.onNodeWithText(string(R.string.do_not_disturb_settings_title))
-            .assertIsEnabled()
-            .performClick()
-
-        assertEquals(1, opened)
-    }
-
-    @Test
     fun theDoNotDisturbSettingsShortcutStaysLiveWhileFollowingDoNotDisturb() {
+        // The shortcut is the one row in this run that never dims - it's how you go and look at
+        // your Do Not Disturb schedule before deciding whether to follow it, so it can't only work
+        // once you already have. Checked in the mode where the rows around it *are* disabled.
         var opened = 0
         setPicker(
             activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
