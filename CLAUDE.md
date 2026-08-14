@@ -52,6 +52,14 @@ Then drive the actual UI to the screen that changed and look at it — `adb shel
 `adb shell screencap -p /sdcard/s.png` + `adb pull` to view the result. Report what the screenshots
 showed. Vibration itself can't be verified on an emulator; say so rather than implying it was checked.
 
+## Translations
+
+The app ships four translations alongside the default `res/values/strings.xml`: `values-nl`,
+`values-de`, `values-es`, `values-fr`. **Every new or renamed string has to be added to all five**,
+in the same position under the same section comment. `./gradlew lint` fails on `MissingTranslation`,
+so a change that only touches `res/values` will not get past `build` — add the translations as part
+of the change rather than discovering it at the end.
+
 ## Architecture
 
 Manual dependency injection, no DI framework. `AppContainer` (app/src/main/java/nl/pixento/remindforge/AppContainer.kt)
