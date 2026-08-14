@@ -45,14 +45,4 @@ class TimeWindowPickerTest {
         val suffix = context.getString(R.string.time_window_next_day_suffix)
         composeRule.onNodeWithText("06:00$suffix").assertExists()
     }
-
-    @Test
-    fun equalStartAndEndIsNotMarkedNextDay() {
-        // start == end means "always active" to NextTriggerCalculator, not a zero-length window
-        // ending tomorrow, so it must not pick up the next-day suffix.
-        setPicker(windowStart = LocalTime.of(9, 0), windowEnd = LocalTime.of(9, 0))
-
-        val suffix = context.getString(R.string.time_window_next_day_suffix)
-        composeRule.onNodeWithText("09:00$suffix").assertDoesNotExist()
-    }
 }

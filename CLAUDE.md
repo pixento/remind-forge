@@ -34,6 +34,20 @@ Notes on the build:
   `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB
   page aligned, which makes the emulator pop up an alignment warning on every instrumented run.
 
+## Testing strategy
+
+Instrumented tests (`app/src/androidTest`) are reserved for **major flows**: the primary Settings
+screen's rendering and wiring (`SettingsScreenTest`), and composables whose logic only exists as UI
+wiring with no unit-testable non-UI counterpart (e.g. `ActiveWindowPickerTest`'s toggle/enabled-state
+behavior). Smaller or less important features — a picker's formatting logic, rounding/validation
+math, edge-case branching — should get unit-test coverage of the underlying pure logic instead of a
+dedicated instrumented test that re-proves the same case through rendered UI text. When both an
+instrumented test and a unit test cover the same component, the instrumented test should prove
+*wiring* (does the UI show what the logic already computed), not *re-derive* the logic's own
+correctness — a duplicate of that kind adds a slow, flaky-prone test for no additional coverage and
+should be trimmed on sight, same as `IntervalRandomnessTest` already owning the rounding math that
+`IntervalPickerTest` only needs to prove gets rendered, once.
+
 ## Verifying a change
 
 Finishing an implementation means running it on the emulator, not just going green on tests. After
