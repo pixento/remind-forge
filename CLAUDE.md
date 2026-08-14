@@ -213,3 +213,7 @@ and when they do, use a short, single-sentence, imperative style, descriptive co
 Commit to whatever branch is currently checked out. Don't create a branch first — not even when the
 current branch is the default one, which would normally call for it. Only branch when the user
 explicitly asks for a branch.
+
+Anything under `.idea/` is IDE bookkeeping that the project tracks on purpose. Stage whatever of it
+happens to be dirty along with the rest of the change, and don't mention it in the commit message or
+flag it in the summary — it says nothing about what changed.
