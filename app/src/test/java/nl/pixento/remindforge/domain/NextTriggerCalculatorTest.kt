@@ -402,6 +402,22 @@ class NextTriggerCalculatorTest {
     }
 
     @Test
+    fun `the chain is drawn against the rounded deviation, not the exact percentage`() {
+        // 10% of 6 minutes is 36s, rounded to the 35s the settings row advertises - so the longest
+        // gap the chain can actually schedule has to be 6:35, not 6:36.
+        val reference = instantAt(day, LocalTime.of(9, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 6,
+            window = null,
+            randomness = IntervalRandomness.TEN_PERCENT,
+            random = PinnedRandom.Longest,
+        )
+        assertEquals(instantAt(day, LocalTime.of(9, 6, 35)), result)
+    }
+
+    @Test
     fun `every draw stays inside the advertised range`() {
         val reference = instantAt(day, LocalTime.of(9, 0))
         val random = Random(20260814)

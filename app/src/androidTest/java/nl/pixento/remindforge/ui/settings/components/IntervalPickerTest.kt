@@ -206,4 +206,11 @@ class IntervalPickerTest {
         setPicker(current = 5, randomness = IntervalRandomness.TEN_PERCENT)
         composeRule.onNodeWithText(rangeValue("4:30", "5:30")).assertExists()
     }
+
+    @Test
+    fun anAwkwardPercentageStillReadsAsWholeFiveSecondSteps() {
+        // 10% of 6 minutes is 36s exactly, which would read as 5:24 - 6:36.
+        setPicker(current = 6, randomness = IntervalRandomness.TEN_PERCENT)
+        composeRule.onNodeWithText(rangeValue("5:25", "6:35")).assertExists()
+    }
 }
