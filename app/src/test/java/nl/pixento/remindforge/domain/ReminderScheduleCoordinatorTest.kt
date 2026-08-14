@@ -7,11 +7,13 @@ import io.mockk.verify
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
+import kotlin.random.Random
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.scheduling.AlarmScheduler
 import org.junit.Before
@@ -30,12 +32,13 @@ class ReminderScheduleCoordinatorTest {
         every { scheduleStateRepository.nextTriggerAtMillis } returns flowOf(1L)
     }
 
-    private fun coordinator() = ReminderScheduleCoordinator(
+    private fun coordinator(random: Random = Random.Default) = ReminderScheduleCoordinator(
         settingsRepository = settingsRepository,
         scheduleStateRepository = scheduleStateRepository,
         alarmScheduler = alarmScheduler,
         zone = zone,
         now = { fixedNow },
+        random = random,
     )
 
     @Test
@@ -124,6 +127,25 @@ class ReminderScheduleCoordinatorTest {
         coordinator().rescheduleFromNow()
 
         val expectedNext = fixedNow.plusSeconds(15 * 60).toEpochMilli()
+        verify { alarmScheduler.scheduleNext(expectedNext) }
+        coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
+    }
+
+    @Test
+    fun `the interval randomness reaches the scheduled and the recorded instant alike`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 20,
+            intervalRandomness = IntervalRandomness.TWENTY_PERCENT,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+
+        coordinator(random = PinnedRandom.Longest).rescheduleFromNow()
+
+        // 20 minutes plus the full 20% deviation, i.e. 24.
+        val expectedNext = fixedNow.plusSeconds(24 * 60).toEpochMilli()
         verify { alarmScheduler.scheduleNext(expectedNext) }
         coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
     }

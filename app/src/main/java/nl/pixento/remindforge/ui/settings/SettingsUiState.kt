@@ -2,11 +2,13 @@ package nl.pixento.remindforge.ui.settings
 
 import java.time.LocalTime
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 
 data class SettingsUiState(
     val enabled: Boolean = false,
     val intervalMinutes: Int = 15,
+    val intervalRandomness: IntervalRandomness = IntervalRandomness.NONE,
     val activeWindowMode: ActiveWindowMode = ActiveWindowMode.CUSTOM_TIMES,
     val windowStart: LocalTime = LocalTime.of(9, 0),
     val windowEnd: LocalTime = LocalTime.of(17, 0),

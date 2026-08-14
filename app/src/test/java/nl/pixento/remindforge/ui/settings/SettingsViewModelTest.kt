@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.setMain
 import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
@@ -103,7 +104,10 @@ class SettingsViewModelTest {
     fun `changing the interval or window triggers a coordinator reschedule`() = runTest {
         val vm = viewModel()
 
-        vm.onIntervalChanged(ReminderSettings().intervalMinutes + 5)
+        vm.onIntervalChanged(
+            ReminderSettings().intervalMinutes + 5,
+            ReminderSettings().intervalRandomness,
+        )
         vm.onWindowStartChanged(ReminderSettings().windowStart.plusHours(1))
         vm.onWindowEndChanged(ReminderSettings().windowEnd.plusHours(1))
 
@@ -181,9 +185,29 @@ class SettingsViewModelTest {
         repository = FakeSettingsRepository(ReminderSettings(enabled = true))
         val vm = viewModel()
 
-        vm.onIntervalChanged(ReminderSettings().intervalMinutes)
+        vm.onIntervalChanged(
+            ReminderSettings().intervalMinutes,
+            ReminderSettings().intervalRandomness,
+        )
 
         coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `changing only the randomness reschedules exactly once`() = runTest {
+        // Both values are written by one persist call, so the picker's OK must not restart the
+        // chain twice - and a randomness-only change still has to restart it, since the calculator
+        // reads it.
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+
+        vm.onIntervalChanged(
+            ReminderSettings().intervalMinutes,
+            IntervalRandomness.FIFTY_PERCENT,
+        )
+
+        assertEquals(IntervalRandomness.FIFTY_PERCENT, vm.uiState.value.intervalRandomness)
+        coVerify(exactly = 1) { coordinator.rescheduleFromNow() }
     }
 
     @Test

@@ -2,6 +2,7 @@ package nl.pixento.remindforge.domain
 
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
@@ -10,9 +11,9 @@ import nl.pixento.remindforge.scheduling.AlarmScheduler
 /**
  * Single entry point for (re)starting the alarm chain: reads current settings and either
  * cancels (if disabled) or cancels + reschedules from *now* (if enabled). Used on enable, on
- * disable, on a change to one of the settings the chain is computed from (interval, active-window
- * mode and window times), and on boot/app-update - so such a change takes effect immediately rather
- * than waiting for the old chain to finish its current interval.
+ * disable, on a change to one of the settings the chain is computed from (interval, its randomness,
+ * active-window mode and window times), and on boot/app-update - so such a change takes effect
+ * immediately rather than waiting for the old chain to finish its current interval.
  *
  * Deliberately *not* used for settings the chain doesn't depend on (vibration pattern, ringtone):
  * restarting from now would push the next reminder a full interval into the future, so those are
@@ -24,6 +25,7 @@ class ReminderScheduleCoordinator(
     private val alarmScheduler: AlarmScheduler,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val now: () -> Instant = Instant::now,
+    private val random: Random = Random.Default,
 ) {
 
     suspend fun rescheduleFromNow() {
@@ -39,6 +41,8 @@ class ReminderScheduleCoordinator(
             zone = zone,
             intervalMinutes = settings.intervalMinutes,
             window = settings.activeWindow,
+            randomness = settings.intervalRandomness,
+            random = random,
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())
         scheduleStateRepository.setNextTriggerAtMillis(next.toEpochMilli())

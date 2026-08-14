@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter
 import nl.pixento.remindforge.R
 import nl.pixento.remindforge.alerting.DoNotDisturbSettings
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -82,7 +83,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
 fun SettingsScreen(
     uiState: SettingsUiState,
     onEnabledChanged: (Boolean) -> Unit,
-    onIntervalChanged: (Int) -> Unit,
+    onIntervalChanged: (Int, IntervalRandomness) -> Unit,
     onActiveWindowModeChanged: (ActiveWindowMode) -> Unit,
     onWindowStartChanged: (LocalTime) -> Unit,
     onWindowEndChanged: (LocalTime) -> Unit,
@@ -175,7 +176,11 @@ fun SettingsScreen(
                     description = stringResource(R.string.settings_schedule_description),
                 )
                 SettingsGroup {
-                    IntervalPicker(uiState.intervalMinutes, onIntervalChanged)
+                    IntervalPicker(
+                        intervalMinutes = uiState.intervalMinutes,
+                        randomness = uiState.intervalRandomness,
+                        onIntervalChange = onIntervalChanged,
+                    )
                     SettingsDivider()
                     ActiveWindowPicker(
                         activeWindowMode = uiState.activeWindowMode,

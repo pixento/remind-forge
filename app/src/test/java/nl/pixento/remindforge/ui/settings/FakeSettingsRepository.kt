@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 
@@ -27,6 +28,10 @@ class FakeSettingsRepository(
                 ReminderSettings.MAX_INTERVAL_MINUTES,
             ),
         )
+    }
+
+    override suspend fun setIntervalRandomness(randomness: IntervalRandomness) {
+        state.value = state.value.copy(intervalRandomness = randomness)
     }
 
     override suspend fun setActiveWindowMode(mode: ActiveWindowMode) {

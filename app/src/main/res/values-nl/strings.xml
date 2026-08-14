@@ -2,7 +2,7 @@
     <string name="app_name">RemindForge</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Periodieke herinneringen die trillen of rinkelen binnen een dagelijks tijdvenster.</string>
+    <string name="settings_description">Verander gewoontes met periodieke herinneringen die je voelt of hoort, niet leest — houd je telefoon in je zak. Net als een smidse: elke klap vormt het staal.</string>
     <string name="settings_reminders_enabled">Herinneringen ingeschakeld</string>
     <string name="settings_schedule_title">Schema</string>
     <string name="settings_schedule_description">Kies hoe vaak en tijdens welke uren je herinnerd wilt worden.</string>
@@ -17,8 +17,12 @@
     <!-- Interval picker -->
     <string name="interval_title">Interval</string>
     <string name="interval_value">Elke %1$d minuten</string>
+    <string name="interval_value_range">Elke %1$s – %2$s minuten</string>
     <string name="interval_input_hint">Minuten (%1$d–%2$d)</string>
     <string name="interval_input_error">Voer een getal tussen %1$d en %2$d in</string>
+    <string name="interval_randomness_title">Variatie</string>
+    <string name="interval_randomness_hint">Varieert elke tussenpoos met maximaal dit percentage, zodat herinneringen minder voorspelbaar zijn.</string>
+    <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Actief venster / Active window picker -->
     <string name="follow_do_not_disturb_schedule">Niet storen-schema volgen</string>

@@ -1,12 +1,14 @@
 package nl.pixento.remindforge.domain
 
 import nl.pixento.remindforge.domain.model.DailyWindow
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.random.Random
 
 /**
  * Pure, framework-free trigger-time math. Given the previously *scheduled* instant (not the
@@ -24,6 +26,12 @@ object NextTriggerCalculator {
      * @param now the current instant, used only to skip slots that are already in the past when
      *   the firing alarm was itself delivered late. Defaults to [referenceInstant], which is
      *   correct for the compute-fresh case where the reference already *is* now.
+     * @param randomness how far this gap may stray from [intervalMinutes], making the reminder
+     *   harder to anticipate. Since each tick keys off the previously *scheduled* instant, the
+     *   offsets accumulate and the cadence random-walks over the day - which is the point. The
+     *   long-run average stays at [intervalMinutes], and a [window] re-anchors the chain to its
+     *   start every day.
+     * @param random the source of that deviation; injectable so tests can seed it.
      */
     fun nextTrigger(
         referenceInstant: Instant,
@@ -31,6 +39,8 @@ object NextTriggerCalculator {
         intervalMinutes: Int,
         window: DailyWindow?,
         now: Instant = referenceInstant,
+        randomness: IntervalRandomness = IntervalRandomness.NONE,
+        random: Random = Random.Default,
     ): Instant {
         val supported = ReminderSettings.MIN_INTERVAL_MINUTES..ReminderSettings.MAX_INTERVAL_MINUTES
         require(intervalMinutes in supported) {
@@ -40,7 +50,7 @@ object NextTriggerCalculator {
 
         val naive = firstSlotAfter(
             referenceInstant,
-            Duration.ofMinutes(intervalMinutes.toLong()),
+            jitteredInterval(intervalMinutes, randomness, random),
             now,
         )
         if (window == null) return naive
@@ -60,6 +70,26 @@ object NextTriggerCalculator {
     fun isWithinWindow(instant: Instant, zone: ZoneId, window: DailyWindow?): Boolean {
         if (window == null) return true
         return window.contains(ZonedDateTime.ofInstant(instant, zone).toLocalTime())
+    }
+
+    /**
+     * The configured interval displaced by a uniform draw from `[-deviation, +deviation]` seconds.
+     *
+     * The deviation is applied to the *interval* rather than to the slot [firstSlotAfter] returns,
+     * because that function's whole job is to guarantee a result strictly after `now`; nudging its
+     * answer afterwards could push it back into the past. Jittering the input keeps that guarantee -
+     * and the catch-up behaviour below - intact for free.
+     */
+    private fun jitteredInterval(
+        intervalMinutes: Int,
+        randomness: IntervalRandomness,
+        random: Random,
+    ): Duration {
+        val base = Duration.ofMinutes(intervalMinutes.toLong())
+        val deviation = randomness.deviationSeconds(intervalMinutes)
+        if (deviation == 0L) return base
+        // nextLong's upper bound is exclusive, so +1 to make +deviation itself reachable.
+        return base.plusSeconds(random.nextLong(-deviation, deviation + 1))
     }
 
     /**

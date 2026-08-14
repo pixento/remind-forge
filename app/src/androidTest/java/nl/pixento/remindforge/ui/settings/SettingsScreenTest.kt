@@ -44,7 +44,7 @@ class SettingsScreenTest {
                 SettingsScreen(
                     uiState = uiState,
                     onEnabledChanged = onEnabledChanged,
-                    onIntervalChanged = {},
+                    onIntervalChanged = { _, _ -> },
                     onActiveWindowModeChanged = {},
                     onWindowStartChanged = {},
                     onWindowEndChanged = {},

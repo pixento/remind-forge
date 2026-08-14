@@ -2,7 +2,7 @@
     <string name="app_name">RemindForge</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Wiederkehrende Erinnerungen, die innerhalb eines täglichen Zeitfensters vibrieren oder klingeln.</string>
+    <string name="settings_description">Gewohnheiten ändern mit wiederkehrenden Erinnerungen, die du spürst oder hörst, nicht liest — behalte dein Telefon in der Tasche. Wie eine Schmiede: Jeder Schlag formt den Stahl.</string>
     <string name="settings_reminders_enabled">Erinnerungen aktiviert</string>
     <string name="settings_schedule_title">Zeitplan</string>
     <string name="settings_schedule_description">Wähle, wie oft und in welchem Zeitraum du erinnert werden möchtest.</string>
@@ -17,8 +17,12 @@
     <!-- Interval picker -->
     <string name="interval_title">Intervall</string>
     <string name="interval_value">Alle %1$d Minuten</string>
+    <string name="interval_value_range">Alle %1$s – %2$s Minuten</string>
     <string name="interval_input_hint">Minuten (%1$d–%2$d)</string>
     <string name="interval_input_error">Gib eine Zahl zwischen %1$d und %2$d ein</string>
+    <string name="interval_randomness_title">Zufälligkeit</string>
+    <string name="interval_randomness_hint">Variiert jeden Abstand um bis zu diesen Anteil, damit Erinnerungen schwerer vorherzusehen sind.</string>
+    <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Aktives Fenster / Active window picker -->
     <string name="follow_do_not_disturb_schedule">Dem „Bitte nicht stören“-Zeitplan folgen</string>

@@ -11,6 +11,7 @@ import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import org.junit.Assert.assertEquals
@@ -44,6 +45,7 @@ class SettingsRepositoryImplTest {
         setUp()
         repository.setEnabled(true)
         repository.setIntervalMinutes(20)
+        repository.setIntervalRandomness(IntervalRandomness.TWENTY_PERCENT)
         repository.setActiveWindowMode(ActiveWindowMode.DO_NOT_DISTURB_OFF)
         repository.setWindowStart(LocalTime.of(8, 30))
         repository.setWindowEnd(LocalTime.of(20, 15))
@@ -53,6 +55,7 @@ class SettingsRepositoryImplTest {
         val result = repository.settings.first()
         assertEquals(true, result.enabled)
         assertEquals(20, result.intervalMinutes)
+        assertEquals(IntervalRandomness.TWENTY_PERCENT, result.intervalRandomness)
         assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, result.activeWindowMode)
         assertEquals(LocalTime.of(8, 30), result.windowStart)
         assertEquals(LocalTime.of(20, 15), result.windowEnd)
@@ -105,6 +108,22 @@ class SettingsRepositoryImplTest {
         setUp()
         dataStore.edit { it[stringPreferencesKey("window_start")] = "08:00" }
         assertEquals(ActiveWindowMode.CUSTOM_TIMES, repository.settings.first().activeWindowMode)
+    }
+
+    @Test
+    fun `a store without the interval randomness key reads as none`() = runTest {
+        // Additive too, so no DataMigration: a store written before randomness existed has to keep
+        // firing on the exact cadence it always did.
+        setUp()
+        dataStore.edit { it[intPreferencesKey("interval_minutes")] = 20 }
+        assertEquals(IntervalRandomness.NONE, repository.settings.first().intervalRandomness)
+    }
+
+    @Test
+    fun `corrupted interval randomness string falls back to none`() = runTest {
+        setUp()
+        dataStore.edit { it[stringPreferencesKey("interval_randomness")] = "NINETY_PERCENT" }
+        assertEquals(IntervalRandomness.NONE, repository.settings.first().intervalRandomness)
     }
 
     @Test

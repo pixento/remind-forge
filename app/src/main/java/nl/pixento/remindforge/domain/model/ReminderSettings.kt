@@ -5,6 +5,8 @@ import java.time.LocalTime
 data class ReminderSettings(
     val enabled: Boolean = false,
     val intervalMinutes: Int = 15,
+    /** How far each gap may stray from [intervalMinutes]; [IntervalRandomness.NONE] is exact. */
+    val intervalRandomness: IntervalRandomness = IntervalRandomness.NONE,
     val activeWindowMode: ActiveWindowMode = ActiveWindowMode.CUSTOM_TIMES,
     val windowStart: LocalTime = LocalTime.of(9, 0),
     val windowEnd: LocalTime = LocalTime.of(17, 0),
@@ -40,6 +42,7 @@ data class ReminderSettings(
     fun schedulesSameAs(other: ReminderSettings): Boolean =
         enabled == other.enabled &&
                 intervalMinutes == other.intervalMinutes &&
+                intervalRandomness == other.intervalRandomness &&
                 activeWindowMode == other.activeWindowMode &&
                 windowStart == other.windowStart &&
                 windowEnd == other.windowEnd

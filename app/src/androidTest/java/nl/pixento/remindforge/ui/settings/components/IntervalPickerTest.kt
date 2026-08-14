@@ -3,6 +3,7 @@ package nl.pixento.remindforge.ui.settings.components
 import android.content.Context
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ApplicationProvider
 import nl.pixento.remindforge.R
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -26,13 +28,26 @@ class IntervalPickerTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private var chosen: Int? = null
+    private var chosen: Pair<Int, IntervalRandomness>? = null
 
     private fun intervalValue(minutes: Int) = context.getString(R.string.interval_value, minutes)
 
-    private fun setPicker(current: Int = 15) {
+    private fun rangeValue(low: String, high: String) =
+        context.getString(R.string.interval_value_range, low, high)
+
+    private fun randomnessLabel(randomness: IntervalRandomness) =
+        context.getString(R.string.interval_randomness_value, randomness.percent)
+
+    private fun setPicker(
+        current: Int = 15,
+        randomness: IntervalRandomness = IntervalRandomness.NONE,
+    ) {
         composeRule.setContent {
-            IntervalPicker(intervalMinutes = current, onIntervalChange = { chosen = it })
+            IntervalPicker(
+                intervalMinutes = current,
+                randomness = randomness,
+                onIntervalChange = { minutes, picked -> chosen = minutes to picked },
+            )
         }
     }
 
@@ -86,7 +101,7 @@ class IntervalPickerTest {
                 tapRow().performTextReplacement(minutes.toString())
                 okButton().performClick()
 
-                assertEquals(minutes, chosen)
+                assertEquals(minutes to IntervalRandomness.NONE, chosen)
             }
     }
 
@@ -131,5 +146,64 @@ class IntervalPickerTest {
         field.performTextInput("4a5")
 
         field.assertTextContains("45")
+    }
+
+    // --- Randomness ---
+
+    @Test
+    fun everyRandomnessOptionIsOfferedWithTheCurrentOneSelected() {
+        setPicker(current = 15, randomness = IntervalRandomness.TWENTY_PERCENT)
+        composeRule.onNodeWithText(rangeValue("12", "18")).performClick()
+
+        IntervalRandomness.entries.forEach { option ->
+            composeRule.onNodeWithText(randomnessLabel(option)).assertExists()
+        }
+        composeRule.onNodeWithText(randomnessLabel(IntervalRandomness.TWENTY_PERCENT))
+            .assertIsSelected()
+    }
+
+    @Test
+    fun okCommitsTheIntervalAndTheRandomnessTogether() {
+        // One callback for both, so the caller writes them in a single persist and the alarm chain
+        // restarts once rather than twice.
+        val field = openDialog(current = 15)
+
+        field.performTextReplacement("5")
+        composeRule.onNodeWithText(randomnessLabel(IntervalRandomness.TEN_PERCENT)).performClick()
+        okButton().performClick()
+
+        assertEquals(5 to IntervalRandomness.TEN_PERCENT, chosen)
+    }
+
+    @Test
+    fun cancelDiscardsThePickedRandomness() {
+        openDialog(current = 15)
+
+        composeRule.onNodeWithText(randomnessLabel(IntervalRandomness.FIFTY_PERCENT)).performClick()
+        composeRule.onNodeWithText(context.getString(R.string.dialog_cancel)).performClick()
+
+        assertNull(chosen)
+        // The row still reads the unchanged exact interval rather than a range.
+        composeRule.onNodeWithText(intervalValue(15)).assertExists()
+    }
+
+    @Test
+    fun theRowShowsAnExactIntervalWithoutRandomness() {
+        setPicker(current = 15, randomness = IntervalRandomness.NONE)
+        composeRule.onNodeWithText(intervalValue(15)).assertExists()
+    }
+
+    @Test
+    fun theRowShowsARangeOnceRandomnessIsOn() {
+        // Seconds are only spelled out when the bound has any, so 15 +/- 20% stays whole minutes
+        // while 5 +/- 10% needs the half minute.
+        setPicker(current = 15, randomness = IntervalRandomness.TWENTY_PERCENT)
+        composeRule.onNodeWithText(rangeValue("12", "18")).assertExists()
+    }
+
+    @Test
+    fun aRangeBoundWithSecondsSpellsThemOut() {
+        setPicker(current = 5, randomness = IntervalRandomness.TEN_PERCENT)
+        composeRule.onNodeWithText(rangeValue("4:30", "5:30")).assertExists()
     }
 }

@@ -7,6 +7,7 @@ import io.mockk.verify
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
+import kotlin.random.Random
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.remindforge.alerting.AlertPlayer
@@ -14,6 +15,7 @@ import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
 import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.ReminderSettings
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.AlarmScheduler
@@ -28,7 +30,11 @@ class TriggerReminderUseCaseTest {
     private val alertPlayer = mockk<AlertPlayer>(relaxUnitFun = true)
     private val alarmScheduler = mockk<AlarmScheduler>(relaxUnitFun = true)
 
-    private fun useCase(fixedNow: Instant, doNotDisturbActive: Boolean = false) =
+    private fun useCase(
+        fixedNow: Instant,
+        doNotDisturbActive: Boolean = false,
+        random: Random = Random.Default,
+    ) =
         TriggerReminderUseCase(
             settingsRepository = settingsRepository,
             scheduleStateRepository = scheduleStateRepository,
@@ -37,6 +43,7 @@ class TriggerReminderUseCaseTest {
             doNotDisturbMonitor = FakeDoNotDisturbMonitor(doNotDisturbActive),
             zone = zone,
             now = { fixedNow },
+            random = random,
         )
 
     private class FakeDoNotDisturbMonitor(private val active: Boolean) : DoNotDisturbMonitor {
@@ -239,6 +246,30 @@ class TriggerReminderUseCaseTest {
         useCase(fixedNow = actualFireTime).onAlarmFired(scheduledAt.toEpochMilli())
 
         val expectedNext = scheduledAt.plusSeconds(15 * 60).toEpochMilli()
+        verify { alarmScheduler.scheduleNext(expectedNext) }
+        coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
+    }
+
+    @Test
+    fun `the interval randomness varies the next tick from the scheduled reference`() = runTest {
+        // Keyed off the scheduled time as always, so the deviation displaces the *next* slot rather
+        // than compounding with however late this tick happened to run.
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 10,
+            intervalRandomness = IntervalRandomness.TEN_PERCENT,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        useCase(fixedNow = scheduledAt, random = PinnedRandom.Shortest)
+            .onAlarmFired(scheduledAt.toEpochMilli())
+
+        // 10 minutes less the full 10% deviation, i.e. 9 minutes.
+        val expectedNext = scheduledAt.plusSeconds(9 * 60).toEpochMilli()
         verify { alarmScheduler.scheduleNext(expectedNext) }
         coVerify { scheduleStateRepository.setNextTriggerAtMillis(expectedNext) }
     }

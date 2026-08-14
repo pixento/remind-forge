@@ -49,6 +49,11 @@ class ReminderSettingsTest {
     fun `each input the chain is computed from forces a reschedule`() {
         assertFalse(settings.schedulesSameAs(settings.copy(enabled = false)))
         assertFalse(settings.schedulesSameAs(settings.copy(intervalMinutes = 20)))
+        assertFalse(
+            settings.schedulesSameAs(
+                settings.copy(intervalRandomness = IntervalRandomness.TWENTY_PERCENT),
+            )
+        )
         assertFalse(settings.schedulesSameAs(settings.copy(windowStart = LocalTime.of(8, 0))))
         assertFalse(settings.schedulesSameAs(settings.copy(windowEnd = LocalTime.of(18, 0))))
         assertFalse(

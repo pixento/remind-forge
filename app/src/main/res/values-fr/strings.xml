@@ -2,7 +2,7 @@
     <string name="app_name">RemindForge</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Rappels périodiques qui vibrent ou sonnent pendant une plage horaire quotidienne.</string>
+    <string name="settings_description">Changez vos habitudes grâce à des rappels périodiques que l\'on ressent ou entend, sans les lire — gardez votre téléphone dans votre poche. Comme une forge : chaque coup façonne l\'acier.</string>
     <string name="settings_reminders_enabled">Rappels activés</string>
     <string name="settings_schedule_title">Planification</string>
     <string name="settings_schedule_description">Choisissez la fréquence des rappels et la plage horaire.</string>
@@ -17,8 +17,12 @@
     <!-- Interval picker -->
     <string name="interval_title">Intervalle</string>
     <string name="interval_value">Toutes les %1$d minutes</string>
+    <string name="interval_value_range">Toutes les %1$s – %2$s minutes</string>
     <string name="interval_input_hint">Minutes (%1$d–%2$d)</string>
     <string name="interval_input_error">Saisissez un nombre entre %1$d et %2$d</string>
+    <string name="interval_randomness_title">Variation</string>
+    <string name="interval_randomness_hint">Fait varier chaque intervalle de ce pourcentage au maximum, pour rendre les rappels moins prévisibles.</string>
+    <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Fenêtre active / Active window picker -->
     <string name="follow_do_not_disturb_schedule">Suivre la programmation Ne pas déranger</string>

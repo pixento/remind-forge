@@ -5,7 +5,9 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import kotlin.random.Random
 import nl.pixento.remindforge.domain.model.DailyWindow
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -348,6 +350,111 @@ class NextTriggerCalculatorTest {
             )
             assertEquals("interval $intervalMinutes", instantAt(day, expectedTime), result)
         }
+    }
+
+    // --- Interval randomness ---
+    // The draw is pinned to one end of its range rather than seeded, so each assertion names the
+    // instant it expects instead of whatever a particular PRNG implementation happens to produce.
+
+    @Test
+    fun `no randomness leaves the interval exact and never draws`() {
+        val reference = instantAt(day, LocalTime.of(9, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 5,
+            window = null,
+            randomness = IntervalRandomness.NONE,
+            random = PinnedRandom { _, _ ->
+                throw AssertionError("NONE must not consult the random source")
+            },
+        )
+        assertEquals(instantAt(day, LocalTime.of(9, 5)), result)
+    }
+
+    @Test
+    fun `the shortest draw is the interval minus the full deviation`() {
+        val reference = instantAt(day, LocalTime.of(9, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 5,
+            window = null,
+            randomness = IntervalRandomness.TEN_PERCENT,
+            random = PinnedRandom.Shortest,
+        )
+        assertEquals(instantAt(day, LocalTime.of(9, 4, 30)), result)
+    }
+
+    @Test
+    fun `the longest draw is the interval plus the full deviation`() {
+        // Also pins the exclusive-upper-bound detail: +deviation itself has to be reachable.
+        val reference = instantAt(day, LocalTime.of(9, 0))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 5,
+            window = null,
+            randomness = IntervalRandomness.FIFTY_PERCENT,
+            random = PinnedRandom.Longest,
+        )
+        assertEquals(instantAt(day, LocalTime.of(9, 7, 30)), result)
+    }
+
+    @Test
+    fun `every draw stays inside the advertised range`() {
+        val reference = instantAt(day, LocalTime.of(9, 0))
+        val random = Random(20260814)
+
+        repeat(500) {
+            val result = NextTriggerCalculator.nextTrigger(
+                referenceInstant = reference,
+                zone = utc,
+                intervalMinutes = 20,
+                window = null,
+                randomness = IntervalRandomness.TWENTY_PERCENT,
+                random = random,
+            )
+            assertTrue(
+                "$result outside 09:16-09:24",
+                !result.isBefore(instantAt(day, LocalTime.of(9, 16))) &&
+                        !result.isAfter(instantAt(day, LocalTime.of(9, 24))),
+            )
+        }
+    }
+
+    @Test
+    fun `a jittered slot past the window end still clamps to the next window start`() {
+        // The deviation makes the gap unpredictable, not the window: the first reminder of the day
+        // stays exactly on the window start, which is what re-anchors the drifting chain daily.
+        val reference = instantAt(day, LocalTime.of(16, 58))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 5,
+            window = DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)),
+            randomness = IntervalRandomness.TEN_PERCENT,
+            random = PinnedRandom.Longest,
+        )
+        assertEquals(instantAt(nextDay, LocalTime.of(9, 0)), result)
+    }
+
+    @Test
+    fun `a late tick catches up on the jittered cadence and never lands in the past`() {
+        val reference = instantAt(day, LocalTime.of(10, 0))
+        val now = instantAt(day, LocalTime.of(10, 20))
+        val result = NextTriggerCalculator.nextTrigger(
+            referenceInstant = reference,
+            zone = utc,
+            intervalMinutes = 5,
+            window = null,
+            now = now,
+            randomness = IntervalRandomness.TEN_PERCENT,
+            random = PinnedRandom.Shortest,
+        )
+        // Five 4:30 gaps from 10:00 - the first slot on that cadence still ahead of 10:20.
+        assertEquals(instantAt(day, LocalTime.of(10, 22, 30)), result)
+        assertTrue(result.isAfter(now))
     }
 
     // --- DST edge cases (Europe/Amsterdam) ---

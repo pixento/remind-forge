@@ -2,6 +2,7 @@ package nl.pixento.remindforge.domain
 
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import nl.pixento.remindforge.alerting.AlertPlayer
 import nl.pixento.remindforge.alerting.DoNotDisturbMonitor
@@ -35,6 +36,7 @@ class TriggerReminderUseCase(
     private val doNotDisturbMonitor: DoNotDisturbMonitor,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val now: () -> Instant = Instant::now,
+    private val random: Random = Random.Default,
 ) {
 
     suspend fun onAlarmFired(scheduledAtMillis: Long): AlarmFiredOutcome {
@@ -67,6 +69,8 @@ class TriggerReminderUseCase(
             intervalMinutes = settings.intervalMinutes,
             window = settings.activeWindow,
             now = firedAt,
+            randomness = settings.intervalRandomness,
+            random = random,
         )
         alarmScheduler.scheduleNext(next.toEpochMilli())
         scheduleStateRepository.setNextTriggerAtMillis(next.toEpochMilli())

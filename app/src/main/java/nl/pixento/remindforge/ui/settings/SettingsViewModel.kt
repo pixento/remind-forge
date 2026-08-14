@@ -17,6 +17,7 @@ import nl.pixento.remindforge.data.ScheduleStateRepository
 import nl.pixento.remindforge.data.SettingsRepository
 import nl.pixento.remindforge.domain.ReminderScheduleCoordinator
 import nl.pixento.remindforge.domain.model.ActiveWindowMode
+import nl.pixento.remindforge.domain.model.IntervalRandomness
 import nl.pixento.remindforge.domain.model.VibrationPatternType
 import nl.pixento.remindforge.scheduling.BatteryOptimization
 import nl.pixento.remindforge.scheduling.ExactAlarmPermission
@@ -40,6 +41,7 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     enabled = settings.enabled,
                     intervalMinutes = settings.intervalMinutes,
+                    intervalRandomness = settings.intervalRandomness,
                     activeWindowMode = settings.activeWindowMode,
                     windowStart = settings.windowStart,
                     windowEnd = settings.windowEnd,
@@ -62,7 +64,11 @@ class SettingsViewModel(
 
     fun onEnabledChanged(enabled: Boolean) = persist { setEnabled(enabled) }
 
-    fun onIntervalChanged(minutes: Int) = persist { setIntervalMinutes(minutes) }
+    /** One write for both, so the picker's OK restarts the alarm chain once rather than twice. */
+    fun onIntervalChanged(minutes: Int, randomness: IntervalRandomness) = persist {
+        setIntervalMinutes(minutes)
+        setIntervalRandomness(randomness)
+    }
 
     fun onActiveWindowModeChanged(mode: ActiveWindowMode) = persist { setActiveWindowMode(mode) }
 
