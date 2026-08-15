@@ -18,6 +18,8 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     environment: google-play
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
 
@@ -60,6 +62,23 @@ jobs:
         with:
           name: app-release-aab
           path: app/build/outputs/bundle/release/app-release.aab
+
+      # Leaves an already-existing release (e.g. one a human has since hand-edited with real notes)
+      # untouched - this only fills in the gap for a tag that has no release yet.
+      - name: Ensure a GitHub Release exists for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --generate-notes
+
+      # --clobber makes this idempotent if the job is re-run for the same tag.
+      - name: Upload the signed bundle to the tag's GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            app/build/outputs/bundle/release/app-release.aab --clobber
 
       # Stays dormant until the manual first upload has created the app's first release; see the
       # Releasing section in README.md.

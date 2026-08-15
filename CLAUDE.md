@@ -224,9 +224,11 @@ would never fire, since that broadcast carries `FLAG_RECEIVER_REGISTERED_ONLY`.
 Don't commit automatically after making changes. Only commit when the user explicitly asks for it,
 and when they do, use a short, single-sentence, imperative style, descriptive commit message.
 
-Commit to whatever branch is currently checked out. Don't create a branch first — not even when the
-current branch is the default one, which would normally call for it. Only branch when the user
-explicitly asks for a branch.
+If the current branch is `main`, create a feature branch and open a PR before committing. If a feature
+branch is already checked out, keep committing to it and don't branch again — one branch is allowed
+to carry multiple unrelated changes rather than spawning a branch per feature. Update the PR's
+description after every push to that branch so it stays a true summary of everything the branch
+contains, not just the latest push.
 
 Anything under `.idea/` is IDE bookkeeping that the project tracks on purpose. Stage whatever of it
 happens to be dirty along with the rest of the change, and don't mention it in the commit message or
