@@ -7,7 +7,7 @@
     <string name="settings_schedule_title">Schedule</string>
     <string name="settings_schedule_description">Choose how often to be reminded and during which hours.</string>
     <string name="settings_alerts_title">Alerts</string>
-    <string name="settings_alerts_description">Choose how you\'re notified — vibration, sound, or both.</string>
+    <string name="settings_alerts_description">Choose how you\'re notified. Choose a unique vibration pattern or sound, so you recognize the reminder without looking at your phone.</string>
     <string name="vibration_label">Vibration</string>
     <string name="sound_label">Sound</string>
     <string name="silent_label">Silent</string>

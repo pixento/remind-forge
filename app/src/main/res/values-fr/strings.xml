@@ -7,7 +7,7 @@
     <string name="settings_schedule_title">Planification</string>
     <string name="settings_schedule_description">Choisissez la fréquence des rappels et la plage horaire.</string>
     <string name="settings_alerts_title">Alertes</string>
-    <string name="settings_alerts_description">Choisissez comment être averti — vibration, son, ou les deux.</string>
+    <string name="settings_alerts_description">Choisissez comment être averti. Choisissez une vibration ou une sonnerie unique, pour reconnaître le rappel sans regarder votre téléphone.</string>
     <string name="vibration_label">Vibration</string>
     <string name="sound_label">Son</string>
     <string name="silent_label">Silencieux</string>
