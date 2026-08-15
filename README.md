@@ -66,6 +66,9 @@ plus the environment **variable** (not secret — `secrets` can't be read from a
 publishes it as the `app-release-aab` run artifact without touching Play. That is also the escape
 hatch if Play ever has to be fed a build by hand.
 
+Regardless of that gate, the workflow also attaches the signed bundle to the tag's GitHub Release,
+creating the release first if the tag doesn't have one yet.
+
 ## How it works
 
 Rather than a repeating `AlarmManager` alarm, each fired alarm computes and schedules exactly one
