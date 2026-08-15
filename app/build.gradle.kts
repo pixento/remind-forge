@@ -49,7 +49,7 @@ android {
     buildTypes {
         release {
             optimization {
-                enable = false
+                enable = true
             }
             // Null on every local build, which is the correct "leave it unsigned" state - nobody
             // needs the upload key on their machine to build the release variant.
