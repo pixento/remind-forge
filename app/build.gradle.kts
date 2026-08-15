@@ -6,6 +6,18 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Release identity comes from CI (.github/workflows/release.yml). Unset locally, so a local build
+// keeps the placeholder version. Read through providers rather than System.getenv so the
+// configuration cache treats them as tracked inputs instead of baking in a stale value.
+val releaseVersionCode = providers.environmentVariable("VERSION_CODE").orElse("1").get().toInt()
+val releaseVersionName = providers.environmentVariable("VERSION_NAME").orElse("1.0").get()
+
+// Absolute path to the upload keystore, written by CI outside the working tree. Absent locally,
+// which leaves the release signing config undefined and the release build unsigned.
+val uploadKeystore = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
+    ?.let(::file)
+    ?.takeIf { it.exists() }
+
 android {
     namespace = "nl.pixento.remindforge"
     compileSdk {
@@ -16,10 +28,22 @@ android {
         applicationId = "nl.pixento.remindforge"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        // Only defined when CI supplied a keystore; the release build is unsigned otherwise.
+        if (uploadKeystore != null) {
+            create("release") {
+                storeFile = uploadKeystore
+                storePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
@@ -27,6 +51,9 @@ android {
             optimization {
                 enable = false
             }
+            // Null on every local build, which is the correct "leave it unsigned" state - nobody
+            // needs the upload key on their machine to build the release variant.
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

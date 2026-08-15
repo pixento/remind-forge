@@ -1,0 +1,36 @@
+name: Promote to production
+
+# Reassigns a version code that is already on the internal track to production. Nothing is rebuilt,
+# so what reaches production is bit-for-bit what testers installed.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Version code to promote (blank = highest currently on the internal track)'
+        required: false
+      rollout_percentage:
+        description: 'Staged rollout percentage (1-100)'
+        required: true
+        default: '100'
+
+jobs:
+  promote:
+    name: Promote internal release to production
+    runs-on: ubuntu-latest
+    environment: google-play
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet google-auth requests
+
+      - name: Promote
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PACKAGE_NAME: nl.pixento.remindforge
+          VERSION_CODE: ${{ inputs.version_code }}
+          ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
+        run: python .github/scripts/promote_play_release.py

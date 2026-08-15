@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing and Play credentials - never commit these
+*.jks
+*.keystore
+keystore.properties
+play-service-account*.json
+
+# Bytecode cache from the Play promote script
+__pycache__/
