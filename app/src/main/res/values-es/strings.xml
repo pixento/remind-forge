@@ -7,7 +7,7 @@
     <string name="settings_schedule_title">Programación</string>
     <string name="settings_schedule_description">Elige con qué frecuencia y en qué horas quieres que te recuerden.</string>
     <string name="settings_alerts_title">Alertas</string>
-    <string name="settings_alerts_description">Elige cómo se te avisa — vibración, sonido o ambos.</string>
+    <string name="settings_alerts_description">Elige cómo se te avisa. Elige un patrón de vibración o un sonido único, para que reconozcas el recordatorio sin mirar el teléfono.</string>
     <string name="vibration_label">Vibración</string>
     <string name="sound_label">Sonido</string>
     <string name="silent_label">Silencio</string>
