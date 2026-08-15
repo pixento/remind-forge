@@ -14,6 +14,8 @@ enum class VibrationPatternType {
     SHORT_SHORT_LONG,
     SHORT_LONG_SHORT,
     LONG_SHORT_LONG,
+    LONG_SHORT_SHORT_SHORT,
+    SHORT_SHORT_SHORT_LONG,
 
     /** No buzz at all - the way to silence the vibration channel while keeping a ringtone. */
     SILENT,

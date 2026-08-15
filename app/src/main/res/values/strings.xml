@@ -58,4 +58,6 @@
     <string name="vibration_pattern_short_short_long">Short-short-long</string>
     <string name="vibration_pattern_short_long_short">Short-long-short</string>
     <string name="vibration_pattern_long_short_long">Long-short-long</string>
+    <string name="vibration_pattern_long_short_short_short">Long-3x short</string>
+    <string name="vibration_pattern_short_short_short_long">3x short-long</string>
 </resources>
