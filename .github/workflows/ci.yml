@@ -82,7 +82,7 @@ jobs:
       # Caching a pre-booted, snapshotted AVD lets subsequent runs resume from the snapshot instead
       # of booting from scratch. Keyed on api-level alone since target/arch are fixed per job.
       - name: AVD cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: avd-cache
         with:
           path: |
