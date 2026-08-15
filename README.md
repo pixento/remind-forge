@@ -46,9 +46,11 @@ reassigns a version code that is already on the internal track rather than rebui
 is bit-for-bit what testers installed. It takes a `version_code` (blank picks the highest one on the
 internal track) and a `rollout_percentage` for a staged rollout.
 
-Store text lives in `distribution/`: release notes in `whatsnew/whatsnew-<locale>`, and the listing
-copy for all five languages in [store-listing.md](distribution/store-listing.md). Only add a whatsnew
-locale that exists in the Play listing, or the upload fails.
+Store text lives in `distribution/`: release notes in `whatsnew/whatsnew-<locale>` and the listing
+copy in [store-listing.md](distribution/store-listing.md), both covering all five shipped languages.
+Keep the two in step — the upload fails on a whatsnew locale the Play listing doesn't have. Play
+preserves the newlines in a whatsnew file, so write each paragraph as one long line rather than
+wrapping it.
 
 Release builds are **unsigned locally by design**: the signing config only materialises when
 `RELEASE_KEYSTORE_PATH` points at a keystore, so nobody needs the upload key on their machine.
