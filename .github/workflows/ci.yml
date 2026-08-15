@@ -77,39 +77,12 @@ jobs:
       # espresso-core is pinned to 3.7.0 (newer platform images removed InputManager.getInstance,
       # see app/build.gradle.kts) and 34 is the level that pin was validated against, matching the
       # Robolectric config's pin for unit tests.
-
-      # Cold-booting the emulator is normally the single largest chunk of this job's wall time.
-      # Caching a pre-booted, snapshotted AVD lets subsequent runs resume from the snapshot instead
-      # of booting from scratch. Keyed on api-level alone since target/arch are fixed per job.
-      - name: AVD cache
-        uses: actions/cache@v6
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
-
-      - name: Create AVD snapshot
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: ${{ matrix.api-level }}
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "AVD snapshot created for caching."
-
       - name: Run connected tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew connectedDebugAndroidTest
 
