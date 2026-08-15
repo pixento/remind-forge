@@ -23,6 +23,10 @@ object VibrationPatterns {
         VibrationPatternType.SHORT_SHORT_LONG -> longArrayOf(0, SHORT, GAP, SHORT, GAP, LONG)
         VibrationPatternType.SHORT_LONG_SHORT -> longArrayOf(0, SHORT, GAP, LONG, GAP, SHORT)
         VibrationPatternType.LONG_SHORT_LONG -> longArrayOf(0, LONG, GAP, SHORT, GAP, LONG)
+        VibrationPatternType.LONG_SHORT_SHORT_SHORT ->
+            longArrayOf(0, LONG, GAP, SHORT, GAP, SHORT, GAP, SHORT)
+        VibrationPatternType.SHORT_SHORT_SHORT_LONG ->
+            longArrayOf(0, SHORT, GAP, SHORT, GAP, SHORT, GAP, LONG)
         VibrationPatternType.SILENT -> null
     }
 

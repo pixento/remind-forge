@@ -58,4 +58,6 @@
     <string name="vibration_pattern_short_short_long">Kort-kort-lang</string>
     <string name="vibration_pattern_short_long_short">Kort-lang-kort</string>
     <string name="vibration_pattern_long_short_long">Lang-kort-lang</string>
+    <string name="vibration_pattern_long_short_short_short">Lang-3x kort</string>
+    <string name="vibration_pattern_short_short_short_long">3x kort-lang</string>
 </resources>

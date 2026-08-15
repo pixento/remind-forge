@@ -90,6 +90,22 @@ class VibrationPatternsTest {
     }
 
     @Test
+    fun `long-3x short waveform`() {
+        assertArrayEquals(
+            longArrayOf(0, 700, 300, 150, 300, 150, 300, 150),
+            VibrationPatterns.waveformFor(VibrationPatternType.LONG_SHORT_SHORT_SHORT),
+        )
+    }
+
+    @Test
+    fun `3x short-long waveform`() {
+        assertArrayEquals(
+            longArrayOf(0, 150, 300, 150, 300, 150, 300, 700),
+            VibrationPatterns.waveformFor(VibrationPatternType.SHORT_SHORT_SHORT_LONG),
+        )
+    }
+
+    @Test
     fun `audible patterns are all distinguishable from each other`() {
         val waveforms = VibrationPatternType.entries
             .filter { it != VibrationPatternType.SILENT }

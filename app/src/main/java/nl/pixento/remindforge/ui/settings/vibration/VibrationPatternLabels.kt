@@ -16,6 +16,8 @@ fun VibrationPatternType.labelRes(): Int = when (this) {
     VibrationPatternType.SHORT_SHORT_LONG -> R.string.vibration_pattern_short_short_long
     VibrationPatternType.SHORT_LONG_SHORT -> R.string.vibration_pattern_short_long_short
     VibrationPatternType.LONG_SHORT_LONG -> R.string.vibration_pattern_long_short_long
+    VibrationPatternType.LONG_SHORT_SHORT_SHORT -> R.string.vibration_pattern_long_short_short_short
+    VibrationPatternType.SHORT_SHORT_SHORT_LONG -> R.string.vibration_pattern_short_short_short_long
     VibrationPatternType.SILENT -> R.string.silent_label
 }
 
