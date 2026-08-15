@@ -61,9 +61,10 @@ CI expects these in the `google-play` GitHub Environment:
 | `RELEASE_KEYSTORE_BASE64` | base64 of the upload keystore |
 | `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` | keystore credentials |
 
-plus the repository variable `PLAY_PUBLISH_ENABLED`, which gates the upload step: anything other than
-`true` builds the bundle and publishes it as the `app-release-aab` run artifact without touching
-Play. That is also the escape hatch if Play ever has to be fed a build by hand.
+plus the environment **variable** (not secret — `secrets` can't be read from a step `if:`)
+`PLAY_PUBLISH_ENABLED`, which gates the upload step: anything other than `true` builds the bundle and
+publishes it as the `app-release-aab` run artifact without touching Play. That is also the escape
+hatch if Play ever has to be fed a build by hand.
 
 ## How it works
 
