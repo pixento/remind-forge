@@ -13,6 +13,7 @@
     <string name="silent_label">Lautlos</string>
     <string name="no_alert_warning">Keine Vibration oder Ton ausgewählt - Erinnerungen bleiben lautlos.</string>
     <string name="next_reminder_around">Nächste Erinnerung gegen %1$s</string>
+    <string name="paused_for_do_not_disturb">Pausiert, „Bitte nicht stören“ ist aktiv</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Intervall</string>
@@ -28,7 +29,6 @@
     <string name="follow_do_not_disturb_schedule">Dem „Bitte nicht stören“-Zeitplan folgen</string>
     <string name="do_not_disturb_settings_title">Einstellungen für „Bitte nicht stören“</string>
     <string name="do_not_disturb_settings_value">Zeitplan für „Bitte nicht stören“ auf deinem Telefon öffnen</string>
-    <string name="do_not_disturb_paused_notice">„Bitte nicht stören“ ist an, daher pausieren die Erinnerungen bis es endet.</string>
 
     <!-- Zeitfenster / Time window picker -->
     <string name="time_window_start">Startzeit</string>

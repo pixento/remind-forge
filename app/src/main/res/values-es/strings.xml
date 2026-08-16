@@ -13,6 +13,7 @@
     <string name="silent_label">Silencio</string>
     <string name="no_alert_warning">No se ha seleccionado vibración ni sonido - los recordatorios sonarán en silencio.</string>
     <string name="next_reminder_around">Próximo recordatorio alrededor de las %1$s</string>
+    <string name="paused_for_do_not_disturb">En pausa, No molestar está activo</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Intervalo</string>
@@ -28,7 +29,6 @@
     <string name="follow_do_not_disturb_schedule">Seguir la programación de No molestar</string>
     <string name="do_not_disturb_settings_title">Ajustes de No molestar</string>
     <string name="do_not_disturb_settings_value">Abre la programación de No molestar de tu teléfono</string>
-    <string name="do_not_disturb_paused_notice">No molestar está activado, así que los recordatorios están en pausa hasta que termine.</string>
 
     <!-- Franja horaria / Time window picker -->
     <string name="time_window_start">Hora de inicio</string>

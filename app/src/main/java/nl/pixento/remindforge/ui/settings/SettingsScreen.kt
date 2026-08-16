@@ -157,7 +157,7 @@ fun SettingsScreen(
             SettingsGroup {
                 SettingsRow(
                     title = stringResource(R.string.settings_reminders_enabled),
-                    value = nextReminderText(uiState),
+                    value = enabledRowValue(uiState),
                     trailing = {
                         Switch(
                             checked = uiState.enabled,
@@ -195,10 +195,6 @@ fun SettingsScreen(
             }
         }
 
-        if (uiState.remindersPausedByDoNotDisturb) {
-            item { DoNotDisturbPausedNotice() }
-        }
-
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingsSectionHeader(
@@ -231,26 +227,6 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Not a warning: the chain is healthy and the countdown above is real, it just won't make a sound
- * until Do Not Disturb ends. Says so in the calmer secondary colours rather than the error ones.
- */
-@Composable
-private fun DoNotDisturbPausedNotice(modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth().testTag("doNotDisturbPausedNotice"),
-        shape = SettingsCardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        ),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.do_not_disturb_paused_notice))
-        }
-    }
-}
-
 @Composable
 private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
     Card(
@@ -268,15 +244,24 @@ private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
 }
 
 /**
- * The instant the pending alarm will actually fire, as recorded by whoever scheduled it - not a
- * fresh now + interval estimate, which would silently disagree with the running chain (and appear
- * to push the next reminder forward) every time this screen was opened.
+ * Either when the next reminder lands or why it won't alert - this one line is where the chain's
+ * state is reported, rather than a countdown here and a contradicting notice elsewhere on the
+ * screen.
+ *
+ * The time is the instant the pending alarm will actually fire, as recorded by whoever scheduled it
+ * - not a fresh now + interval estimate, which would silently disagree with the running chain (and
+ * appear to push the next reminder forward) every time this screen was opened. While Do Not Disturb
+ * pauses the alerts that instant is still real, but promising a reminder at it would be a lie, so
+ * the paused state wins.
  */
 @Composable
-private fun nextReminderText(uiState: SettingsUiState): String? {
+private fun enabledRowValue(uiState: SettingsUiState): String? {
     val zone = remember { ZoneId.systemDefault() }
     val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
     if (!uiState.enabled) return null
+    if (uiState.remindersPausedByDoNotDisturb) {
+        return stringResource(R.string.paused_for_do_not_disturb)
+    }
     val next = uiState.nextTriggerAtMillis ?: return null
     return stringResource(
         R.string.next_reminder_around,

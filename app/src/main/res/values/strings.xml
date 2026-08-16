@@ -13,6 +13,7 @@
     <string name="silent_label">Silent</string>
     <string name="no_alert_warning">No vibration or sound selected - reminders will fire silently.</string>
     <string name="next_reminder_around">Next reminder around %1$s</string>
+    <string name="paused_for_do_not_disturb">Paused, Do Not Disturb is active</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Interval</string>
@@ -28,7 +29,6 @@
     <string name="follow_do_not_disturb_schedule">Follow Do Not Disturb schedule</string>
     <string name="do_not_disturb_settings_title">Do Not Disturb settings</string>
     <string name="do_not_disturb_settings_value">Open your phone\'s Do Not Disturb schedule</string>
-    <string name="do_not_disturb_paused_notice">Do Not Disturb is on, so reminders are paused until it ends.</string>
 
     <!-- Time window picker -->
     <string name="time_window_start">Start time</string>

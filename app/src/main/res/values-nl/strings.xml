@@ -13,6 +13,7 @@
     <string name="silent_label">Stil</string>
     <string name="no_alert_warning">Geen trilling of geluid geselecteerd - herinneringen gaan stil af.</string>
     <string name="next_reminder_around">Volgende herinnering rond %1$s</string>
+    <string name="paused_for_do_not_disturb">Gepauzeerd, Niet storen is actief</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Interval</string>
@@ -28,7 +29,6 @@
     <string name="follow_do_not_disturb_schedule">Niet storen-schema volgen</string>
     <string name="do_not_disturb_settings_title">Instellingen voor Niet storen</string>
     <string name="do_not_disturb_settings_value">Open het Niet storen-schema van je telefoon</string>
-    <string name="do_not_disturb_paused_notice">Niet storen staat aan, dus herinneringen zijn gepauzeerd tot het eindigt.</string>
 
     <!-- Tijdvenster / Time window picker -->
     <string name="time_window_start">Starttijd</string>

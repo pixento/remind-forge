@@ -30,6 +30,13 @@ class SettingsScreenTest {
 
     private fun string(resId: Int, vararg formatArgs: Any) = context.getString(resId, *formatArgs)
 
+    /**
+     * The raw next-reminder template ("Next reminder around %1$s") with the placeholder stripped,
+     * so a substring match stays valid regardless of where the locale puts the placeholder.
+     */
+    private val nextReminderPrefix =
+        context.getString(R.string.next_reminder_around).substringBefore("%").trim()
+
     private fun setScreen(
         uiState: SettingsUiState = SettingsUiState(),
         onEnabledChanged: (Boolean) -> Unit = {},
@@ -124,29 +131,33 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun pausedNoticeShownWhileFollowingDoNotDisturbAndItIsOn() {
-        // Without this the enabled row would still promise a reminder at a specific time while
-        // every tick silently skips its alert.
+    fun pausedTextReplacesNextReminderWhileFollowingDoNotDisturbAndItIsOn() {
+        // The alarm is genuinely pending, but every tick skips its alert - so the row has to say
+        // that instead of promising a reminder at a time nothing will happen at.
         setScreen(
             uiState = SettingsUiState(
                 enabled = true,
                 activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
                 doNotDisturbActive = true,
+                nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
             ),
         )
-        composeRule.onNodeWithTag("doNotDisturbPausedNotice").assertExists()
+        composeRule.onNodeWithText(string(R.string.paused_for_do_not_disturb)).assertExists()
+        composeRule.onNodeWithText(nextReminderPrefix, substring = true).assertDoesNotExist()
     }
 
     @Test
-    fun pausedNoticeHiddenOnCustomTimesEvenWhileDoNotDisturbIsOn() {
+    fun nextReminderStillShownOnCustomTimesEvenWhileDoNotDisturbIsOn() {
         setScreen(
             uiState = SettingsUiState(
                 enabled = true,
                 activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
                 doNotDisturbActive = true,
+                nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
             ),
         )
-        composeRule.onNodeWithTag("doNotDisturbPausedNotice").assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.paused_for_do_not_disturb)).assertDoesNotExist()
+        composeRule.onNodeWithText(nextReminderPrefix, substring = true).assertExists()
     }
 
     @Test
@@ -167,9 +178,6 @@ class SettingsScreenTest {
     @Test
     fun nextReminderHiddenWhenNothingIsScheduled() {
         setScreen(uiState = SettingsUiState(enabled = true, nextTriggerAtMillis = null))
-        // The raw template ("Next reminder around %1$s") with the placeholder stripped, so this
-        // stays a substring match regardless of where the locale puts the placeholder.
-        val prefix = context.getString(R.string.next_reminder_around).substringBefore("%").trim()
-        composeRule.onNodeWithText(prefix, substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText(nextReminderPrefix, substring = true).assertDoesNotExist()
     }
 }
