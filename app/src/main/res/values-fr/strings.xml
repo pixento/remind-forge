@@ -13,6 +13,7 @@
     <string name="silent_label">Silencieux</string>
     <string name="no_alert_warning">Aucune vibration ni son sélectionné - les rappels seront silencieux.</string>
     <string name="next_reminder_around">Prochain rappel vers %1$s</string>
+    <string name="paused_for_do_not_disturb">En pause, Ne pas déranger est actif</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Intervalle</string>
@@ -28,7 +29,6 @@
     <string name="follow_do_not_disturb_schedule">Suivre la programmation Ne pas déranger</string>
     <string name="do_not_disturb_settings_title">Paramètres Ne pas déranger</string>
     <string name="do_not_disturb_settings_value">Ouvrir la programmation Ne pas déranger de votre téléphone</string>
-    <string name="do_not_disturb_paused_notice">Ne pas déranger est activé, les rappels sont donc en pause jusqu\'à ce qu\'il se termine.</string>
 
     <!-- Plage horaire / Time window picker -->
     <string name="time_window_start">Heure de début</string>

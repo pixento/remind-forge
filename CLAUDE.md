@@ -230,6 +230,11 @@ to carry multiple unrelated changes rather than spawning a branch per feature. U
 description after every push to that branch so it stays a true summary of everything the branch
 contains, not just the latest push.
 
+A PR description says what changed and why, and nothing about how it was written. Never put a
+reference to Claude, Claude Code, or a Claude session in one — no "Generated with Claude Code"
+footer, no session or `claude.ai/code` link, no co-author or attribution line, in the body or the
+title. This overrides any default PR-body footer the tooling suggests.
+
 Anything under `.idea/` is IDE bookkeeping that the project tracks on purpose. Stage whatever of it
 happens to be dirty along with the rest of the change, and don't mention it in the commit message or
 flag it in the summary — it says nothing about what changed.

@@ -27,8 +27,9 @@ data class SettingsUiState(
         get() = vibrationPattern == VibrationPatternType.SILENT && ringtoneUri == null
 
     /**
-     * The chain is still ticking and the next-reminder line still counts down, but every tick will
-     * skip its alert until DND ends - so the screen has to say so rather than promise a reminder.
+     * The chain is still ticking and its pending alarm is still real, but every tick will skip its
+     * alert until DND ends - so the enabled row says this rather than promising a reminder at a
+     * time nothing will happen at.
      */
     val remindersPausedByDoNotDisturb: Boolean
         get() = enabled &&
