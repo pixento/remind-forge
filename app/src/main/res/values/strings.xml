@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">RemindForge</string>
+    <string name="app_name">Better Habits</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Break habits with periodic reminders you feel or hear, not read — keep your phone in your pocket. Like a forge: one hit at a time shapes the steel.</string>
+    <string name="settings_description">Quiet reminders you feel or hear, not read — keep your phone in your pocket. One nudge at a time, until it sticks.</string>
     <string name="settings_reminders_enabled">Reminders enabled</string>
     <string name="settings_schedule_title">Schedule</string>
     <string name="settings_schedule_description">Choose how often to be reminded and during which hours.</string>

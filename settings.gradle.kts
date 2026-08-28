@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "RemindForge"
+rootProject.name = "BetterHabits"
 include(":app")

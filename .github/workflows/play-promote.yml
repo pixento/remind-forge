@@ -30,7 +30,7 @@ jobs:
       - name: Promote
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          PACKAGE_NAME: nl.pixento.remindforge
+          PACKAGE_NAME: nl.pixento.betterhabits
           VERSION_CODE: ${{ inputs.version_code }}
           ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
         run: python .github/scripts/promote_play_release.py

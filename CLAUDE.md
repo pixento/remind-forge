@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-RemindForge (`nl.pixento.remindforge`) is a single-module Android app (Kotlin + Jetpack Compose) that
+Better Habits (`nl.pixento.betterhabits`) is a single-module Android app (Kotlin + Jetpack Compose) that
 periodically alerts the user (vibration or ringtone) at a configurable interval within a configurable
 daily time window — e.g. "buzz every 15 minutes between 09:00 and 17:00". There is one screen
 (Settings) and no server/backend; all state lives in local DataStore Preferences.
@@ -16,7 +16,7 @@ Run all commands from the repo root via the Gradle wrapper.
 ```bash
 ./gradlew build                                    # full build (assemble + check)
 ./gradlew testDebugUnitTest                         # JVM unit tests (app/src/test)
-./gradlew testDebugUnitTest --tests "nl.pixento.remindforge.domain.NextTriggerCalculatorTest"
+./gradlew testDebugUnitTest --tests "nl.pixento.betterhabits.domain.NextTriggerCalculatorTest"
 ./gradlew testDebugUnitTest --tests "*.NextTriggerCalculatorTest.within window*"  # single test method
 ./gradlew connectedDebugAndroidTest                 # instrumented tests (app/src/androidTest), needs device/emulator
 ./gradlew assembleDebug                             # build a debug APK
@@ -58,7 +58,7 @@ export PATH="$HOME/Library/Android/sdk/platform-tools:$HOME/Library/Android/sdk/
 adb devices                                        # or: emulator -avd Medium_Phone &
 ./gradlew connectedDebugAndroidTest                 # instrumented tests on the running emulator
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n nl.pixento.remindforge/.MainActivity
+adb shell am start -n nl.pixento.betterhabits/.MainActivity
 ```
 
 Then drive the actual UI to the screen that changed and look at it — `adb shell input tap X Y`,
@@ -76,10 +76,10 @@ of the change rather than discovering it at the end.
 
 ## Architecture
 
-Manual dependency injection, no DI framework. `AppContainer` (app/src/main/java/nl/pixento/remindforge/AppContainer.kt)
+Manual dependency injection, no DI framework. `AppContainer` (app/src/main/java/nl/pixento/betterhabits/AppContainer.kt)
 is the composition root — it lazily builds the repository, scheduler, alert player, and use cases, and
-is exposed as `container` on `RemindForgeApplication`. Both `MainActivity` and the two
-`BroadcastReceiver`s reach into `(application as RemindForgeApplication).container` to get their
+is exposed as `container` on `BetterHabitsApplication`. Both `MainActivity` and the two
+`BroadcastReceiver`s reach into `(application as BetterHabitsApplication).container` to get their
 dependencies; there's no other wiring mechanism.
 
 ### The alarm chain (core mechanism)

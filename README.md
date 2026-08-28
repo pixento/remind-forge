@@ -1,8 +1,8 @@
-# RemindForge
+# Better Habits
 
 An Android app that periodically nudges you with a vibration or a sound — no notification to read,
 no reason to take your phone out of your pocket. Set an interval and the hours it should run, and it
-buzzes you every so often until you turn it off. Like a forge: one hit at a time shapes the steel.
+buzzes you every so often until you turn it off. One nudge at a time, until the habit sticks.
 
 ## Features
 
@@ -90,5 +90,5 @@ cannot make network requests at all.
 
 ## Privacy
 
-RemindForge collects nothing and sends nothing; every setting stays in the app's private storage on
+Better Habits collects nothing and sends nothing; every setting stays in the app's private storage on
 the device. The full policy, in all five shipped languages, is in [PRIVACY.md](PRIVACY.md).
