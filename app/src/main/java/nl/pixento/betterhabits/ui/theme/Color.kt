@@ -2,13 +2,42 @@ package nl.pixento.betterhabits.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// The brand accent: a dark pastel red - dusty and desaturated rather than a signal red. The 80s are
+// the dark theme's roles (a light tone has to carry on a near-black page) and the 40s the light
+// theme's; both are deep for their tone so the red reads as muted, not candied.
+//
+// The `on*` and `*Container` partners are spelled out rather than left to `darkColorScheme()`'s
+// defaults: those defaults are Material's baseline *purple*, which the old accent happened to match,
+// so leaving them out puts a purple switch thumb on a red track.
+val PastelRed80 = Color(0xFFD98A85)
+val OnPastelRed80 = Color(0xFF5A211D)
+val PastelRedContainer80 = Color(0xFF763A35)
+val OnPastelRedContainer80 = Color(0xFFFFDAD4)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val PastelRedGrey80 = Color(0xFFD8BFBD)
+val OnPastelRedGrey80 = Color(0xFF402A28)
+val PastelRedGreyContainer80 = Color(0xFF58403E)
+val OnPastelRedGreyContainer80 = Color(0xFFFFDAD6)
+
+val Clay80 = Color(0xFFE3B3A4)
+val OnClay80 = Color(0xFF4A2519)
+val ClayContainer80 = Color(0xFF643A2C)
+val OnClayContainer80 = Color(0xFFFFDBCE)
+
+val PastelRed40 = Color(0xFF8E4B47)
+val OnPastelRed40 = Color(0xFFFFFFFF)
+val PastelRedContainer40 = Color(0xFFFFDAD4)
+val OnPastelRedContainer40 = Color(0xFF3B0A08)
+
+val PastelRedGrey40 = Color(0xFF755654)
+val OnPastelRedGrey40 = Color(0xFFFFFFFF)
+val PastelRedGreyContainer40 = Color(0xFFFFDAD6)
+val OnPastelRedGreyContainer40 = Color(0xFF2C1513)
+
+val Clay40 = Color(0xFF7A5245)
+val OnClay40 = Color(0xFFFFFFFF)
+val ClayContainer40 = Color(0xFFFFDBCE)
+val OnClayContainer40 = Color(0xFF2E1508)
 
 /**
  * Fixed neutral surfaces, applied over whatever scheme `BetterHabitsTheme` picked (see

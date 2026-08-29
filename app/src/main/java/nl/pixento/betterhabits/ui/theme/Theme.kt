@@ -14,25 +14,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PastelRed80,
+    onPrimary = OnPastelRed80,
+    primaryContainer = PastelRedContainer80,
+    onPrimaryContainer = OnPastelRedContainer80,
+    secondary = PastelRedGrey80,
+    onSecondary = OnPastelRedGrey80,
+    secondaryContainer = PastelRedGreyContainer80,
+    onSecondaryContainer = OnPastelRedGreyContainer80,
+    tertiary = Clay80,
+    onTertiary = OnClay80,
+    tertiaryContainer = ClayContainer80,
+    onTertiaryContainer = OnClayContainer80,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PastelRed40,
+    onPrimary = OnPastelRed40,
+    primaryContainer = PastelRedContainer40,
+    onPrimaryContainer = OnPastelRedContainer40,
+    secondary = PastelRedGrey40,
+    onSecondary = OnPastelRedGrey40,
+    secondaryContainer = PastelRedGreyContainer40,
+    onSecondaryContainer = OnPastelRedGreyContainer40,
+    tertiary = Clay40,
+    onTertiary = OnClay40,
+    tertiaryContainer = ClayContainer40,
+    onTertiaryContainer = OnClayContainer40,
 )
 
 @Composable
