@@ -46,11 +46,12 @@ reassigns a version code that is already on the internal track rather than rebui
 is bit-for-bit what testers installed. It takes a `version_code` (blank picks the highest one on the
 internal track) and a `rollout_percentage` for a staged rollout.
 
-Store text lives in `distribution/`: release notes in `whatsnew/whatsnew-<locale>` and the listing
-copy in [store-listing.md](distribution/store-listing.md), both covering all five shipped languages.
-Keep the two in step — the upload fails on a whatsnew locale the Play listing doesn't have. Play
-preserves the newlines in a whatsnew file, so write each paragraph as one long line rather than
-wrapping it.
+Store text lives in `distribution/`: release notes in `whatsnew/whatsnew-<locale>`, the listing copy
+in [store-listing.md](distribution/store-listing.md), and the screenshot captions and feature-graphic
+tagline in `screenshots/captions/<locale>` and `screenshots/feature-graphic/<locale>` — all covering
+the same five shipped languages. Keep them in step — the upload fails on a whatsnew locale the Play
+listing doesn't have. Play preserves the newlines in a whatsnew file, so write each paragraph as one
+long line rather than wrapping it.
 
 Release builds are **unsigned locally by design**: the signing config only materialises when
 `RELEASE_KEYSTORE_PATH` points at a keystore, so nobody needs the upload key on their machine.
@@ -70,6 +71,27 @@ hatch if Play ever has to be fed a build by hand.
 
 Regardless of that gate, the workflow also attaches the signed bundle to the tag's GitHub Release,
 creating the release first if the tag doesn't have one yet.
+
+### Listing graphics
+
+All three Play graphics are drawn from the app rather than captured by hand, so they can't drift from
+what shipped: five phone screenshots (1080×1920) per language, the feature graphic (1024×500) per
+language, and the 512×512 icon. The renderers live in `app/src/test/.../screenshots/` and use
+Roborazzi to draw the real composables — and, for the icon, the same vector drawables the launcher
+icon is built from — on the JVM under Robolectric. No emulator is involved. To see them:
+
+```bash
+./gradlew :app:testDebugUnitTest -PrecordStoreGraphics=true
+open app/build/outputs/store-graphics/metadata/android/en-GB/images
+```
+
+Without that flag an ordinary test run skips the renderers entirely and writes nothing. The output is
+laid out the way `fastlane supply` and the Play Console expect, and the release workflow attaches the
+whole tree to the tag's GitHub Release as `store-graphics-<tag>.zip`. The Play upload step can only
+carry the bundle and the release notes — it has no input for images — so putting the graphics on the
+listing is still a Console action.
+
+Captions are one line per screenshot, in order, and the render fails if a locale is short a line.
 
 ## How it works
 

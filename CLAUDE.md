@@ -21,6 +21,7 @@ Run all commands from the repo root via the Gradle wrapper.
 ./gradlew connectedDebugAndroidTest                 # instrumented tests (app/src/androidTest), needs device/emulator
 ./gradlew assembleDebug                             # build a debug APK
 ./gradlew lint                                      # Android Lint
+./gradlew :app:testDebugUnitTest -PrecordStoreGraphics=true   # render the Play listing graphics
 ```
 
 Notes on the build:
@@ -73,6 +74,11 @@ The app ships four translations alongside the default `res/values/strings.xml`: 
 in the same position under the same section comment. `./gradlew lint` fails on `MissingTranslation`,
 so a change that only touches `res/values` will not get past `build` — add the translations as part
 of the change rather than discovering it at the end.
+
+`distribution/` carries three more five-locale sets that the same rule applies to, keyed by Play
+locale (`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than by res qualifier: `whatsnew/`,
+`store-listing.md`, and the store copy under `screenshots/`. Lint can't see any of them; for
+`screenshots/` the render test is what enforces it, failing when a locale is short a caption line.
 
 ## Architecture
 
@@ -169,6 +175,16 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   system settings screen rather than a normal permission dialog.
 - `receivers/` — `ReminderAlarmReceiver` (alarm chain tick) and `BootCompletedReceiver` (restarts the
   chain after reboot/app update, since `AlarmManager` alarms don't survive reboot).
+- `app/src/test/.../screenshots/` — not tests. These render the Play listing graphics (phone
+  screenshots, feature graphic, 512x512 icon) out of the app's own composables and vector drawables
+  with Roborazzi, on the JVM, in all five languages; `.github/workflows/release.yml` attaches them to
+  each tag's GitHub Release. They live in the unit test source set only because that's where the
+  Robolectric machinery is, and are excluded from an ordinary `testDebugUnitTest` — see the
+  `recordStoreGraphics` block in `app/build.gradle.kts`. Each renderer's canvas size comes from its
+  `@Config(qualifiers = ...)` (dp x density, so `w360dp-h640dp-...-xxhdpi` is exactly 1080x1920);
+  that's why there are three classes rather than one. Anything time-, locale- or palette-dependent
+  has to stay pinned — a fixed `nextTriggerAtMillis`, `TimeZone.setDefault`, and
+  `BetterHabitsTheme(dynamicColor = false)` — or the images churn between machines.
 - `ui/settings/` — single-screen Compose UI. `SettingsViewModel` holds `SettingsUiState`, collects
   `SettingsRepository.settings` and writes through `persist { ... }`, which compares the settings
   before and after the write and calls `scheduleCoordinator.rescheduleFromNow()` only when the write

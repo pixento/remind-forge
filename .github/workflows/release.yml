@@ -96,3 +96,61 @@ jobs:
       - name: Remove keystore
         if: always()
         run: rm -f "$RUNNER_TEMP/upload.jks"
+
+  # Drawn on the JVM through Robolectric, so this needs no emulator and no signing material -
+  # deliberately outside the google-play environment, whose secrets and protection rules it has no
+  # use for. Job-level permissions don't inherit from publish, hence contents: write again.
+  store-graphics:
+    name: Play listing graphics
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Matches the unit test launcher pinned in app/build.gradle.kts, so the foojay resolver never
+      # has to download a JDK.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          validate-wrappers: true
+
+      # The -P both narrows testDebugUnitTest to the renderers and switches Roborazzi from "no-op"
+      # to "write files"; without it an ordinary test run does neither.
+      - name: Render the listing graphics
+        run: ./gradlew :app:testDebugUnitTest -PrecordStoreGraphics=true
+
+      # gh release upload can't take a directory. The zip root is metadata/, the layout fastlane
+      # supply and the Play Console both expect.
+      - name: Pack the graphics
+        run: |
+          ( cd app/build/outputs/store-graphics && \
+            zip -r -q "$RUNNER_TEMP/store-graphics-$GITHUB_REF_NAME.zip" metadata )
+
+      # The raw tree as well, so it's browsable in the Actions UI without a zip inside a zip.
+      - name: Upload graphics artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: store-graphics
+          path: app/build/outputs/store-graphics/metadata
+
+      # Repeated from publish so this job stays runnable on its own for a tag that already shipped.
+      - name: Ensure a GitHub Release exists for this tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --generate-notes
+
+      # --clobber makes this idempotent if the job is re-run for the same tag.
+      - name: Upload the graphics to the tag's GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            "$RUNNER_TEMP/store-graphics-$GITHUB_REF_NAME.zip" --clobber
