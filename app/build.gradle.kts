@@ -19,13 +19,13 @@ val uploadKeystore = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNu
     ?.takeIf { it.exists() }
 
 android {
-    namespace = "nl.pixento.remindforge"
+    namespace = "nl.pixento.betterhabits"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "nl.pixento.remindforge"
+        applicationId = "nl.pixento.betterhabits"
         minSdk = 24
         targetSdk = 37
         versionCode = releaseVersionCode

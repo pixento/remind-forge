@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">RemindForge</string>
+    <string name="app_name">Better Habits</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Verander gewoontes met periodieke herinneringen die je voelt of hoort, niet leest — houd je telefoon in je zak. Net als een smidse: elke klap vormt het staal.</string>
+    <string name="settings_description">Onopvallende herinneringen die je voelt of hoort, niet leest — houd je telefoon in je zak. Steeds een klein duwtje, tot het een gewoonte wordt.</string>
     <string name="settings_reminders_enabled">Herinneringen ingeschakeld</string>
     <string name="settings_schedule_title">Schema</string>
     <string name="settings_schedule_description">Kies hoe vaak en tijdens welke uren je herinnerd wilt worden.</string>

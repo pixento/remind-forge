@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">RemindForge</string>
+    <string name="app_name">Better Habits</string>
 
     <!-- Settings screen -->
-    <string name="settings_description">Gewohnheiten ändern mit wiederkehrenden Erinnerungen, die du spürst oder hörst, nicht liest — behalte dein Telefon in der Tasche. Wie eine Schmiede: Jeder Schlag formt den Stahl.</string>
+    <string name="settings_description">Unaufdringliche Erinnerungen, die du spürst oder hörst, nicht liest — behalte dein Telefon in der Tasche. Ein kleiner Anstoß nach dem anderen, bis es zur Gewohnheit wird.</string>
     <string name="settings_reminders_enabled">Erinnerungen aktiviert</string>
     <string name="settings_schedule_title">Zeitplan</string>
     <string name="settings_schedule_description">Wähle, wie oft und in welchem Zeitraum du erinnert werden möchtest.</string>
