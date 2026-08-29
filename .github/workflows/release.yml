@@ -53,15 +53,18 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease :app:packageReleaseNativeDebugSymbols
 
       # Kept unconditionally, so the very first release - which Google requires be uploaded through
-      # the Console by hand - can just be downloaded from here.
+      # the Console by hand - can just be downloaded from here. The symbols zip rides along because
+      # a by-hand upload needs both: Play asks for it separately, under App bundle explorer.
       - name: Upload release bundle artifact
         uses: actions/upload-artifact@v7
         with:
           name: app-release-aab
-          path: app/build/outputs/bundle/release/app-release.aab
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
 
       # Leaves an already-existing release (e.g. one a human has since hand-edited with real notes)
       # untouched - this only fills in the gap for a tag that has no release yet.
@@ -72,13 +75,19 @@ jobs:
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
             gh release create "$GITHUB_REF_NAME" --generate-notes
 
-      # --clobber makes this idempotent if the job is re-run for the same tag.
-      - name: Upload the signed bundle to the tag's GitHub Release
+      # gh names an asset after the file it uploads, so the tagged names come from copies rather
+      # than from a flag. --clobber makes this idempotent if the job is re-run for the same tag.
+      - name: Upload the signed bundle and its symbols to the tag's GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp app/build/outputs/bundle/release/app-release.aab \
+            "$RUNNER_TEMP/better-habits-$GITHUB_REF_NAME.aab"
+          cp app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip \
+            "$RUNNER_TEMP/native-debug-symbols-$GITHUB_REF_NAME.zip"
           gh release upload "$GITHUB_REF_NAME" \
-            app/build/outputs/bundle/release/app-release.aab --clobber
+            "$RUNNER_TEMP/better-habits-$GITHUB_REF_NAME.aab" \
+            "$RUNNER_TEMP/native-debug-symbols-$GITHUB_REF_NAME.zip" --clobber
 
       # Stays dormant until the manual first upload has created the app's first release; see the
       # Releasing section in README.md.
@@ -89,6 +98,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: nl.pixento.betterhabits
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          debugSymbols: app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip
           tracks: internal
           status: completed
           whatsNewDirectory: distribution/whatsnew

@@ -22,6 +22,7 @@ Run all commands from the repo root via the Gradle wrapper.
 ./gradlew assembleDebug                             # build a debug APK
 ./gradlew lint                                      # Android Lint
 ./gradlew :app:testDebugUnitTest -PrecordStoreGraphics=true   # render the Play listing graphics
+./gradlew :app:packageReleaseNativeDebugSymbols     # Play's native debug symbols zip (builds the bundle)
 ```
 
 Notes on the build:
@@ -30,6 +31,13 @@ Notes on the build:
   target 11, independent of whatever JDK the Gradle daemon itself uses — Robolectric's bundled ASM
   can't parse class files from very new JDKs. Don't "fix" this pinning if a newer local JDK is
   present; it's intentional (see comments in `app/build.gradle.kts`).
+- `ndk.debugSymbolLevel` is deliberately **not** set. The bundle's only native code is prebuilt
+  AndroidX (`libandroidx.graphics.path.so`, `libdatastore_shared_counter.so`), published already
+  stripped, and AGP skips extracting metadata from any `.so` whose pre-strip input matches its
+  stripped output — so setting it packages nothing, leaves Play's "no debug symbols" warning in
+  place, and merely adds an NDK to the build's requirements. `packageReleaseNativeDebugSymbols`
+  repackages the shipped `.so` as `<abi>/<lib>.so.sym` instead; `.github/workflows/release.yml`
+  feeds that zip to the Play upload and attaches it to the tag's GitHub Release.
 - Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK
   and JUnit4; instrumented tests use the Compose test rule. MockK is deliberately a
   `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB

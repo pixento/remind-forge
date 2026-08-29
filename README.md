@@ -69,8 +69,27 @@ plus the environment **variable** (not secret — `secrets` can't be read from a
 publishes it as the `app-release-aab` run artifact without touching Play. That is also the escape
 hatch if Play ever has to be fed a build by hand.
 
-Regardless of that gate, the workflow also attaches the signed bundle to the tag's GitHub Release,
-creating the release first if the tag doesn't have one yet.
+Regardless of that gate, the workflow also attaches the signed bundle to the tag's GitHub Release as
+`better-habits-<tag>.aab`, creating the release first if the tag doesn't have one yet.
+
+### Native debug symbols
+
+Play warns on every upload that the bundle carries native code without debug symbols. That native
+code is entirely prebuilt AndroidX — `libandroidx.graphics.path.so` (via Compose) and
+`libdatastore_shared_counter.so` — and AndroidX publishes both already stripped, so AGP's
+`ndk.debugSymbolLevel` extracts nothing from them and the warning stays whatever it is set to. The
+`packageReleaseNativeDebugSymbols` task repackages the very `.so` files the bundle ships as
+`<abi>/<lib>.so.sym` instead, which is the file Play asks for; their exported symbol table is all the
+symbol information that exists for those libraries.
+
+The release workflow builds it alongside the bundle, hands it to the Play upload step, and attaches
+it to the GitHub Release as `native-debug-symbols-<tag>.zip`. When Play is being fed by hand, upload
+it in the Console under **App bundle explorer → Downloads → Upload native debug symbols** for that
+version code. To build it locally:
+
+```bash
+./gradlew :app:packageReleaseNativeDebugSymbols
+```
 
 ### Listing graphics
 
