@@ -1,3 +1,8 @@
+import com.android.build.api.artifact.SingleArtifact
+import java.time.LocalDateTime
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -171,5 +176,82 @@ tasks.withType<Test>().configureEach {
         outputs.cacheIf { false }
     } else {
         filter { excludeTestsMatching("nl.pixento.betterhabits.screenshots.*") }
+    }
+}
+
+// Native debug symbols for Play. Every AAB upload otherwise warns that the bundle contains native
+// code with no debug symbols. The only native code here is prebuilt AndroidX: graphics-path (via
+// Compose ui-graphics) and datastore's shared counter, four ABIs each. Both are published *already
+// stripped* - their pre-strip form under intermediates/merged_native_libs is byte-identical to the
+// stripped one, and carries no .symtab or .debug_* section, only the exported .dynsym.
+//
+// That is why `ndk { debugSymbolLevel = ... }`, the fix Play's warning links to, is deliberately
+// NOT set: AGP's ExtractNativeDebugMetadataTask skips any .so whose merged input has the same size
+// as its stripped output ("already been stripped"), and the merge task that would write
+// BUNDLE-METADATA is @SkipWhenEmpty - so it produces nothing, leaves the warning in place, and only
+// adds an NDK to the build's requirements. Repackage the shipped .so as the symbol file instead:
+// their exported symbol table is genuinely all the symbol information that exists for them.
+abstract class PackageNativeDebugSymbols : DefaultTask() {
+
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val bundle: RegularFileProperty
+
+    @get:OutputFile
+    abstract val outputFile: RegularFileProperty
+
+    @TaskAction
+    fun packageSymbols() {
+        val aab = bundle.get().asFile
+        val output = outputFile.get().asFile
+        output.parentFile.mkdirs()
+        ZipFile(aab).use { bundleZip ->
+            val nativeLibs = bundleZip.entries()
+                .asSequence()
+                .filter { !it.isDirectory && NATIVE_LIB.matches(it.name) }
+                .sortedBy { it.name }
+                .toList()
+            if (nativeLibs.isEmpty()) {
+                throw GradleException(
+                    "No native libraries in ${aab.name}, so Play has nothing left to warn about - " +
+                        "drop this task and its wiring in .github/workflows/release.yml."
+                )
+            }
+            ZipOutputStream(output.outputStream().buffered()).use { symbolsZip ->
+                nativeLibs.forEach { entry ->
+                    val (abi, name) = NATIVE_LIB.find(entry.name)!!.destructured
+                    // Pinned local date-time rather than an mtime: the default would be "now", and
+                    // ZipEntry.setTime would additionally read it back through the default time
+                    // zone, so two builds of the same bundle would not produce the same zip.
+                    symbolsZip.putNextEntry(
+                        ZipEntry("$abi/$name.sym").apply { setTimeLocal(DOS_EPOCH) }
+                    )
+                    bundleZip.getInputStream(entry).use { it.copyTo(symbolsZip) }
+                    symbolsZip.closeEntry()
+                }
+            }
+        }
+    }
+
+    private companion object {
+        /** How a bundle lays out the base module's packaged native libraries. */
+        val NATIVE_LIB = Regex("""base/lib/([^/]+)/([^/]+\.so)""")
+        val DOS_EPOCH: LocalDateTime = LocalDateTime.of(1980, 1, 1, 0, 0)
+    }
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        tasks.register<PackageNativeDebugSymbols>("packageReleaseNativeDebugSymbols") {
+            description = "Packages the release bundle's native libraries as a Play symbols zip."
+            // The public bundle artifact, so this can only ever describe what actually shipped -
+            // and depending on it is what makes the task build the bundle first.
+            bundle.set(variant.artifacts.get(SingleArtifact.BUNDLE))
+            outputFile.set(
+                layout.buildDirectory.file(
+                    "outputs/native-debug-symbols/release/native-debug-symbols.zip"
+                )
+            )
+        }
     }
 }
