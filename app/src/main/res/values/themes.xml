@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BetterHabits" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+        The window the system draws before and behind Compose: the launch window, the space a
+        resize or rotation briefly exposes, and everything under the transparent system bars that
+        edge-to-edge lets content scroll beneath. Its background has to match the Compose page or
+        those moments flash the wrong colour - see values-night for the dark counterpart.
+    -->
+    <style name="Theme.BetterHabits" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

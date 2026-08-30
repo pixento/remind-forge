@@ -38,6 +38,15 @@ Notes on the build:
   place, and merely adds an NDK to the build's requirements. `packageReleaseNativeDebugSymbols`
   repackages the shipped `.so` as `<abi>/<lib>.so.sym` instead; `.github/workflows/release.yml`
   feeds that zip to the Play upload and attaches it to the tag's GitHub Release.
+- Play's "app uses deprecated APIs or parameters for edge-to-edge" warning
+  (`Window.setStatusBarColor`, `setNavigationBarColor`) has **no app-side fix and is expected to
+  stay**. Nothing in `src/main` touches a window or a bar colour; the four obfuscated sites Play
+  names are androidx.activity's `EdgeToEdgeApi23/26/29/35.setUp`, i.e. the innards of the
+  `enableEdgeToEdge()` call Google's own remediation text tells you to make. They are
+  `SDK_INT`-gated and inert on 35+. Hand-rolling a replacement would only substitute
+  `setDecorFitsSystemWindows`, which is on the same Android 15 deprecation list, and would give up
+  transparent bars on API 24-28. `mapping.txt` already ships in the AAB's `BUNDLE-METADATA`, so
+  there is nothing missing on the upload side either - Play just doesn't deobfuscate that report.
 - Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK
   and JUnit4; instrumented tests use the Compose test rule. MockK is deliberately a
   `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB
@@ -214,6 +223,18 @@ time (not actual fire time) to avoid drift accumulating over a long-running chai
   `SettingsRow` also supports `checked` (a checkbox row, `Role.Checkbox`) and `enabled = false`,
   which dims a row to Material's 0.38 alpha while keeping its click modifier, so the row is
   *announced* as disabled rather than being silently inert.
+
+  Both screens draw edge to edge, so window insets reach a screen as a `contentPadding` argument
+  and are merged into its `LazyColumn`'s own `contentPadding` through `SettingsList.kt`'s
+  `PaddingValues.plus` — never as a `Modifier.padding` around the list, which would stop the
+  content at the system bars instead of letting it scroll under them. Both `Scaffold`s ask for
+  `WindowInsets.safeDrawing` rather than the default: `enableEdgeToEdge()` puts the window in
+  `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on API 30+, so landscape on a notched device needs the
+  cutout kept clear too. `res/values-night/` carries the dark `Theme.BetterHabits` and the
+  `window_background` behind it, which has to keep matching `Color.kt`'s neutral backgrounds — the
+  platform paints that colour before and around Compose, so a mismatch shows as a light flash on a
+  dark launch. `StoreGraphicsFrame.kt`'s `AppScreen` hand-duplicates `MainActivity`'s scaffold and
+  has to be changed alongside it.
 
   The Schedule group is one card: interval, then `components/ActiveWindowPicker.kt` — the "Disable
   when Do Not Disturb is on" checkbox, the two time rows, and the system-DND shortcut as the last

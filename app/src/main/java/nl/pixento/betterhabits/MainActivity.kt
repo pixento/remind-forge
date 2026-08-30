@@ -4,8 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -56,8 +57,15 @@ class MainActivity : ComponentActivity() {
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SettingsRoute(viewModel = viewModel, modifier = Modifier.padding(innerPadding))
+                // safeDrawing rather than the Scaffold default: enableEdgeToEdge() opts the
+                // window into LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, so landscape on a notched
+                // device needs the cutout kept clear too, not just the system bars. The padding
+                // goes to the screen as content padding - see PaddingValues.plus.
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets.safeDrawing,
+                ) { innerPadding ->
+                    SettingsRoute(viewModel = viewModel, contentPadding = innerPadding)
                 }
             }
         }

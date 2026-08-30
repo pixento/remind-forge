@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
@@ -176,12 +178,29 @@ private fun StoreGraphicBackground(
  * `dynamicColor = false` matters: the default is true, and on the SDK Robolectric runs the dynamic
  * branch resolves the platform's own accent palette instead of the PastelRed80-over-neutral-greys look
  * the app actually ships to anyone without Material You.
+ *
+ * The `Scaffold` and its insets have to keep matching `MainActivity`'s, and the padding has to
+ * reach the screen the same way - as its content padding - or the renders stop being a picture of
+ * what the app does. Robolectric reports no system bar insets, so what that padding measures here
+ * is zero; it is the shape of the wiring that is being kept honest, not the pixels.
  */
 @Composable
 internal fun AppScreen(content: @Composable (PaddingValues) -> Unit) {
-    BetterHabitsTheme(darkTheme = true, dynamicColor = false) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding -> content(innerPadding) }
+    AppWindow {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            contentWindowInsets = WindowInsets.safeDrawing,
+        ) { innerPadding -> content(innerPadding) }
     }
+}
+
+/**
+ * The themed window with no scaffold, as `VibrationPickerActivity` sets it up - that screen brings
+ * its own `Scaffold`, and wrapping it in a second one would pad it twice.
+ */
+@Composable
+internal fun AppWindow(content: @Composable () -> Unit) {
+    BetterHabitsTheme(darkTheme = true, dynamicColor = false) { content() }
 }
 
 /**
