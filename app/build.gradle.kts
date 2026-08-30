@@ -159,6 +159,7 @@ val recordStoreGraphics =
     providers.gradleProperty("recordStoreGraphics").map(String::toBoolean).orElse(false)
 val storeGraphicsOutputDir = layout.buildDirectory.dir("outputs/store-graphics")
 val storeGraphicsCopyDir = layout.projectDirectory.dir("../distribution/screenshots")
+val whatsNewDir = layout.projectDirectory.dir("../distribution/whatsnew")
 
 tasks.withType<Test>().configureEach {
     val recording = recordStoreGraphics.get()
@@ -167,6 +168,13 @@ tasks.withType<Test>().configureEach {
     // working directory, and the store copy lives outside this module either way.
     systemProperty("storeGraphics.outputDir", storeGraphicsOutputDir.get().asFile.absolutePath)
     systemProperty("storeGraphics.copyDir", storeGraphicsCopyDir.asFile.absolutePath)
+    // The Play release notes, read by WhatsNewFilesTest. Declared as an input as well as handed
+    // over as a path: they're outside the module's own source, so without this an edit to a
+    // whatsnew file would leave the test task UP-TO-DATE and the check unrun.
+    systemProperty("whatsNew.dir", whatsNewDir.asFile.absolutePath)
+    inputs.dir(whatsNewDir)
+        .withPropertyName("whatsNewFiles")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     if (recording) {
         filter { includeTestsMatching("nl.pixento.betterhabits.screenshots.*") }
         // The PNGs are the point of the run and aren't declared task outputs, so neither an

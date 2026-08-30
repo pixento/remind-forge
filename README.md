@@ -53,6 +53,14 @@ the same five shipped languages. Keep them in step — the upload fails on a wha
 listing doesn't have. Play preserves the newlines in a whatsnew file, so write each paragraph as one
 long line rather than wrapping it.
 
+The release notes are **generated, not written by hand**. All five are rewritten from the commits
+since the latest `v*` tag as part of preparing a pull request, so by the time a tag is pushed they
+already describe exactly the changes that release contains, and the set resets itself for the next
+cycle rather than accumulating. `WhatsNewFilesTest` fails the ordinary unit test run if a locale is
+missing, a file is empty, one exceeds Play's 500-character limit, or something that isn't a locale
+file has appeared in the directory — none of which lint or the Play upload would tell you about
+before tag time. Editing a file by hand is still fine; the next regeneration simply rewrites it.
+
 Release builds are **unsigned locally by design**: the signing config only materialises when
 `RELEASE_KEYSTORE_PATH` points at a keystore, so nobody needs the upload key on their machine.
 
