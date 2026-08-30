@@ -177,8 +177,8 @@ class SettingsScreenTest {
 
     @Test
     fun doNotDisturbWinsTheStatusLineWhenBothConditionsPause() {
-        // One line reports the chain's state, so the two reasons need an order - and it has to be
-        // the one TriggerReminderUseCase resolves them in.
+        // One line reports the chain's state, so the reasons need the order
+        // TriggerReminderUseCase resolves them in.
         setScreen(
             uiState = SettingsUiState(
                 enabled = true,

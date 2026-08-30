@@ -11,12 +11,12 @@ import nl.pixento.betterhabits.R
  * The hours reminders run in - a "only during set hours" checkbox over the two time rows - as a run
  * of sibling rows that drops into the Schedule [SettingsGroup] under the interval.
  *
- * Unticking the checkbox drops the time-of-day constraint entirely rather than hiding it: the rows
- * stay on screen (and keep their stored values, so re-ticking restores them) because hiding them
- * would make the group jump around, and because seeing what you'd go back to is part of deciding.
+ * Unticking the checkbox drops the time-of-day constraint entirely, but dims the time rows rather
+ * than hiding them: they keep their stored values so re-ticking restores them, and the group
+ * doesn't jump around.
  *
- * The conditions that *pause* reminders - Do Not Disturb, a connected car - are deliberately not
- * here; they compose with these hours rather than replacing them, and live in [AutoPausePicker].
+ * The conditions that *pause* reminders live in [AutoPausePicker]; they compose with these hours
+ * rather than replacing them.
  */
 @Composable
 fun ActiveWindowPicker(

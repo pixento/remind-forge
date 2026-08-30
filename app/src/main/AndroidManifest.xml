@@ -8,12 +8,10 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!--
-        DoNotDisturbSettings picks whichever of these intents the device can handle, and
-        AndroidCarConnectionMonitor reads the provider Android Auto publishes. Without declaring
-        them, Android 11+ package-visibility filtering makes resolveActivity() return null for all
-        the intents (so every device would fall through to the last-resort sound settings) and hides
-        the provider (so the car would always read as disconnected). The provider entry is the one
-        thing the androidx.car.app library would have merged in for us.
+        Android 11+ package-visibility filtering hides anything not declared here: without the
+        intents, DoNotDisturbSettings' resolveActivity() returns null on every device and falls
+        through to the last-resort sound settings; without the provider,
+        AndroidCarConnectionMonitor always reads as disconnected.
     -->
     <queries>
         <intent>

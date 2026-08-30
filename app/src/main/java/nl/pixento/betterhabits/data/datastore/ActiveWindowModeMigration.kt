@@ -6,15 +6,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 
 /**
  * Translates the removed `active_window_mode` preference into the independent flags that replaced
- * it. The mode used to be an either/or - *custom times* or *follow Do Not Disturb*, never both - so
- * the two arms have to become two separate settings that happen to reproduce the old behaviour.
+ * it. That mode was an either/or - *custom times* or *follow Do Not Disturb* - so each arm maps to a
+ * pair of flags reproducing the behaviour the user had.
  *
- * Existing custom-times users deliberately do **not** gain the new Do-Not-Disturb pause: that would
- * change behaviour they configured, on an upgrade they didn't ask for.
+ * Custom-times stores deliberately do **not** gain the Do-Not-Disturb pause: that would change
+ * behaviour the user configured, on an upgrade they didn't ask for.
  *
- * Runs once: it removes the legacy key, so [shouldMigrate] is false forever after. Doing this as a
- * real one-shot migration rather than a fallback inside [SettingsMapper] matters - a read-side rule
- * would re-apply on every read and overwrite whatever the user picked later.
+ * Runs once: it removes the legacy key, so [shouldMigrate] is false forever after. A read-side
+ * fallback in [SettingsMapper] would instead re-apply on every read and overwrite a later choice.
  */
 internal object ActiveWindowModeMigration : DataMigration<Preferences> {
 
@@ -26,8 +25,7 @@ internal object ActiveWindowModeMigration : DataMigration<Preferences> {
 
     override suspend fun migrate(currentData: Preferences): Preferences {
         val migrated = currentData.toMutablePreferences()
-        // The old mode followed Do Not Disturb *instead of* any fixed hours, so it maps to both
-        // flags at once; anything else was the plain custom-times mode.
+        // Following Do Not Disturb excluded fixed hours, so that arm sets both flags at once.
         val followedDoNotDisturb =
             currentData[LEGACY_ACTIVE_WINDOW_MODE] == LEGACY_DO_NOT_DISTURB_OFF
         migrated[PreferencesKeys.LIMIT_TO_ACTIVE_HOURS] = !followedDoNotDisturb

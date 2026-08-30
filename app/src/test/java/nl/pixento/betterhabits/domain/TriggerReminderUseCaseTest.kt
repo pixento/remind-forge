@@ -222,8 +222,8 @@ class TriggerReminderUseCaseTest {
 
     @Test
     fun `a condition that wasn't opted into is never consulted`() = runTest {
-        // Each pause is independent and off by default, so a phone in Do Not Disturb and plugged
-        // into a car still buzzes for someone who asked for neither.
+        // Each pause is off by default, so both conditions holding still buzzes for someone who
+        // asked for neither.
         val settings = ReminderSettings(
             enabled = true,
             intervalMinutes = 15,
@@ -246,8 +246,7 @@ class TriggerReminderUseCaseTest {
 
     @Test
     fun `the pause conditions combine with the active hours rather than replacing them`() = runTest {
-        // The point of the whole arrangement: hours AND Do Not Disturb, not one or the other. Both
-        // opted into, in-hours, and neither condition holding, so it fires.
+        // Hours AND the conditions, not one or the other.
         val settings = ReminderSettings(
             enabled = true,
             intervalMinutes = 15,
@@ -265,7 +264,7 @@ class TriggerReminderUseCaseTest {
             useCase(fixedNow = inHours).onAlarmFired(inHours.toEpochMilli()),
         )
 
-        // ... and the hours still apply on their own, even with both conditions clear.
+        // The hours still apply on their own.
         val outOfHours = scheduledInstant(20, 0)
         assertEquals(
             AlarmFiredOutcome.OUTSIDE_WINDOW,
@@ -285,7 +284,7 @@ class TriggerReminderUseCaseTest {
             vibrationPattern = VibrationPatternType.LONG_PULSE,
         )
         every { settingsRepository.settings } returns flowOf(settings)
-        // 03:00 is outside the stored window, which doesn't apply here.
+        // Outside the stored window, which doesn't apply here.
         val scheduledAt = scheduledInstant(3, 0)
 
         assertEquals(

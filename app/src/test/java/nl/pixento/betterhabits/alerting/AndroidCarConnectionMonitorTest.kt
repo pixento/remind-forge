@@ -76,7 +76,7 @@ class AndroidCarConnectionMonitorTest {
 
     @Test
     fun `a native head unit counts as connected too`() {
-        // Automotive OS rather than projection, but the phone is just as much "in the car".
+        // Automotive OS rather than projection, but just as much "in the car".
         assertTrue(monitorWithState(CONNECTION_TYPE_NATIVE).isConnectedToCar())
     }
 
@@ -103,9 +103,8 @@ class AndroidCarConnectionMonitorTest {
 
     @Test
     fun `no provider at all reads as not connected`() {
-        // What every device without Android Auto installed looks like, and what package-visibility
-        // filtering would look like if the manifest ever lost its queries entry. Failing open here
-        // is the difference between "no car" and "no reminders, ever".
+        // Every device without Android Auto, and any device whose manifest lost its queries
+        // entry. Failing open is the difference between "no car" and "no reminders, ever".
         assertFalse(AndroidCarConnectionMonitor(context).isConnectedToCar())
     }
 

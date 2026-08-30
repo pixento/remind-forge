@@ -45,7 +45,7 @@ class AutoPausePickerTest {
 
     @Test
     fun eachConditionShowsItsOwnState() {
-        // The whole point of the arrangement: they are independent, not a single choice.
+        // Independent conditions, not a single choice.
         setPicker(pauseDuringDoNotDisturb = true, pauseDuringAndroidAuto = false)
 
         composeRule.onNodeWithText(string(R.string.pause_during_do_not_disturb)).assertIsOn()
@@ -82,8 +82,8 @@ class AutoPausePickerTest {
 
     @Test
     fun theDoNotDisturbSettingsShortcutStaysLiveWhicheverWayTheCheckboxIsSet() {
-        // It's how you go and look at your Do Not Disturb schedule before deciding whether to
-        // follow it, so it can't only work once you already have.
+        // It's how you check your Do Not Disturb schedule before deciding whether to follow it,
+        // so it can't only work once you already have.
         var opened = 0
         setPicker(pauseDuringDoNotDisturb = false, onOpenDoNotDisturbSettings = { opened++ })
 

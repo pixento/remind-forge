@@ -280,7 +280,7 @@ private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
  * - not a fresh now + interval estimate, which would silently disagree with the running chain (and
  * appear to push the next reminder forward) every time this screen was opened. While something
  * pauses the alerts that instant is still real, but promising a reminder at it would be a lie, so
- * a paused state wins. The two pause reasons are checked in the same order
+ * a paused state wins. The pause reasons are checked in the order
  * [nl.pixento.betterhabits.domain.TriggerReminderUseCase] resolves them, so the line names the one
  * that would actually stop the next tick.
  */

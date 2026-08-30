@@ -29,10 +29,10 @@ enum class AlarmFiredOutcome {
  * apply, and always computes + schedules the next tick from the *scheduled* time so drift doesn't
  * compound across the chain.
  *
- * The three conditions - active hours, Do Not Disturb, a connected car - are independent and each
- * separately opted into, so a user can ask for "09:00-17:00, *and* quiet whenever Do Not Disturb is
- * on". Only the hours can be predicted for a future instant; the other two are readable only for
- * *now*, which is why they are judged here per tick rather than baked into the next trigger time.
+ * Active hours, Do Not Disturb and a connected car are independent and separately opted into, so
+ * they combine ("09:00-17:00, *and* quiet whenever Do Not Disturb is on"). Only the hours can be
+ * predicted for a future instant; the other two are readable only for *now*, so they are judged
+ * here per tick rather than baked into the next trigger time.
  */
 class TriggerReminderUseCase(
     private val settingsRepository: SettingsRepository,
@@ -58,9 +58,8 @@ class TriggerReminderUseCase(
         // can't be judged in-window and then rescheduled against a slightly different "now".
         val firedAt = now()
 
-        // Cheapest first: the window check is pure math, so a tick outside the active hours costs
-        // no system calls at all. Each of the other two is asked of the OS only when the user opted
-        // into it, so nothing is read on behalf of someone who didn't ask for that condition.
+        // Window first because it's pure math, and each condition is asked of the OS only when
+        // opted into - so a skipped tick costs as few system calls as possible.
         val outcome = when {
             !NextTriggerCalculator.isWithinWindow(firedAt, zone, settings.activeWindow) ->
                 AlarmFiredOutcome.OUTSIDE_WINDOW

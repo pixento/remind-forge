@@ -146,8 +146,8 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggling a pause condition never restarts the chain`() = runTest {
-        // These are read fresh on every tick, so restarting the chain here would only push the next
-        // reminder a full interval away for a setting that takes effect anyway.
+        // Read fresh on every tick, so restarting the chain would only push the next reminder a
+        // full interval away for a setting that takes effect anyway.
         repository = FakeSettingsRepository(ReminderSettings(enabled = true))
         val vm = viewModel()
 
@@ -210,8 +210,8 @@ class SettingsViewModelTest {
 
     @Test
     fun `resume check picks up the car being disconnected`() = runTest {
-        // There is no broadcast a manifest receiver can get for this, so returning to the screen is
-        // the only moment it can be re-read.
+        // No broadcast can wake a manifest receiver for this, so returning to the screen is the
+        // only moment it is re-read.
         every { carConnectionMonitor.isConnectedToCar() } returns true
         repository = FakeSettingsRepository(
             ReminderSettings(enabled = true, pauseDuringAndroidAuto = true),

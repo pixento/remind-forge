@@ -83,12 +83,9 @@ class StoreScreenshotsTest {
         },
         Shot("do_not_disturb") {
             AppScreen { contentPadding ->
-                // Far enough down to put the whole Automatic pauses card in frame with both
-                // conditions ticked - that card, not the Schedule above it, is what this shot is
-                // captioned for. One offset serves every locale, so it's set by the longest
-                // translation rather than by English: at 460 the German and French rows wrap to
-                // three lines and push "pause while Android Auto is connected" off the bottom,
-                // leaving a caption that promises a row the image doesn't show.
+                // Frames the whole Automatic pauses card, which is what this shot is captioned
+                // for. One offset serves every locale, so it has to clear the longest
+                // translation's row wrapping, not English's.
                 ScrolledTo(offsetDp = 560) {
                     settings(
                         contentPadding = contentPadding,

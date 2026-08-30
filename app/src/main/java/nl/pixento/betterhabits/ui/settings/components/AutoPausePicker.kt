@@ -10,14 +10,10 @@ import nl.pixento.betterhabits.R
  * The conditions that silence a reminder wherever it lands in the day, as a run of sibling rows for
  * its own [SettingsGroup].
  *
- * These *compose* with the active hours and with each other rather than replacing anything: a tick
- * alerts only when it is within the hours, Do Not Disturb is off, and no car is connected. Each is
- * separately opted into, and each is judged when the alarm fires - neither can be predicted for a
- * future instant, so neither moves the next reminder, it just doesn't sound.
- *
- * Android Auto leads so that the two Do Not Disturb rows stay adjacent: the shortcut is about the
- * checkbox above it, and a row that only leaves the app has no business splitting the conditions
- * that actually decide something.
+ * They compose with the active hours and with each other rather than replacing anything, and each
+ * is judged when the alarm fires, so neither moves the next reminder - it just doesn't sound.
+ * Android Auto leads so the two Do Not Disturb rows stay adjacent, the shortcut being about the
+ * checkbox above it.
  *
  * Being a run of siblings, this needs the [SettingsGroup] Column around it; put it in a Box and the
  * rows stack, leaving the last one to silently swallow every click.
@@ -46,10 +42,8 @@ fun AutoPausePicker(
         trailing = { Checkbox(checked = pauseDuringDoNotDisturb, onCheckedChange = null) },
     )
     SettingsDivider()
-    // Directly under the checkbox it belongs to, and last because it's the only row here that
-    // isn't a condition of its own - it leaves the app rather than setting anything. Stays live
-    // whichever way that checkbox is set: it's also how you go and check what your Do Not Disturb
-    // schedule actually is before deciding whether to follow it.
+    // Stays live whichever way the checkbox above is set: it's how you check what your Do Not
+    // Disturb schedule actually is before deciding whether to follow it.
     SettingsRow(
         title = stringResource(R.string.do_not_disturb_settings_title),
         value = stringResource(R.string.do_not_disturb_settings_value),

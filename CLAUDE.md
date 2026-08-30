@@ -52,6 +52,25 @@ Notes on the build:
   `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB
   page aligned, which makes the emulator pop up an alignment warning on every instrumented run.
 
+## Comments
+
+Comments are short, to the point, and written from the perspective of the whole codebase rather than
+the change that introduced them. A comment earns its place by telling a reader something the code
+cannot: why a non-obvious choice is the right one, what breaks if it is undone, which constraint
+outside this file forces it.
+
+Write for someone reading the file cold, months from now, with no knowledge of the change, the
+review, or the alternatives considered. In particular:
+
+- Don't narrate the edit ("moved this up", "now also does X", "changed from a mode to a flag") or
+  compare against how the code used to be. Git history holds that; a comment that references a
+  previous version rots the moment the next change lands.
+- Don't record the debugging or tuning session that produced a value. State the constraint the value
+  satisfies, not the values that were tried on the way.
+- Don't restate the code, and don't pad a real reason with a summary of what the next lines do.
+- Prefer one precise sentence to a paragraph. If a comment needs several sentences, it is usually
+  documenting a design decision that belongs in a KDoc on the type, or in this file.
+
 ## Testing strategy
 
 Instrumented tests (`app/src/androidTest`) are reserved for **major flows**: the primary Settings

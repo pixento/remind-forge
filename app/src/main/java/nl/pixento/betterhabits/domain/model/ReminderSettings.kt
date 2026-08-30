@@ -12,11 +12,9 @@ data class ReminderSettings(
     val windowStart: LocalTime = LocalTime.of(9, 0),
     val windowEnd: LocalTime = LocalTime.of(17, 0),
     /**
-     * Skip the alert while the phone is in Do Not Disturb.
-     *
-     * Off by default on purpose: [nl.pixento.betterhabits.alerting.AndroidAlertPlayer] classes
-     * alerts as `USAGE_ALARM` precisely so they punch *through* Do Not Disturb, and defaulting this
-     * on would silently reverse that decision for everyone.
+     * Skip the alert while the phone is in Do Not Disturb. Off by default because
+     * [nl.pixento.betterhabits.alerting.AndroidAlertPlayer] classes alerts as `USAGE_ALARM`
+     * precisely so they punch *through* it.
      */
     val pauseDuringDoNotDisturb: Boolean = false,
     /** Skip the alert while the phone is connected to a car (Android Auto projection). */
@@ -29,10 +27,9 @@ data class ReminderSettings(
     /**
      * The time-of-day constraint on future trigger slots, or `null` if there isn't one.
      *
-     * Only the hours can be baked into a future trigger time. The two pause conditions can't:
-     * whether Do Not Disturb is on, or a car is connected, can only be read for *now*, never
-     * predicted for a future instant - so they never clamp the next trigger and are instead judged
-     * tick by tick in [nl.pixento.betterhabits.domain.TriggerReminderUseCase].
+     * Only the hours can be baked into a future trigger time: Do Not Disturb and a car connection
+     * are readable for *now* alone, so they never clamp the next trigger and are judged tick by
+     * tick in [nl.pixento.betterhabits.domain.TriggerReminderUseCase] instead.
      */
     val activeWindow: DailyWindow?
         get() = if (limitToActiveHours) DailyWindow(windowStart, windowEnd) else null
@@ -43,13 +40,12 @@ data class ReminderSettings(
      * tick, so changing it must not restart the chain (which would push the next reminder a full
      * interval away).
      *
-     * That is why [pauseDuringDoNotDisturb] and [pauseDuringAndroidAuto] are deliberately absent:
-     * they only ever decide whether an already-scheduled tick alerts, never when it lands.
-     * [limitToActiveHours] *is* here, because it changes [activeWindow].
+     * So [pauseDuringDoNotDisturb] and [pauseDuringAndroidAuto] are absent - they decide whether an
+     * already-scheduled tick alerts, never when it lands - while [limitToActiveHours] is here
+     * because it changes [activeWindow].
      *
-     * The window times stay in here even though they're unused while [limitToActiveHours] is off:
-     * comparing them unconditionally is simpler than reasoning about which way the flag was set
-     * before *and* after the write.
+     * The window times are compared even while [limitToActiveHours] is off, which is simpler than
+     * reasoning about which way the flag was set before *and* after the write.
      */
     fun schedulesSameAs(other: ReminderSettings): Boolean =
         enabled == other.enabled &&
