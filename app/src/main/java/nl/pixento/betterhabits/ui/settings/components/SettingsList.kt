@@ -4,7 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
@@ -19,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
@@ -34,6 +38,26 @@ import androidx.compose.ui.unit.dp
  * permission banners between them - so they read as one family rather than as cards of two radii.
  */
 val SettingsCardShape = RoundedCornerShape(16.dp)
+
+/**
+ * Adds the two paddings side by side.
+ *
+ * Both settings screens are a `LazyColumn` under an edge-to-edge window, so the window insets have
+ * to reach the list as *content* padding rather than as a `Modifier.padding` around it: padded from
+ * the outside the list stops at the system bars, while inside `contentPadding` the first and last
+ * cards keep their clearance and everything in between scrolls under the bars, which is the whole
+ * point of drawing edge to edge.
+ */
+@Composable
+internal fun PaddingValues.plus(other: PaddingValues): PaddingValues {
+    val direction = LocalLayoutDirection.current
+    return PaddingValues(
+        start = calculateStartPadding(direction) + other.calculateStartPadding(direction),
+        top = calculateTopPadding() + other.calculateTopPadding(),
+        end = calculateEndPadding(direction) + other.calculateEndPadding(direction),
+        bottom = calculateBottomPadding() + other.calculateBottomPadding(),
+    )
+}
 
 @Composable
 fun SettingsGroup(

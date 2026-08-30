@@ -48,11 +48,16 @@ import nl.pixento.betterhabits.ui.settings.components.SettingsGroup
 import nl.pixento.betterhabits.ui.settings.components.SettingsRow
 import nl.pixento.betterhabits.ui.settings.components.SettingsSectionHeader
 import nl.pixento.betterhabits.ui.settings.components.buildRingtonePickerIntent
+import nl.pixento.betterhabits.ui.settings.components.plus
 import nl.pixento.betterhabits.ui.settings.vibration.PickVibrationPattern
 import nl.pixento.betterhabits.ui.settings.vibration.label
 
 @Composable
-fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
+fun SettingsRoute(
+    viewModel: SettingsViewModel,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -76,6 +81,7 @@ fun SettingsRoute(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
         },
         onDismissBatteryOptimizationBanner = viewModel::onDismissBatteryOptimizationBanner,
         modifier = modifier,
+        contentPadding = contentPadding,
     )
 }
 
@@ -91,6 +97,7 @@ fun SettingsScreen(
     onRingtoneSelected: (Uri?) -> Unit,
     onRequestExactAlarmPermission: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     onOpenDoNotDisturbSettings: () -> Unit = {},
     onRequestBatteryOptimizationExemption: () -> Unit = {},
     onDismissBatteryOptimizationBanner: () -> Unit = {},
@@ -120,7 +127,7 @@ fun SettingsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = contentPadding.plus(PaddingValues(16.dp)),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {

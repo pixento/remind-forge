@@ -1,8 +1,9 @@
 package nl.pixento.betterhabits.ui.settings.vibration
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,6 +23,7 @@ import nl.pixento.betterhabits.domain.model.VibrationPatternType
 import nl.pixento.betterhabits.ui.settings.components.SettingsDivider
 import nl.pixento.betterhabits.ui.settings.components.SettingsGroup
 import nl.pixento.betterhabits.ui.settings.components.SettingsRow
+import nl.pixento.betterhabits.ui.settings.components.plus
 
 /**
  * Full-screen pattern picker, shaped like the system ringtone picker the Sound row opens: a titled
@@ -38,6 +40,10 @@ fun VibrationPatternScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        // Matches MainActivity: the cutout has to be kept clear in landscape as well as the bars.
+        // The top bar consumes the status bar inset itself, so what reaches innerPadding on top is
+        // the bar's height.
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.vibration_label)) },
@@ -55,9 +61,8 @@ fun VibrationPatternScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .selectableGroup(),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = innerPadding.plus(PaddingValues(16.dp)),
         ) {
             item {
                 SettingsGroup {

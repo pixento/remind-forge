@@ -1,5 +1,6 @@
 package nl.pixento.betterhabits.screenshots
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.time.LocalDateTime
@@ -49,9 +50,10 @@ class StoreScreenshotsTest {
 
     private val shots = listOf(
         Shot("reminders") {
-            AppScreen {
+            AppScreen { contentPadding ->
                 settings(
-                    SettingsUiState(
+                    contentPadding = contentPadding,
+                    uiState = SettingsUiState(
                         enabled = true,
                         intervalMinutes = 20,
                         nextTriggerAtMillis = nextTrigger,
@@ -63,11 +65,12 @@ class StoreScreenshotsTest {
             }
         },
         Shot("interval") {
-            AppScreen {
+            AppScreen { contentPadding ->
                 // Frames the whole Schedule section, from its header to the Do Not Disturb row.
                 ScrolledTo(offsetDp = 212) {
                     settings(
-                        SettingsUiState(
+                        contentPadding = contentPadding,
+                        uiState = SettingsUiState(
                             enabled = true,
                             intervalMinutes = 45,
                             intervalRandomness = IntervalRandomness.TWENTY_PERCENT,
@@ -80,12 +83,13 @@ class StoreScreenshotsTest {
             }
         },
         Shot("do_not_disturb") {
-            AppScreen {
+            AppScreen { contentPadding ->
                 // High enough to keep the paused enabled-row in frame with the ticked checkbox
                 // and the time rows it dims.
                 ScrolledTo(offsetDp = 112) {
                     settings(
-                        SettingsUiState(
+                        contentPadding = contentPadding,
+                        uiState = SettingsUiState(
                             enabled = true,
                             activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
                             doNotDisturbActive = true,
@@ -96,11 +100,12 @@ class StoreScreenshotsTest {
             }
         },
         Shot("alerts") {
-            AppScreen {
+            AppScreen { contentPadding ->
                 // The Alerts card is the last thing on the screen, so this is near the bottom.
                 ScrolledTo(offsetDp = 505) {
                     settings(
-                        SettingsUiState(
+                        contentPadding = contentPadding,
+                        uiState = SettingsUiState(
                             enabled = true,
                             nextTriggerAtMillis = nextTrigger,
                             vibrationPattern = VibrationPatternType.LONG_SHORT_SHORT,
@@ -112,7 +117,7 @@ class StoreScreenshotsTest {
             }
         },
         Shot("vibration") {
-            AppScreen {
+            AppWindow {
                 VibrationPatternScreen(
                     selected = VibrationPatternType.LONG_SHORT_SHORT,
                     onSelect = {},
@@ -124,7 +129,7 @@ class StoreScreenshotsTest {
 
     /** The same call shape as `SettingsScreenTest.setScreen` - every callback stubbed. */
     @Composable
-    private fun settings(uiState: SettingsUiState) = SettingsScreen(
+    private fun settings(contentPadding: PaddingValues, uiState: SettingsUiState) = SettingsScreen(
         uiState = uiState,
         onEnabledChanged = {},
         onIntervalChanged = { _, _ -> },
@@ -134,6 +139,7 @@ class StoreScreenshotsTest {
         onVibrationPatternSelected = {},
         onRingtoneSelected = {},
         onRequestExactAlarmPermission = {},
+        contentPadding = contentPadding,
     )
 
     private val originalLocale = Locale.getDefault()
