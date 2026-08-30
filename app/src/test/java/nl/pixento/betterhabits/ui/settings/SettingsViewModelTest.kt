@@ -15,9 +15,9 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import nl.pixento.betterhabits.alerting.CarConnectionMonitor
 import nl.pixento.betterhabits.alerting.DoNotDisturbMonitor
 import nl.pixento.betterhabits.domain.ReminderScheduleCoordinator
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
@@ -40,6 +40,7 @@ class SettingsViewModelTest {
     private lateinit var coordinator: ReminderScheduleCoordinator
     private lateinit var context: Context
     private lateinit var doNotDisturbMonitor: DoNotDisturbMonitor
+    private lateinit var carConnectionMonitor: CarConnectionMonitor
 
     @Before
     fun setUp() {
@@ -50,6 +51,8 @@ class SettingsViewModelTest {
         context = mockk(relaxed = true)
         doNotDisturbMonitor = mockk()
         every { doNotDisturbMonitor.isDoNotDisturbActive() } returns false
+        carConnectionMonitor = mockk()
+        every { carConnectionMonitor.isConnectedToCar() } returns false
 
         mockkObject(ExactAlarmPermission)
         every { ExactAlarmPermission.canScheduleExactAlarms(any()) } returns true
@@ -68,7 +71,14 @@ class SettingsViewModelTest {
     }
 
     private fun viewModel() =
-        SettingsViewModel(context, repository, scheduleState, coordinator, doNotDisturbMonitor)
+        SettingsViewModel(
+            context,
+            repository,
+            scheduleState,
+            coordinator,
+            doNotDisturbMonitor,
+            carConnectionMonitor,
+        )
 
     @Test
     fun `initial state mirrors repository defaults`() {
@@ -115,35 +125,50 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `changing the active window mode triggers a coordinator reschedule`() = runTest {
+    fun `changing the active hours flag triggers a coordinator reschedule`() = runTest {
         val vm = viewModel()
 
-        vm.onActiveWindowModeChanged(ActiveWindowMode.DO_NOT_DISTURB_OFF)
+        vm.onLimitToActiveHoursChanged(false)
 
-        assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, vm.uiState.value.activeWindowMode)
+        assertFalse(vm.uiState.value.limitToActiveHours)
         coVerify(exactly = 1) { coordinator.rescheduleFromNow() }
     }
 
     @Test
-    fun `re-picking the same active window mode leaves the running chain alone`() = runTest {
+    fun `re-picking the same active hours flag leaves the running chain alone`() = runTest {
         repository = FakeSettingsRepository(ReminderSettings(enabled = true))
         val vm = viewModel()
 
-        vm.onActiveWindowModeChanged(ActiveWindowMode.CUSTOM_TIMES)
+        vm.onLimitToActiveHoursChanged(true)
 
         coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
     }
 
     @Test
-    fun `reminders read as paused only while following Do Not Disturb and it is on`() = runTest {
+    fun `toggling a pause condition never restarts the chain`() = runTest {
+        // Read fresh on every tick, so restarting the chain would only push the next reminder a
+        // full interval away for a setting that takes effect anyway.
+        repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+        val vm = viewModel()
+
+        vm.onPauseDuringDoNotDisturbChanged(true)
+        vm.onPauseDuringAndroidAutoChanged(true)
+
+        assertTrue(vm.uiState.value.pauseDuringDoNotDisturb)
+        assertTrue(vm.uiState.value.pauseDuringAndroidAuto)
+        coVerify(exactly = 0) { coordinator.rescheduleFromNow() }
+    }
+
+    @Test
+    fun `reminders read as paused only while pausing for Do Not Disturb and it is on`() = runTest {
         every { doNotDisturbMonitor.isDoNotDisturbActive() } returns true
         repository = FakeSettingsRepository(ReminderSettings(enabled = true))
         val vm = viewModel()
 
-        // Enabled and DND is on, but this mode doesn't consult it.
+        // Enabled and DND is on, but the user didn't ask to pause for it.
         assertFalse(vm.uiState.value.remindersPausedByDoNotDisturb)
 
-        vm.onActiveWindowModeChanged(ActiveWindowMode.DO_NOT_DISTURB_OFF)
+        vm.onPauseDuringDoNotDisturbChanged(true)
         assertTrue(vm.uiState.value.remindersPausedByDoNotDisturb)
 
         vm.onEnabledChanged(false)
@@ -151,12 +176,28 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `reminders read as paused only while pausing for Android Auto and it is connected`() =
+        runTest {
+            every { carConnectionMonitor.isConnectedToCar() } returns true
+            repository = FakeSettingsRepository(ReminderSettings(enabled = true))
+            val vm = viewModel()
+
+            assertFalse(vm.uiState.value.remindersPausedByAndroidAuto)
+
+            vm.onPauseDuringAndroidAutoChanged(true)
+            assertTrue(vm.uiState.value.remindersPausedByAndroidAuto)
+
+            vm.onEnabledChanged(false)
+            assertFalse(vm.uiState.value.remindersPausedByAndroidAuto)
+        }
+
+    @Test
     fun `resume check picks up Do Not Disturb being turned off elsewhere`() = runTest {
         // The filter is changed outside this app - system settings, the quick-settings tile, a
         // schedule ending - so coming back to the screen is when it gets re-read.
         every { doNotDisturbMonitor.isDoNotDisturbActive() } returns true
         repository = FakeSettingsRepository(
-            ReminderSettings(enabled = true, activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF),
+            ReminderSettings(enabled = true, pauseDuringDoNotDisturb = true),
         )
         val vm = viewModel()
         assertTrue(vm.uiState.value.remindersPausedByDoNotDisturb)
@@ -165,6 +206,23 @@ class SettingsViewModelTest {
         vm.onExactAlarmPermissionResumeCheck()
 
         assertFalse(vm.uiState.value.remindersPausedByDoNotDisturb)
+    }
+
+    @Test
+    fun `resume check picks up the car being disconnected`() = runTest {
+        // No broadcast can wake a manifest receiver for this, so returning to the screen is the
+        // only moment it is re-read.
+        every { carConnectionMonitor.isConnectedToCar() } returns true
+        repository = FakeSettingsRepository(
+            ReminderSettings(enabled = true, pauseDuringAndroidAuto = true),
+        )
+        val vm = viewModel()
+        assertTrue(vm.uiState.value.remindersPausedByAndroidAuto)
+
+        every { carConnectionMonitor.isConnectedToCar() } returns false
+        vm.onExactAlarmPermissionResumeCheck()
+
+        assertFalse(vm.uiState.value.remindersPausedByAndroidAuto)
     }
 
     @Test

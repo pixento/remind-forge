@@ -11,10 +11,10 @@ import kotlin.random.Random
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.betterhabits.alerting.AlertPlayer
+import nl.pixento.betterhabits.alerting.CarConnectionMonitor
 import nl.pixento.betterhabits.alerting.DoNotDisturbMonitor
 import nl.pixento.betterhabits.data.ScheduleStateRepository
 import nl.pixento.betterhabits.data.SettingsRepository
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
@@ -33,6 +33,7 @@ class TriggerReminderUseCaseTest {
     private fun useCase(
         fixedNow: Instant,
         doNotDisturbActive: Boolean = false,
+        connectedToCar: Boolean = false,
         random: Random = Random.Default,
     ) =
         TriggerReminderUseCase(
@@ -41,6 +42,7 @@ class TriggerReminderUseCaseTest {
             alertPlayer = alertPlayer,
             alarmScheduler = alarmScheduler,
             doNotDisturbMonitor = FakeDoNotDisturbMonitor(doNotDisturbActive),
+            carConnectionMonitor = FakeCarConnectionMonitor(connectedToCar),
             zone = zone,
             now = { fixedNow },
             random = random,
@@ -48,6 +50,10 @@ class TriggerReminderUseCaseTest {
 
     private class FakeDoNotDisturbMonitor(private val active: Boolean) : DoNotDisturbMonitor {
         override fun isDoNotDisturbActive(): Boolean = active
+    }
+
+    private class FakeCarConnectionMonitor(private val connected: Boolean) : CarConnectionMonitor {
+        override fun isConnectedToCar(): Boolean = connected
     }
 
     private fun scheduledInstant(hour: Int, minute: Int) =
@@ -168,58 +174,15 @@ class TriggerReminderUseCaseTest {
     }
 
     @Test
-    fun `following Do Not Disturb, an active filter skips the alert but still reschedules`() =
-        runTest {
-            val settings = ReminderSettings(
-                enabled = true,
-                intervalMinutes = 15,
-                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
-                vibrationPattern = VibrationPatternType.LONG_PULSE,
-                ringtoneUri = "content://media/ringtone/1",
-            )
-            every { settingsRepository.settings } returns flowOf(settings)
-            // 20:00 is outside the stored 09:00-17:00 window, which this mode must ignore, so a
-            // DO_NOT_DISTURB outcome here also proves the window isn't being consulted.
-            val scheduledAt = scheduledInstant(20, 0)
-
-            val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = true)
-                .onAlarmFired(scheduledAt.toEpochMilli())
-
-            assertEquals(AlarmFiredOutcome.DO_NOT_DISTURB, outcome)
-            verify(exactly = 0) { alertPlayer.playVibration(any()) }
-            verify(exactly = 0) { alertPlayer.playRingtone(any()) }
-            verify { alarmScheduler.scheduleNext(scheduledInstant(20, 15).toEpochMilli()) }
-        }
-
-    @Test
-    fun `following Do Not Disturb, an inactive filter fires whatever the time of day`() = runTest {
+    fun `pausing for Do Not Disturb skips the alert but still reschedules`() = runTest {
         val settings = ReminderSettings(
             enabled = true,
             intervalMinutes = 15,
-            activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
-            vibrationPattern = VibrationPatternType.LONG_PULSE,
-        )
-        every { settingsRepository.settings } returns flowOf(settings)
-        val scheduledAt = scheduledInstant(3, 0) // outside the stored window, which doesn't apply
-
-        val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = false)
-            .onAlarmFired(scheduledAt.toEpochMilli())
-
-        assertEquals(AlarmFiredOutcome.FIRED, outcome)
-        verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
-    }
-
-    @Test
-    fun `on custom times, Do Not Disturb is ignored and the alert still fires`() = runTest {
-        // The two modes are a choice, not a combination: only the mode that opted in consults DND,
-        // so custom times keeps firing through it exactly as it always has.
-        val settings = ReminderSettings(
-            enabled = true,
-            intervalMinutes = 15,
-            activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
+            pauseDuringDoNotDisturb = true,
             windowStart = LocalTime.of(9, 0),
             windowEnd = LocalTime.of(17, 0),
             vibrationPattern = VibrationPatternType.LONG_PULSE,
+            ringtoneUri = "content://media/ringtone/1",
         )
         every { settingsRepository.settings } returns flowOf(settings)
         val scheduledAt = scheduledInstant(10, 0)
@@ -227,8 +190,113 @@ class TriggerReminderUseCaseTest {
         val outcome = useCase(fixedNow = scheduledAt, doNotDisturbActive = true)
             .onAlarmFired(scheduledAt.toEpochMilli())
 
+        assertEquals(AlarmFiredOutcome.DO_NOT_DISTURB, outcome)
+        verify(exactly = 0) { alertPlayer.playVibration(any()) }
+        verify(exactly = 0) { alertPlayer.playRingtone(any()) }
+        // The chain keeps its cadence, so it resumes the moment the condition clears.
+        verify { alarmScheduler.scheduleNext(scheduledInstant(10, 15).toEpochMilli()) }
+    }
+
+    @Test
+    fun `pausing for Android Auto skips the alert but still reschedules`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            pauseDuringAndroidAuto = true,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+            ringtoneUri = "content://media/ringtone/1",
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        val outcome = useCase(fixedNow = scheduledAt, connectedToCar = true)
+            .onAlarmFired(scheduledAt.toEpochMilli())
+
+        assertEquals(AlarmFiredOutcome.ANDROID_AUTO, outcome)
+        verify(exactly = 0) { alertPlayer.playVibration(any()) }
+        verify(exactly = 0) { alertPlayer.playRingtone(any()) }
+        verify { alarmScheduler.scheduleNext(scheduledInstant(10, 15).toEpochMilli()) }
+    }
+
+    @Test
+    fun `a condition that wasn't opted into is never consulted`() = runTest {
+        // Each pause is off by default, so both conditions holding still buzzes for someone who
+        // asked for neither.
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        val scheduledAt = scheduledInstant(10, 0)
+
+        val outcome = useCase(
+            fixedNow = scheduledAt,
+            doNotDisturbActive = true,
+            connectedToCar = true,
+        ).onAlarmFired(scheduledAt.toEpochMilli())
+
         assertEquals(AlarmFiredOutcome.FIRED, outcome)
         verify { alertPlayer.playVibration(VibrationPatternType.LONG_PULSE) }
+    }
+
+    @Test
+    fun `the pause conditions combine with the active hours rather than replacing them`() = runTest {
+        // Hours AND the conditions, not one or the other.
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            pauseDuringDoNotDisturb = true,
+            pauseDuringAndroidAuto = true,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+
+        val inHours = scheduledInstant(10, 0)
+        assertEquals(
+            AlarmFiredOutcome.FIRED,
+            useCase(fixedNow = inHours).onAlarmFired(inHours.toEpochMilli()),
+        )
+
+        // The hours still apply on their own.
+        val outOfHours = scheduledInstant(20, 0)
+        assertEquals(
+            AlarmFiredOutcome.OUTSIDE_WINDOW,
+            useCase(fixedNow = outOfHours).onAlarmFired(outOfHours.toEpochMilli()),
+        )
+    }
+
+    @Test
+    fun `without active hours a pause condition is still judged per tick`() = runTest {
+        val settings = ReminderSettings(
+            enabled = true,
+            intervalMinutes = 15,
+            limitToActiveHours = false,
+            pauseDuringDoNotDisturb = true,
+            windowStart = LocalTime.of(9, 0),
+            windowEnd = LocalTime.of(17, 0),
+            vibrationPattern = VibrationPatternType.LONG_PULSE,
+        )
+        every { settingsRepository.settings } returns flowOf(settings)
+        // Outside the stored window, which doesn't apply here.
+        val scheduledAt = scheduledInstant(3, 0)
+
+        assertEquals(
+            AlarmFiredOutcome.FIRED,
+            useCase(fixedNow = scheduledAt, doNotDisturbActive = false)
+                .onAlarmFired(scheduledAt.toEpochMilli()),
+        )
+        assertEquals(
+            AlarmFiredOutcome.DO_NOT_DISTURB,
+            useCase(fixedNow = scheduledAt, doNotDisturbActive = true)
+                .onAlarmFired(scheduledAt.toEpochMilli()),
+        )
     }
 
     @Test

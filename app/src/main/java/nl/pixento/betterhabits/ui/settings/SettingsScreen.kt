@@ -33,12 +33,12 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import nl.pixento.betterhabits.R
 import nl.pixento.betterhabits.alerting.DoNotDisturbSettings
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
 import nl.pixento.betterhabits.scheduling.BatteryOptimization
 import nl.pixento.betterhabits.scheduling.ExactAlarmPermission
 import nl.pixento.betterhabits.ui.settings.components.ActiveWindowPicker
+import nl.pixento.betterhabits.ui.settings.components.AutoPausePicker
 import nl.pixento.betterhabits.ui.settings.components.BatteryOptimizationBanner
 import nl.pixento.betterhabits.ui.settings.components.ExactAlarmPermissionBanner
 import nl.pixento.betterhabits.ui.settings.components.IntervalPicker
@@ -65,9 +65,11 @@ fun SettingsRoute(
         uiState = uiState,
         onEnabledChanged = viewModel::onEnabledChanged,
         onIntervalChanged = viewModel::onIntervalChanged,
-        onActiveWindowModeChanged = viewModel::onActiveWindowModeChanged,
+        onLimitToActiveHoursChanged = viewModel::onLimitToActiveHoursChanged,
         onWindowStartChanged = viewModel::onWindowStartChanged,
         onWindowEndChanged = viewModel::onWindowEndChanged,
+        onPauseDuringDoNotDisturbChanged = viewModel::onPauseDuringDoNotDisturbChanged,
+        onPauseDuringAndroidAutoChanged = viewModel::onPauseDuringAndroidAutoChanged,
         onVibrationPatternSelected = viewModel::onVibrationPatternSelected,
         onRingtoneSelected = viewModel::onRingtoneSelected,
         onOpenDoNotDisturbSettings = {
@@ -90,7 +92,7 @@ fun SettingsScreen(
     uiState: SettingsUiState,
     onEnabledChanged: (Boolean) -> Unit,
     onIntervalChanged: (Int, IntervalRandomness) -> Unit,
-    onActiveWindowModeChanged: (ActiveWindowMode) -> Unit,
+    onLimitToActiveHoursChanged: (Boolean) -> Unit,
     onWindowStartChanged: (LocalTime) -> Unit,
     onWindowEndChanged: (LocalTime) -> Unit,
     onVibrationPatternSelected: (VibrationPatternType) -> Unit,
@@ -98,6 +100,8 @@ fun SettingsScreen(
     onRequestExactAlarmPermission: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    onPauseDuringDoNotDisturbChanged: (Boolean) -> Unit = {},
+    onPauseDuringAndroidAutoChanged: (Boolean) -> Unit = {},
     onOpenDoNotDisturbSettings: () -> Unit = {},
     onRequestBatteryOptimizationExemption: () -> Unit = {},
     onDismissBatteryOptimizationBanner: () -> Unit = {},
@@ -190,12 +194,29 @@ fun SettingsScreen(
                     )
                     SettingsDivider()
                     ActiveWindowPicker(
-                        activeWindowMode = uiState.activeWindowMode,
+                        limitToActiveHours = uiState.limitToActiveHours,
                         windowStart = uiState.windowStart,
                         windowEnd = uiState.windowEnd,
-                        onActiveWindowModeChange = onActiveWindowModeChanged,
+                        onLimitToActiveHoursChange = onLimitToActiveHoursChanged,
                         onWindowStartChange = onWindowStartChanged,
                         onWindowEndChange = onWindowEndChanged,
+                    )
+                }
+            }
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingsSectionHeader(
+                    title = stringResource(R.string.settings_auto_pause_title),
+                    description = stringResource(R.string.settings_auto_pause_description),
+                )
+                SettingsGroup {
+                    AutoPausePicker(
+                        pauseDuringDoNotDisturb = uiState.pauseDuringDoNotDisturb,
+                        pauseDuringAndroidAuto = uiState.pauseDuringAndroidAuto,
+                        onPauseDuringDoNotDisturbChange = onPauseDuringDoNotDisturbChanged,
+                        onPauseDuringAndroidAutoChange = onPauseDuringAndroidAutoChanged,
                         onOpenDoNotDisturbSettings = onOpenDoNotDisturbSettings,
                     )
                 }
@@ -257,9 +278,11 @@ private fun NoAlertSelectedWarning(modifier: Modifier = Modifier) {
  *
  * The time is the instant the pending alarm will actually fire, as recorded by whoever scheduled it
  * - not a fresh now + interval estimate, which would silently disagree with the running chain (and
- * appear to push the next reminder forward) every time this screen was opened. While Do Not Disturb
+ * appear to push the next reminder forward) every time this screen was opened. While something
  * pauses the alerts that instant is still real, but promising a reminder at it would be a lie, so
- * the paused state wins.
+ * a paused state wins. The pause reasons are checked in the order
+ * [nl.pixento.betterhabits.domain.TriggerReminderUseCase] resolves them, so the line names the one
+ * that would actually stop the next tick.
  */
 @Composable
 private fun enabledRowValue(uiState: SettingsUiState): String? {
@@ -268,6 +291,9 @@ private fun enabledRowValue(uiState: SettingsUiState): String? {
     if (!uiState.enabled) return null
     if (uiState.remindersPausedByDoNotDisturb) {
         return stringResource(R.string.paused_for_do_not_disturb)
+    }
+    if (uiState.remindersPausedByAndroidAuto) {
+        return stringResource(R.string.paused_for_android_auto)
     }
     val next = uiState.nextTriggerAtMillis ?: return null
     return stringResource(

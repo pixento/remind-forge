@@ -6,6 +6,8 @@
     <string name="settings_reminders_enabled">Recordatorios activados</string>
     <string name="settings_schedule_title">Programación</string>
     <string name="settings_schedule_description">Elige con qué frecuencia y en qué horas quieres que te recuerden.</string>
+    <string name="settings_auto_pause_title">Pausas automáticas</string>
+    <string name="settings_auto_pause_description">Guarda silencio cuando un recordatorio no te llegaría igualmente.</string>
     <string name="settings_alerts_title">Alertas</string>
     <string name="settings_alerts_description">Elige cómo se te avisa. Elige un patrón de vibración o un sonido único, para que reconozcas el recordatorio sin mirar el teléfono.</string>
     <string name="vibration_label">Vibración</string>
@@ -14,6 +16,7 @@
     <string name="no_alert_warning">No se ha seleccionado vibración ni sonido - los recordatorios sonarán en silencio.</string>
     <string name="next_reminder_around">Próximo recordatorio alrededor de las %1$s</string>
     <string name="paused_for_do_not_disturb">En pausa, No molestar está activo</string>
+    <string name="paused_for_android_auto">En pausa, Android Auto está conectado</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Intervalo</string>
@@ -26,14 +29,18 @@
     <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Ventana activa / Active window picker -->
-    <string name="follow_do_not_disturb_schedule">Seguir la programación de No molestar</string>
-    <string name="do_not_disturb_settings_title">Ajustes de No molestar</string>
-    <string name="do_not_disturb_settings_value">Abre la programación de No molestar de tu teléfono</string>
+    <string name="limit_to_active_hours">Solo durante las horas fijadas</string>
 
     <!-- Franja horaria / Time window picker -->
     <string name="time_window_start">Hora de inicio</string>
     <string name="time_window_end">Hora de fin</string>
     <string name="time_window_next_day_suffix">" (día siguiente)"</string>
+
+    <!-- Pausas automáticas / Automatic pauses -->
+    <string name="pause_during_android_auto">Pausar cuando Android Auto esté conectado</string>
+    <string name="pause_during_do_not_disturb">Pausar cuando No molestar esté activo</string>
+    <string name="do_not_disturb_settings_title">Ajustes de No molestar</string>
+    <string name="do_not_disturb_settings_value">Abre la programación de No molestar de tu teléfono</string>
 
     <!-- Permission banners -->
     <string name="exact_alarm_banner_message">Los recordatorios necesitan permiso para programar alarmas exactas y así sonar a tiempo.</string>

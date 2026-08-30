@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import nl.pixento.betterhabits.alerting.CarConnectionMonitor
 import nl.pixento.betterhabits.alerting.DoNotDisturbMonitor
 import nl.pixento.betterhabits.data.ScheduleStateRepository
 import nl.pixento.betterhabits.data.SettingsRepository
 import nl.pixento.betterhabits.domain.ReminderScheduleCoordinator
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
 import nl.pixento.betterhabits.scheduling.BatteryOptimization
@@ -28,6 +28,7 @@ class SettingsViewModel(
     private val scheduleStateRepository: ScheduleStateRepository,
     private val scheduleCoordinator: ReminderScheduleCoordinator,
     private val doNotDisturbMonitor: DoNotDisturbMonitor,
+    private val carConnectionMonitor: CarConnectionMonitor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -42,9 +43,11 @@ class SettingsViewModel(
                     enabled = settings.enabled,
                     intervalMinutes = settings.intervalMinutes,
                     intervalRandomness = settings.intervalRandomness,
-                    activeWindowMode = settings.activeWindowMode,
+                    limitToActiveHours = settings.limitToActiveHours,
                     windowStart = settings.windowStart,
                     windowEnd = settings.windowEnd,
+                    pauseDuringDoNotDisturb = settings.pauseDuringDoNotDisturb,
+                    pauseDuringAndroidAuto = settings.pauseDuringAndroidAuto,
                     vibrationPattern = settings.vibrationPattern,
                     ringtoneUri = settings.ringtoneUri,
                     ringtoneTitle = resolveRingtoneTitle(settings.ringtoneUri),
@@ -70,7 +73,13 @@ class SettingsViewModel(
         setIntervalRandomness(randomness)
     }
 
-    fun onActiveWindowModeChanged(mode: ActiveWindowMode) = persist { setActiveWindowMode(mode) }
+    fun onLimitToActiveHoursChanged(limit: Boolean) = persist { setLimitToActiveHours(limit) }
+
+    fun onPauseDuringDoNotDisturbChanged(pause: Boolean) =
+        persist { setPauseDuringDoNotDisturb(pause) }
+
+    fun onPauseDuringAndroidAutoChanged(pause: Boolean) =
+        persist { setPauseDuringAndroidAuto(pause) }
 
     fun onWindowStartChanged(time: LocalTime) = persist { setWindowStart(time) }
 
@@ -90,8 +99,8 @@ class SettingsViewModel(
     /**
      * Call from Activity.onResume(). Every piece of device state this screen shows is changed
      * elsewhere - the two permission grants in a system settings screen, Do Not Disturb in the
-     * settings screen or the quick-settings tile - so returning to the app is the moment to re-read
-     * all of it.
+     * settings screen or the quick-settings tile, a car connected or unplugged - so returning to
+     * the app is the moment to re-read all of it.
      */
     fun onExactAlarmPermissionResumeCheck() {
         refreshDeviceState()
@@ -103,6 +112,7 @@ class SettingsViewModel(
             showBatteryOptimizationBanner = !batteryBannerDismissed &&
                     !BatteryOptimization.isIgnoringBatteryOptimizations(appContext),
             doNotDisturbActive = doNotDisturbMonitor.isDoNotDisturbActive(),
+            androidAutoConnected = carConnectionMonitor.isConnectedToCar(),
         )
     }
 

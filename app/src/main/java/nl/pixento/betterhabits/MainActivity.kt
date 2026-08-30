@@ -39,13 +39,14 @@ class MainActivity : ComponentActivity() {
                                 scheduleStateRepository = container.scheduleStateRepository,
                                 scheduleCoordinator = container.scheduleCoordinator,
                                 doNotDisturbMonitor = container.doNotDisturbMonitor,
+                                carConnectionMonitor = container.carConnectionMonitor,
                             )
                         }
                     },
                 )
 
-                // Permission grants and Do Not Disturb are all changed outside this app, so
-                // re-read the device state whenever the user comes back to it.
+                // Permission grants, Do Not Disturb and the car connection are all changed
+                // outside this app, so re-read the device state whenever the user comes back to it.
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->

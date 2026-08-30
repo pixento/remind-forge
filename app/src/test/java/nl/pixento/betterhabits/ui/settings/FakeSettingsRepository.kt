@@ -4,7 +4,6 @@ import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import nl.pixento.betterhabits.data.SettingsRepository
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
@@ -34,8 +33,8 @@ class FakeSettingsRepository(
         state.value = state.value.copy(intervalRandomness = randomness)
     }
 
-    override suspend fun setActiveWindowMode(mode: ActiveWindowMode) {
-        state.value = state.value.copy(activeWindowMode = mode)
+    override suspend fun setLimitToActiveHours(limit: Boolean) {
+        state.value = state.value.copy(limitToActiveHours = limit)
     }
 
     override suspend fun setWindowStart(time: LocalTime) {
@@ -44,6 +43,14 @@ class FakeSettingsRepository(
 
     override suspend fun setWindowEnd(time: LocalTime) {
         state.value = state.value.copy(windowEnd = time)
+    }
+
+    override suspend fun setPauseDuringDoNotDisturb(pause: Boolean) {
+        state.value = state.value.copy(pauseDuringDoNotDisturb = pause)
+    }
+
+    override suspend fun setPauseDuringAndroidAuto(pause: Boolean) {
+        state.value = state.value.copy(pauseDuringAndroidAuto = pause)
     }
 
     override suspend fun setVibrationPattern(pattern: VibrationPatternType) {

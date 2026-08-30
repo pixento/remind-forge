@@ -10,7 +10,6 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import java.time.LocalTime
 import nl.pixento.betterhabits.R
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -25,9 +24,8 @@ class ActiveWindowPickerTest {
     private fun string(resId: Int) = context.getString(resId)
 
     private fun setPicker(
-        activeWindowMode: ActiveWindowMode,
-        onActiveWindowModeChange: (ActiveWindowMode) -> Unit = {},
-        onOpenDoNotDisturbSettings: () -> Unit = {},
+        limitToActiveHours: Boolean,
+        onLimitToActiveHoursChange: (Boolean) -> Unit = {},
     ) {
         composeRule.setContent {
             // The picker emits a run of sibling rows, so it needs the same Column its SettingsGroup
@@ -35,34 +33,33 @@ class ActiveWindowPickerTest {
             // last one to swallow clicks meant for the others.
             SettingsGroup {
                 ActiveWindowPicker(
-                    activeWindowMode = activeWindowMode,
+                    limitToActiveHours = limitToActiveHours,
                     windowStart = LocalTime.of(9, 0),
                     windowEnd = LocalTime.of(17, 0),
-                    onActiveWindowModeChange = onActiveWindowModeChange,
+                    onLimitToActiveHoursChange = onLimitToActiveHoursChange,
                     onWindowStartChange = {},
                     onWindowEndChange = {},
-                    onOpenDoNotDisturbSettings = onOpenDoNotDisturbSettings,
                 )
             }
         }
     }
 
     @Test
-    fun customTimesLeavesTheTimeRowsLive() {
-        setPicker(activeWindowMode = ActiveWindowMode.CUSTOM_TIMES)
+    fun setHoursLeavesTheTimeRowsLive() {
+        setPicker(limitToActiveHours = true)
 
-        composeRule.onNodeWithText(string(R.string.follow_do_not_disturb_schedule)).assertIsOff()
+        composeRule.onNodeWithText(string(R.string.limit_to_active_hours)).assertIsOn()
         composeRule.onNodeWithText(string(R.string.time_window_start)).assertIsEnabled()
         composeRule.onNodeWithText(string(R.string.time_window_end)).assertIsEnabled()
     }
 
     @Test
-    fun followingDoNotDisturbKeepsTheTimeRowsVisibleButDisabled() {
-        // The times still show their stored values - unticking restores them - but they no longer
+    fun droppingTheHoursKeepsTheTimeRowsVisibleButDisabled() {
+        // The times still show their stored values - re-ticking restores them - but they no longer
         // decide anything, so they must not read as live settings.
-        setPicker(activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF)
+        setPicker(limitToActiveHours = false)
 
-        composeRule.onNodeWithText(string(R.string.follow_do_not_disturb_schedule)).assertIsOn()
+        composeRule.onNodeWithText(string(R.string.limit_to_active_hours)).assertIsOff()
         composeRule.onNodeWithText(string(R.string.time_window_start)).assertIsNotEnabled()
         composeRule.onNodeWithText(string(R.string.time_window_end)).assertIsNotEnabled()
         composeRule.onNodeWithText("09:00").assertExists()
@@ -70,46 +67,22 @@ class ActiveWindowPickerTest {
     }
 
     @Test
-    fun tickingTheCheckboxSwitchesToFollowingDoNotDisturb() {
-        var selected: ActiveWindowMode? = null
-        setPicker(
-            activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
-            onActiveWindowModeChange = { selected = it },
-        )
+    fun untickingTheCheckboxDropsTheHours() {
+        var limit: Boolean? = null
+        setPicker(limitToActiveHours = true, onLimitToActiveHoursChange = { limit = it })
 
-        composeRule.onNodeWithText(string(R.string.follow_do_not_disturb_schedule)).performClick()
+        composeRule.onNodeWithText(string(R.string.limit_to_active_hours)).performClick()
 
-        assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, selected)
+        assertEquals(false, limit)
     }
 
     @Test
-    fun untickingTheCheckboxSwitchesBackToCustomTimes() {
-        var selected: ActiveWindowMode? = null
-        setPicker(
-            activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
-            onActiveWindowModeChange = { selected = it },
-        )
+    fun tickingTheCheckboxRestoresTheHours() {
+        var limit: Boolean? = null
+        setPicker(limitToActiveHours = false, onLimitToActiveHoursChange = { limit = it })
 
-        composeRule.onNodeWithText(string(R.string.follow_do_not_disturb_schedule)).performClick()
+        composeRule.onNodeWithText(string(R.string.limit_to_active_hours)).performClick()
 
-        assertEquals(ActiveWindowMode.CUSTOM_TIMES, selected)
-    }
-
-    @Test
-    fun theDoNotDisturbSettingsShortcutStaysLiveWhileFollowingDoNotDisturb() {
-        // The shortcut is the one row in this run that never dims - it's how you go and look at
-        // your Do Not Disturb schedule before deciding whether to follow it, so it can't only work
-        // once you already have. Checked in the mode where the rows around it *are* disabled.
-        var opened = 0
-        setPicker(
-            activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
-            onOpenDoNotDisturbSettings = { opened++ },
-        )
-
-        composeRule.onNodeWithText(string(R.string.do_not_disturb_settings_title))
-            .assertIsEnabled()
-            .performClick()
-
-        assertEquals(1, opened)
+        assertEquals(true, limit)
     }
 }

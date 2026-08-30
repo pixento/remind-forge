@@ -46,6 +46,14 @@ class ReminderSettingsTest {
     }
 
     @Test
+    fun `a pause condition change leaves the schedule untouched`() {
+        // These only ever decide whether an already-scheduled tick alerts, never when it lands, so
+        // ticking one must not restart the chain and push the next reminder a full interval away.
+        assertTrue(settings.schedulesSameAs(settings.copy(pauseDuringDoNotDisturb = true)))
+        assertTrue(settings.schedulesSameAs(settings.copy(pauseDuringAndroidAuto = true)))
+    }
+
+    @Test
     fun `each input the chain is computed from forces a reschedule`() {
         assertFalse(settings.schedulesSameAs(settings.copy(enabled = false)))
         assertFalse(settings.schedulesSameAs(settings.copy(intervalMinutes = 20)))
@@ -58,16 +66,17 @@ class ReminderSettingsTest {
         assertFalse(settings.schedulesSameAs(settings.copy(windowEnd = LocalTime.of(18, 0))))
         assertFalse(
             settings.schedulesSameAs(
-                settings.copy(activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF),
+                settings.copy(limitToActiveHours = false),
             )
         )
     }
 
     @Test
-    fun `custom times exposes the stored window, following Do Not Disturb exposes none`() {
-        // A null window is what tells NextTriggerCalculator not to clamp: whether DND is on can
-        // only be read for now, never predicted for the instant the next tick will land on.
+    fun `active hours expose the stored window, and dropping them exposes none`() {
+        // A null window is what tells NextTriggerCalculator not to clamp. Only the hours can be
+        // predicted for a future instant at all; the pause conditions can only be read for now,
+        // which is why they never appear here.
         assertEquals(DailyWindow(LocalTime.of(9, 0), LocalTime.of(17, 0)), settings.activeWindow)
-        assertNull(settings.copy(activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF).activeWindow)
+        assertNull(settings.copy(limitToActiveHours = false).activeWindow)
     }
 }
