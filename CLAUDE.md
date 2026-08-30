@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Better Habits (`nl.pixento.betterhabits`) is a single-module Android app (Kotlin + Jetpack Compose) that
-periodically alerts the user (vibration or ringtone) at a configurable interval within a configurable
-daily time window — e.g. "buzz every 15 minutes between 09:00 and 17:00". There is one screen
-(Settings) and no server/backend; all state lives in local DataStore Preferences.
+Better Habits (`nl.pixento.betterhabits`) is a single-module Android app (Kotlin + Jetpack Compose)
+that periodically alerts the user (vibration and/or ringtone) at a configurable, optionally
+randomised interval — optionally limited to daily hours, and optionally paused while Do Not Disturb
+is on or the phone is connected to a car. There is one screen (Settings) and no server/backend; all
+state lives in local DataStore Preferences.
 
 ## Common commands
 
@@ -27,63 +28,46 @@ Run all commands from the repo root via the Gradle wrapper.
 
 Notes on the build:
 - `compileSdk`/`targetSdk` = 37, `minSdk` = 24. Kotlin 2.2.10, AGP 9.3.1, Compose BOM 2026.02.01.
-- Unit tests are forced to run on JDK 21 (`Test.javaLauncher`) and Kotlin compiles to bytecode
-  target 11, independent of whatever JDK the Gradle daemon itself uses — Robolectric's bundled ASM
-  can't parse class files from very new JDKs. Don't "fix" this pinning if a newer local JDK is
-  present; it's intentional (see comments in `app/build.gradle.kts`).
-- `ndk.debugSymbolLevel` is deliberately **not** set. The bundle's only native code is prebuilt
-  AndroidX (`libandroidx.graphics.path.so`, `libdatastore_shared_counter.so`), published already
-  stripped, and AGP skips extracting metadata from any `.so` whose pre-strip input matches its
-  stripped output — so setting it packages nothing, leaves Play's "no debug symbols" warning in
-  place, and merely adds an NDK to the build's requirements. `packageReleaseNativeDebugSymbols`
-  repackages the shipped `.so` as `<abi>/<lib>.so.sym` instead; `.github/workflows/release.yml`
-  feeds that zip to the Play upload and attaches it to the tag's GitHub Release.
-- Play's "app uses deprecated APIs or parameters for edge-to-edge" warning
-  (`Window.setStatusBarColor`, `setNavigationBarColor`) has **no app-side fix and is expected to
-  stay**. Nothing in `src/main` touches a window or a bar colour; the four obfuscated sites Play
-  names are androidx.activity's `EdgeToEdgeApi23/26/29/35.setUp`, i.e. the innards of the
-  `enableEdgeToEdge()` call Google's own remediation text tells you to make. They are
-  `SDK_INT`-gated and inert on 35+. Hand-rolling a replacement would only substitute
-  `setDecorFitsSystemWindows`, which is on the same Android 15 deprecation list, and would give up
-  transparent bars on API 24-28. `mapping.txt` already ships in the AAB's `BUNDLE-METADATA`, so
-  there is nothing missing on the upload side either - Play just doesn't deobfuscate that report.
+- Unit tests are pinned to JDK 21 (`Test.javaLauncher`) and Kotlin compiles to bytecode target 11,
+  whatever JDK the Gradle daemon itself runs on — Robolectric's bundled ASM can't parse class files
+  from very new JDKs. Don't "fix" this pinning when a newer local JDK is present; it's intentional.
+- `ndk.debugSymbolLevel` is deliberately **not** set, and Play's "no debug symbols" warning is
+  expected to stay: the bundle's only native code is prebuilt AndroidX published already stripped,
+  and AGP extracts nothing from an already-stripped `.so`, so setting it packages nothing and merely
+  adds an NDK to the build's requirements. `packageReleaseNativeDebugSymbols` repackages those `.so`
+  files as `<abi>/<lib>.so.sym` instead, which `.github/workflows/release.yml` uploads to Play.
+- Play's "deprecated APIs for edge-to-edge" warning has **no app-side fix and is expected to stay**.
+  Nothing in `src/main` touches a window or bar colour; the sites Play names are inside the
+  `enableEdgeToEdge()` call its own remediation text asks for, `SDK_INT`-gated and inert on 35+.
+  Replacing it by hand would only reach for `setDecorFitsSystemWindows`, deprecated on the same list,
+  and give up transparent bars on API 24-28.
 - Unit tests use Robolectric (`app/src/test/resources/robolectric.properties` pins `sdk=34`), MockK
-  and JUnit4; instrumented tests use the Compose test rule. MockK is deliberately a
-  `testImplementation`-only dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB
-  page aligned, which makes the emulator pop up an alignment warning on every instrumented run.
+  and JUnit4; instrumented tests use the Compose test rule. MockK stays a `testImplementation`-only
+  dependency: `mockk-android` ships a JVMTI agent `.so` that isn't 16 KB page aligned, which makes
+  the emulator warn on every instrumented run.
 
 ## Comments
 
-Comments are short, to the point, and written from the perspective of the whole codebase rather than
-the change that introduced them. A comment earns its place by telling a reader something the code
-cannot: why a non-obvious choice is the right one, what breaks if it is undone, which constraint
-outside this file forces it.
+A comment earns its place by telling a reader something the code cannot: why a non-obvious choice is
+right, what breaks if it is undone, which constraint outside this file forces it. Write for someone
+opening the file cold, months from now, with no knowledge of the change that introduced it.
 
-Write for someone reading the file cold, months from now, with no knowledge of the change, the
-review, or the alternatives considered. In particular:
-
-- Don't narrate the edit ("moved this up", "now also does X", "changed from a mode to a flag") or
-  compare against how the code used to be. Git history holds that; a comment that references a
-  previous version rots the moment the next change lands.
-- Don't record the debugging or tuning session that produced a value. State the constraint the value
-  satisfies, not the values that were tried on the way.
+- Don't narrate the edit ("moved this up", "now also does X") or compare against how the code used to
+  be. Git history holds that, and such a comment rots the moment the next change lands.
+- Don't record the debugging or tuning session behind a value; state the constraint it satisfies.
 - Don't restate the code, and don't pad a real reason with a summary of what the next lines do.
-- Prefer one precise sentence to a paragraph. If a comment needs several sentences, it is usually
-  documenting a design decision that belongs in a KDoc on the type, or in this file.
+- Prefer one precise sentence to a paragraph. If a comment needs several, it is usually documenting a
+  design decision that belongs in a KDoc on the type, or in this file.
 
 ## Testing strategy
 
-Instrumented tests (`app/src/androidTest`) are reserved for **major flows**: the primary Settings
-screen's rendering and wiring (`SettingsScreenTest`), and composables whose logic only exists as UI
-wiring with no unit-testable non-UI counterpart (e.g. `ActiveWindowPickerTest`'s toggle/enabled-state
-behavior). Smaller or less important features — a picker's formatting logic, rounding/validation
-math, edge-case branching — should get unit-test coverage of the underlying pure logic instead of a
-dedicated instrumented test that re-proves the same case through rendered UI text. When both an
-instrumented test and a unit test cover the same component, the instrumented test should prove
-*wiring* (does the UI show what the logic already computed), not *re-derive* the logic's own
-correctness — a duplicate of that kind adds a slow, flaky-prone test for no additional coverage and
-should be trimmed on sight, same as `IntervalRandomnessTest` already owning the rounding math that
-`IntervalPickerTest` only needs to prove gets rendered, once.
+Instrumented tests (`app/src/androidTest`) are for **major flows** — the Settings screen's rendering
+and wiring (`SettingsScreenTest`) — and for composables whose logic exists only as UI wiring
+(`ActiveWindowPickerTest`, `AutoPausePickerTest`). Everything else (formatting, rounding, validation,
+edge-case branching) gets unit-test coverage of the underlying pure logic instead. Where both cover
+one component, the instrumented test proves *wiring* — the UI shows what the logic already computed —
+and never re-derives the logic itself: `IntervalRandomnessTest` owns the rounding math and
+`IntervalPickerTest` only proves it gets rendered, once. Trim duplicates of that kind on sight.
 
 ## Verifying a change
 
@@ -98,218 +82,156 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n nl.pixento.betterhabits/.MainActivity
 ```
 
-Then drive the actual UI to the screen that changed and look at it — `adb shell input tap X Y`,
-`adb shell uiautomator dump /sdcard/ui.xml` to find tap targets and read back radio/switch state, and
-`adb shell screencap -p /sdcard/s.png` + `adb pull` to view the result. Report what the screenshots
-showed. Vibration itself can't be verified on an emulator; say so rather than implying it was checked.
+Then drive the actual UI to the screen that changed and look at it: `adb shell input tap X Y` to
+tap, `adb shell uiautomator dump /sdcard/ui.xml` to find tap targets, and `adb shell screencap` +
+`adb pull` to view the result. Report what the screenshots showed. Vibration itself can't be
+verified on an emulator; say so rather than implying it was checked.
 
 ## Translations
 
 The app ships four translations alongside the default `res/values/strings.xml`: `values-nl`,
 `values-de`, `values-es`, `values-fr`. **Every new or renamed string has to be added to all five**,
 in the same position under the same section comment. `./gradlew lint` fails on `MissingTranslation`,
-so a change that only touches `res/values` will not get past `build` — add the translations as part
-of the change rather than discovering it at the end.
+so add the translations as part of the change rather than discovering it at the end.
 
-`distribution/` carries three more five-locale sets that the same rule applies to, keyed by Play
-locale (`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than by res qualifier: `whatsnew/`,
-`store-listing.md`, and the store copy under `screenshots/`. Lint can't see any of them; for
-`screenshots/` the render test is what enforces it, failing when a locale is short a caption line,
-and for `whatsnew/` it's `WhatsNewFilesTest`, which also enforces Play's 500-character limit and
-that nothing but the five locale files sits in that directory.
-
+`distribution/` carries three more five-locale sets under the same rule, keyed by Play locale
+(`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than res qualifier: `whatsnew/`,
+`store-listing.md`, and the store copy under `screenshots/`. Lint sees none of them — the store
+graphics render test fails when a locale is short a caption line, and `WhatsNewFilesTest` enforces
+Play's 500-character limit and that nothing but the five locale files sits in `whatsnew/`.
 `whatsnew/` is the one set that is **generated rather than written**: the `whatsnew` skill
 (`.claude/skills/whatsnew/SKILL.md`) rewrites all five files from the commits since the latest `v*`
-tag. Don't hand-edit them as part of an unrelated change — regenerate instead.
+tag, so regenerate rather than hand-editing them as part of an unrelated change.
 
 ## Architecture
 
-Manual dependency injection, no DI framework. `AppContainer` (app/src/main/java/nl/pixento/betterhabits/AppContainer.kt)
-is the composition root — it lazily builds the repository, scheduler, alert player, and use cases, and
-is exposed as `container` on `BetterHabitsApplication`. Both `MainActivity` and the two
-`BroadcastReceiver`s reach into `(application as BetterHabitsApplication).container` to get their
-dependencies; there's no other wiring mechanism.
+Manual dependency injection, no DI framework. `AppContainer` is the composition root — it lazily
+builds the repositories, scheduler, alert player, monitors and use cases and is exposed as
+`container` on `BetterHabitsApplication`, which `MainActivity` and both `BroadcastReceiver`s reach
+into for their dependencies. There is no other wiring mechanism.
 
 ### The alarm chain (core mechanism)
 
-The app doesn't use a repeating `AlarmManager` alarm. Instead it's a **self-rescheduling chain**: each
-fired alarm computes and schedules exactly one next alarm, always keyed off the previously *scheduled*
-time (not actual fire time) to avoid drift accumulating over a long-running chain.
+The app doesn't use a repeating `AlarmManager` alarm. It's a **self-rescheduling chain**: each fired
+alarm computes and schedules exactly one next alarm, keyed off the previously *scheduled* time rather
+than the actual fire time, so a doze-delayed delivery doesn't compound drift. Each type documents its
+own reasoning; these are the invariants that span them.
 
-- `NextTriggerCalculator` (domain, pure/framework-free) — given a reference instant, interval, and
-  a `DailyWindow?`, computes the next trigger instant, clamping into the window (`DailyWindow.contains`
-  owns the semantics: start inclusive, end exclusive, overnight windows where `end < start`, and
-  `start == end` meaning "always active"). A **null** window means no time-of-day constraint at all,
-  which is how `ActiveWindowMode.DO_NOT_DISTURB_OFF` is expressed: whether DND is on can only be read
-  for *now*, never predicted for a future instant, so that mode can't clamp and is judged per tick.
-  It also takes `now` (defaulting to the reference, which is right for the compute-fresh case) and
-  skips whole intervals that already elapsed: doze routinely delivers an exact alarm minutes late,
-  and without that the next slot would land in the past, fire immediately, and make the chain replay
-  every missed tick back to back. Skipping whole intervals rather than restarting from `now` keeps
-  the chain on its original cadence.
-- `TriggerReminderUseCase.onAlarmFired(scheduledAtMillis)` — called by `ReminderAlarmReceiver` on
-  every tick. Re-reads current settings (may have changed since this alarm was scheduled), fires the
-  alert only if still enabled and currently active, then always computes+schedules the next tick.
-  "Currently active" is the window check in `CUSTOM_TIMES` mode and a `DoNotDisturbMonitor` read in
-  `DO_NOT_DISTURB_OFF` mode (outcomes `OUTSIDE_WINDOW` / `DO_NOT_DISTURB`); both skip the alert and
-  still reschedule, so the chain keeps its cadence and resumes the moment the condition clears.
-- `ReminderScheduleCoordinator.rescheduleFromNow()` — the *other* entry point into the chain, used
-  whenever the chain needs to restart fresh from "now" rather than continue: on enable, on disable
-  (cancels), on a change to one of the settings the chain is *computed from* (interval, active-window
-  mode, window start/end), and on boot / app update. Called from `SettingsViewModel.persist()` and
-  `BootCompletedReceiver`. Deliberately **not** called for the alert-channel settings (vibration
-  pattern, ringtone), or when a picker re-confirms the value it already had: every tick re-reads
-  settings anyway, so restarting the chain there would only push the next reminder a full interval
-  away. `ReminderSettings.schedulesSameAs` is the predicate that decides this.
-- Whatever schedules a tick also records its instant through `ScheduleStateRepository`, since
+- Only the **hours** can be baked into a future trigger time. Do Not Disturb and a car connection are
+  readable for *now* alone, so they never clamp the next trigger: `NextTriggerCalculator` sees only
+  the interval, `IntervalRandomness` and a `DailyWindow?`, while
+  `TriggerReminderUseCase.onAlarmFired()` judges the pause conditions per tick, skipping the alert
+  but always rescheduling. The three conditions are independent and combine.
+- `ReminderScheduleCoordinator.rescheduleFromNow()` is the *other* entry point, for when the chain
+  must restart rather than continue: enable, disable (cancels), boot / app update, and a write that
+  changed an input the chain is computed from — `ReminderSettings.schedulesSameAs` decides which.
+  Restarting on anything else would only push the next reminder a full interval away.
+- Whatever schedules a tick records its instant through `ScheduleStateRepository`, since
   `AlarmManager` has no cross-process query for a pending alarm's trigger time and the Settings
-  screen would otherwise have to guess ("now + interval") — a guess that drifts away from the real
-  chain and made merely opening the app *look* like it reset the countdown. `healIfNeeded()` treats
-  a pending alarm with no recorded instant as a broken chain and restarts it (this happens once, on
-  upgrade from a version that didn't record it).
-- `AndroidAlarmScheduler` wraps `AlarmManager.setExactAndAllowWhileIdle` behind a single stable
-  `PendingIntent` (fixed request code) so there is never more than one alarm pending; it explicitly
-  cancels before rescheduling rather than relying on `FLAG_UPDATE_CURRENT` alone.
-- `ReminderAlarmReceiver` and `BootCompletedReceiver` run their work synchronously via `runBlocking`
-  (not `goAsync()`), since the work per tick (one DataStore read + a Vibrator/NotificationManager/
-  AlarmManager call) is fast and comfortably within the broadcast time budget. Keep this pattern if
-  extending them — don't reach for coroutine-async receiver patterns without a reason.
+  screen has to show the real one rather than a "now + interval" guess.
+- `AndroidAlarmScheduler` keeps a single stable `PendingIntent` (fixed request code) so no more than
+  one alarm is ever pending, and cancels before rescheduling rather than relying on
+  `FLAG_UPDATE_CURRENT` alone.
+- Both receivers work synchronously via `runBlocking`, not `goAsync()` — one DataStore read plus a
+  system call sits comfortably within the broadcast budget. Keep that pattern when extending them.
 
 ### Layers
 
 - `domain/` — pure logic and use cases (`NextTriggerCalculator`, `TriggerReminderUseCase`,
-  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`, `ActiveWindowMode`,
-  `DailyWindow`, `VibrationPatternType`). No Android framework dependencies except where noted.
-  `ReminderSettings.activeWindow` is the bridge between the mode and the calculator — it returns the
-  stored `DailyWindow` in `CUSTOM_TIMES` and `null` in `DO_NOT_DISTURB_OFF`. Both window times stay
-  stored in the DND mode (so switching back restores them) and stay in `schedulesSameAs`.
-- `data/` — `SettingsRepository` interface + `data/datastore/SettingsRepositoryImpl`, backed by
-  Preferences DataStore (`data/datastore/PreferencesKeys`, `SettingsMapper` convert between
-  `Preferences` and `ReminderSettings`). `AlertModeMigration` is a one-shot `DataMigration` that
-  translates the removed `alert_mode` preference into the two independent channels below; keep
-  schema changes to one-shot migrations rather than fallbacks in `SettingsMapper`, which would
-  re-apply on every read. `ScheduleStateRepository` (+ `ScheduleStateRepositoryImpl`) shares the same
-  DataStore but holds alarm-chain *state* rather than user settings — currently just the pending
-  alarm's trigger instant. Keep it out of `ReminderSettings`, which is the user's settings only.
-- `alerting/` — `AlertPlayer`/`AndroidAlertPlayer` (Vibrator + RingtoneManager, played
-  programmatically; no notification channel or tray notification is involved — the alarm chain is a
-  plain `BroadcastReceiver` and needs neither), `VibrationPatterns`. Vibration and sound are two
-  **independent** channels — a tick can buzz, ring, or both. `VibrationPatternType.SILENT` (whose
-  `waveformFor` is `null`) silences the first, a null `ringtoneUri` the second; silencing both is a
-  legal state that the Settings screen warns about and `TriggerReminderUseCase` reports as
-  `AlarmFiredOutcome.NO_ALERT_SELECTED` while still rescheduling.
-
-  `DoNotDisturbMonitor`/`AndroidDoNotDisturbMonitor` reads `getCurrentInterruptionFilter()`. That
-  needs **no permission and no Do-Not-Disturb access grant** (only *changing* the policy does) and
-  dates to API 23, so there's nothing in the manifest and no SDK_INT gate. Anything but
-  `INTERRUPTION_FILTER_ALL` counts as DND, deliberately including `INTERRUPTION_FILTER_ALARMS` even
-  though the OS would let our alarm-classed alerts through it; `INTERRUPTION_FILTER_UNKNOWN` fails
-  open. Note the app cannot *read* the user's DND **schedule** — `getAutomaticZenRules()` returns
-  only rules the caller owns and the system's rule belongs to package `"android"` — so following DND
-  is necessarily a live per-tick read, not a set of times copied into `ReminderSettings`.
-  `DoNotDisturbSettings.buildRequestIntent` deep-links into the system DND screen, walking a
-  resolve-checked fallback chain (`android.settings.ZEN_MODE_SETTINGS`, whose `Settings` constant is
-  `@hide`, then the public `ACTION_ZEN_MODE_PRIORITY_SETTINGS`, then `ACTION_SOUND_SETTINGS`). The
-  manifest `<queries>` block is what keeps those resolvable under Android 11+ package visibility.
+  `ReminderScheduleCoordinator`) plus `domain/model` (`ReminderSettings`, `DailyWindow`,
+  `IntervalRandomness`, `VibrationPatternType`), free of Android dependencies.
+  `ReminderSettings.activeWindow` bridges the settings to the calculator, returning the stored window
+  only while `limitToActiveHours`; the times stay stored either way, so re-ticking restores them.
+- `data/` — `SettingsRepository` + `data/datastore/SettingsRepositoryImpl` over Preferences DataStore
+  (`PreferencesKeys`, `SettingsMapper`). Schema changes go in one-shot `DataMigration`s
+  (`AlertModeMigration`, `ActiveWindowModeMigration`), never as fallbacks in `SettingsMapper`, which
+  would re-apply on every read. `ScheduleStateRepository` shares the DataStore but holds alarm-chain
+  *state* rather than user settings — keep it out of `ReminderSettings`.
+- `alerting/` — `AlertPlayer`/`AndroidAlertPlayer` (Vibrator + RingtoneManager played
+  programmatically; the chain is a plain `BroadcastReceiver`, so no notification channel or tray
+  notification is involved) and `VibrationPatterns`. Vibration and sound are **independent**
+  channels: `VibrationPatternType.SILENT` silences one, a null `ringtoneUri` the other, and silencing
+  both is a legal state the screen warns about while the chain still reschedules.
+  `DoNotDisturbMonitor` and `CarConnectionMonitor` are the two live per-tick reads; both need no
+  permission and both fail open. The manifest `<queries>` block keeps `DoNotDisturbSettings`'
+  deep-link intents resolvable and the car-connection provider visible under Android 11+ package
+  visibility — drop an entry and both silently read as "off".
 - `scheduling/` — `AlarmScheduler`/`AndroidAlarmScheduler`, plus `ExactAlarmPermission` and
-  `BatteryOptimization` helpers for the two runtime-permission-like states the Settings screen has to
-  surface (SCHEDULE_EXACT_ALARM grant, battery optimization exemption) since both are granted via a
-  system settings screen rather than a normal permission dialog.
-- `receivers/` — `ReminderAlarmReceiver` (alarm chain tick) and `BootCompletedReceiver` (restarts the
-  chain after reboot/app update, since `AlarmManager` alarms don't survive reboot).
-- `app/src/test/.../screenshots/` — not tests. These render the Play listing graphics (phone
-  screenshots, feature graphic, 512x512 icon) out of the app's own composables and vector drawables
-  with Roborazzi, on the JVM, in all five languages; `.github/workflows/release.yml` attaches them to
-  each tag's GitHub Release. They live in the unit test source set only because that's where the
-  Robolectric machinery is, and are excluded from an ordinary `testDebugUnitTest` — see the
-  `recordStoreGraphics` block in `app/build.gradle.kts`. Each renderer's canvas size comes from its
-  `@Config(qualifiers = ...)` (dp x density, so `w360dp-h640dp-...-xxhdpi` is exactly 1080x1920);
-  that's why there are three classes rather than one. Anything time-, locale- or palette-dependent
-  has to stay pinned — a fixed `nextTriggerAtMillis`, `TimeZone.setDefault`, and
-  `BetterHabitsTheme(dynamicColor = false)` — or the images churn between machines.
-- `ui/settings/` — single-screen Compose UI. `SettingsViewModel` holds `SettingsUiState`, collects
-  `SettingsRepository.settings` and writes through `persist { ... }`, which compares the settings
-  before and after the write and calls `scheduleCoordinator.rescheduleFromNow()` only when the write
-  actually changed the chain's inputs — so an interval/window change takes effect immediately
-  instead of waiting for the in-flight chain, while an alert-channel change leaves the countdown
-  running. The screen's "next reminder" line shows the recorded pending instant
-  (`SettingsUiState.nextTriggerAtMillis`), not a recomputed estimate. `ui/settings/components/`
-  holds the individual controls (interval picker, time window picker, ringtone picker launcher,
-  permission banners), and `ui/settings/vibration/` the vibration pattern picker.
+  `BatteryOptimization` for the two permission-like states the Settings screen surfaces.
+- `receivers/` — `ReminderAlarmReceiver` (chain tick) and `BootCompletedReceiver` (restarts the chain
+  after reboot / app update, since alarms don't survive a reboot).
+- `app/src/test/.../screenshots/` — **not tests.** They render the Play listing graphics with
+  Roborazzi on the JVM in all five languages, for `.github/workflows/release.yml` to attach to each
+  tag's GitHub Release. They live in the unit test source set only for the Robolectric machinery and
+  are excluded from an ordinary `testDebugUnitTest` (see the `recordStoreGraphics` block in
+  `app/build.gradle.kts`). Canvas size comes from each class's `@Config(qualifiers = ...)`, which is
+  why there are three of them; anything time-, locale- or palette-dependent stays pinned, or the
+  images churn between machines.
+- `ui/settings/` — single-screen Compose UI. `SettingsViewModel` holds `SettingsUiState` and writes
+  through `persist { ... }`, the single write path and the place that decides whether the chain
+  restarts; the "next reminder" line shows the recorded pending instant, never a recomputed estimate.
+  The screen is four groups: enabled, Schedule (interval + randomness + active hours), Auto-pause,
+  and Alerts.
 
-  The screen follows the platform sound-and-vibration settings idiom: rounded grouped cards of rows,
-  each row a title over its current value in the accent colour, the whole row tappable to open a
-  picker. Build new settings out of `components/SettingsList.kt` (`SettingsGroup`, `SettingsRow`,
-  `SettingsDivider`) and `components/NumberInputDialog.kt`, rather than adding bespoke inline
-  controls. `NumberInputDialog` keeps the typed value as a draft until OK so nothing outside its
-  `range` can ever be committed (OK is disabled while the field is empty or out of range, which is
-  why the interval row can offer free numeric entry without the caller clamping a surprise value).
-  A radio-style chooser is a full screen rather than a dialog here — see `ui/settings/vibration/`.
-  `SettingsRow` also supports `checked` (a checkbox row, `Role.Checkbox`) and `enabled = false`,
-  which dims a row to Material's 0.38 alpha while keeping its click modifier, so the row is
-  *announced* as disabled rather than being silently inert.
+  It follows the platform sound-and-vibration idiom: rounded grouped cards of rows, each row a title
+  over its current value in the accent colour, the whole row tappable to open a picker. Build new
+  settings out of `components/SettingsList.kt` (`SettingsSectionHeader`, `SettingsGroup`,
+  `SettingsRow`, `SettingsDivider`) and `components/NumberInputDialog.kt` rather than bespoke inline
+  controls; a radio-style chooser is a full screen rather than a dialog (`ui/settings/vibration/`).
+  `SettingsRow` also supports `checked` (a `Role.Checkbox` row) and `enabled = false`, which dims to
+  Material's 0.38 alpha while keeping the click modifier, so a row is *announced* as disabled rather
+  than being silently inert. A composable emitting a *run of sibling rows* (`ActiveWindowPicker`,
+  `AutoPausePicker`) needs the `SettingsGroup` Column around it — in a `Box` the rows stack and the
+  last one swallows every click. `uiautomator dump` doesn't faithfully report Compose's
+  `checked`/`enabled` semantics for these rows; trust the Compose test assertions and screenshots.
 
-  Both screens draw edge to edge, so window insets reach a screen as a `contentPadding` argument
-  and are merged into its `LazyColumn`'s own `contentPadding` through `SettingsList.kt`'s
-  `PaddingValues.plus` — never as a `Modifier.padding` around the list, which would stop the
-  content at the system bars instead of letting it scroll under them. Both `Scaffold`s ask for
-  `WindowInsets.safeDrawing` rather than the default: `enableEdgeToEdge()` puts the window in
-  `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on API 30+, so landscape on a notched device needs the
-  cutout kept clear too. `res/values-night/` carries the dark `Theme.BetterHabits` and the
-  `window_background` behind it, which has to keep matching `Color.kt`'s neutral backgrounds — the
-  platform paints that colour before and around Compose, so a mismatch shows as a light flash on a
-  dark launch. `StoreGraphicsFrame.kt`'s `AppScreen` hand-duplicates `MainActivity`'s scaffold and
-  has to be changed alongside it.
+  Both screens draw edge to edge: insets reach a screen as a `contentPadding` argument merged into
+  the `LazyColumn`'s own through `SettingsList.kt`'s `PaddingValues.plus`, never as a
+  `Modifier.padding` around the list, which would stop the content at the system bars instead of
+  letting it scroll under them. Both `Scaffold`s ask for `WindowInsets.safeDrawing`, since
+  `enableEdgeToEdge()` sets `LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` on API 30+ and a notched device in
+  landscape needs the cutout kept clear too. `res/values-night/`'s `window_background` has to keep
+  matching `Color.kt`'s neutral backgrounds — the platform paints it before and around Compose, so a
+  mismatch shows as a light flash on a dark launch. `StoreGraphicsFrame.kt`'s `AppScreen`
+  hand-duplicates `MainActivity`'s scaffold and has to change alongside it.
 
-  The Schedule group is one card: interval, then `components/ActiveWindowPicker.kt` — the "Disable
-  when Do Not Disturb is on" checkbox, the two time rows, and the system-DND shortcut as the last
-  row. Ticking the checkbox **disables** the time rows rather than hiding them (they keep their
-  stored values, so unticking restores them, and the group doesn't jump around); the shortcut row
-  stays live either way, since it's also how you check what your DND schedule is before deciding.
-  `ActiveWindowPicker` emits a *run of sibling rows*, so it needs the `SettingsGroup` Column around
-  it — put it in a `Box` and the rows stack, leaving the last one to silently swallow every click.
-  Note also that `uiautomator dump` does not faithfully report Compose's `checked`/`enabled`
-  semantics for these rows; trust the Compose test assertions and screenshots, not the XML dump.
-
-  Both alert channels open a *separate picker activity*, so the two rows behave alike: Sound launches
+  Both alert channels open a *separate picker activity* so the two rows behave alike: Sound launches
   the system `ACTION_RINGTONE_PICKER`, Vibration launches `VibrationPickerActivity` through the
-  `PickVibrationPattern` result contract. The vibration picker applies on tap (it buzzes the pattern
-  and updates its activity result) but deliberately doesn't write settings itself — the result is
-  delivered when the screen finishes, and `SettingsViewModel.persist()` stays the single write path.
+  `PickVibrationPattern` result contract. The vibration picker buzzes on tap and updates its activity
+  result, but deliberately doesn't write settings itself.
 
 ### Permission model
 
-No dangerous runtime permissions requiring a request dialog. `SCHEDULE_EXACT_ALARM` and battery
-optimization exemption are both granted through a system settings screen outside the app, so
-`MainActivity` re-checks their state in `onResume` (`SettingsViewModel.onExactAlarmPermissionResumeCheck`
-→ `refreshDeviceState()`) rather than via an `ActivityResultContract` callback. The current Do Not
-Disturb state is re-read on the same hook — it needs no permission, but it changes outside the app
-(system settings, quick-settings tile, a schedule starting), so returning to the screen is when the
-"reminders are paused" notice gets refreshed. Live updates while the screen sits open would need a
-*runtime-registered* receiver for `ACTION_INTERRUPTION_FILTER_CHANGED`; a manifest `<receiver>`
-would never fire, since that broadcast carries `FLAG_RECEIVER_REGISTERED_ONLY`.
+No dangerous runtime permissions requiring a request dialog. `SCHEDULE_EXACT_ALARM` and the battery
+optimization exemption are both granted on a system settings screen outside the app, so
+`MainActivity` re-checks them in `onResume` (`SettingsViewModel.onExactAlarmPermissionResumeCheck` →
+`refreshDeviceState()`) rather than via an `ActivityResultContract` callback. The Do Not Disturb and
+car-connection states refresh on the same hook — they need no permission but change outside the app,
+so returning to the screen is when the "reminders are paused" notice gets updated. Live updates while
+the screen sits open would need a *runtime-registered* receiver: the DND broadcast carries
+`FLAG_RECEIVER_REGISTERED_ONLY`, and `ACTION_CAR_CONNECTION_UPDATED` is an implicit broadcast a
+manifest receiver can't get either.
 
 ## Git workflow
 
-Don't commit automatically after making changes. Only commit when the user explicitly asks for it,
-and when they do, use a short, single-sentence, imperative style, descriptive commit message.
+Don't commit automatically after making changes. Only commit when the user explicitly asks, with a
+short, single-sentence, imperative, descriptive message; a request to commit and/or push counts for
+one commit only, not for subsequent changes.
 
-If the current branch is `main`, create a feature branch and open a PR before committing. If a feature
-branch is already checked out, keep committing to it and don't branch again — one branch is allowed
-to carry multiple unrelated changes rather than spawning a branch per feature. Update the PR's
-description after every push to that branch so it stays a true summary of everything the branch
-contains, not just the latest push.
+If the current branch is `main`, create a feature branch and open a PR before committing. If a
+feature branch is already checked out, keep committing to it and don't branch again — one branch may
+carry several unrelated changes. Update the PR's description after every push so it stays a true
+summary of everything the branch contains, not just the latest push.
 
-Before opening or updating a PR, if the branch changes anything a user of the app can notice, run
-the `whatsnew` skill and include the regenerated `distribution/whatsnew` in the same push. It
-rewrites all five locale files wholesale from the latest `v*` tag onwards — never append to them by
-hand — so whatever is committed when the next tag is pushed already describes exactly that release.
+Before opening or updating a PR, if the branch changes anything a user of the app can notice, run the
+`whatsnew` skill and include the regenerated `distribution/whatsnew` in the same push, so whatever is
+committed when the next tag is pushed already describes exactly that release.
 
 A PR description says what changed and why, and nothing about how it was written. Never put a
 reference to Claude, Claude Code, or a Claude session in one — no "Generated with Claude Code"
 footer, no session or `claude.ai/code` link, no co-author or attribution line, in the body or the
 title. This overrides any default PR-body footer the tooling suggests.
 
-Anything under `.idea/` is IDE bookkeeping that the project tracks on purpose. Stage whatever of it
-happens to be dirty along with the rest of the change, and don't mention it in the commit message or
-flag it in the summary — it says nothing about what changed.
+Anything under `.idea/` is IDE bookkeeping the project tracks on purpose. Stage whatever of it is
+dirty along with the rest of the change, and don't mention it in the commit message or the summary —
+it says nothing about what changed.
