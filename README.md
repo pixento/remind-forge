@@ -46,12 +46,24 @@ reassigns a version code that is already on the internal track rather than rebui
 is bit-for-bit what testers installed. It takes a `version_code` (blank picks the highest one on the
 internal track) and a `rollout_percentage` for a staged rollout.
 
+**Dispatch that workflow from the tag being promoted.** The same run also publishes the store
+listing — the five locales' title, short and full description from `distribution/listings`, and the
+screenshots, feature graphic and icon downloaded from the tag's `store-graphics-<tag>.zip` — all
+inside the edit that assigns the version code, committed once, so the binary and the copy describing
+it go to Google's review together. The copy comes from the checked-out ref and the graphics from the
+tag, which is why the two should be the same tag; `graphics_tag` overrides the second half when they
+can't be. Set `update_listing: false` to promote the binary alone, and `dry_run: true` to have Play
+validate the whole edit and commit nothing — worth doing before the first listing publish, since a
+locale the Console has never had is the one thing that fails at this point.
+
 Store text lives in `distribution/`: release notes in `whatsnew/whatsnew-<locale>`, the listing copy
-in [store-listing.md](distribution/store-listing.md), and the screenshot captions and feature-graphic
-tagline in `screenshots/captions/<locale>` and `screenshots/feature-graphic/<locale>` — all covering
-the same five shipped languages. Keep them in step — the upload fails on a whatsnew locale the Play
-listing doesn't have. Play preserves the newlines in a whatsnew file, so write each paragraph as one
-long line rather than wrapping it.
+in `listings/<locale>/{title,short_description,full_description}.txt` (with the reasoning behind it
+in [store-listing.md](distribution/store-listing.md)), and the screenshot captions and
+feature-graphic tagline in `screenshots/captions/<locale>` and `screenshots/feature-graphic/<locale>`
+— all covering the same five shipped languages. Keep them in step — the upload fails on a whatsnew
+locale the Play listing doesn't have. Play preserves the newlines in a whatsnew file and in a full
+description, so write each paragraph as one long line rather than wrapping it. `ListingFilesTest`
+holds the listing copy to Play's 30/80/4000-character limits and to the five locales.
 
 The release notes are **generated, not written by hand**. All five are rewritten from the commits
 since the latest `v*` tag as part of preparing a pull request, so by the time a tag is pushed they
@@ -68,7 +80,7 @@ CI expects these in the `google-play` GitHub Environment:
 
 | Secret | |
 |---|---|
-| `PLAY_SERVICE_ACCOUNT_JSON` | Play Developer API service-account key |
+| `PLAY_SERVICE_ACCOUNT_JSON` | Play Developer API service-account key — needs the **store listing** permission as well as release access, or the promotion's listing write is rejected |
 | `RELEASE_KEYSTORE_BASE64` | base64 of the upload keystore |
 | `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` | keystore credentials |
 

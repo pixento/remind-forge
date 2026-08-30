@@ -95,10 +95,13 @@ in the same position under the same section comment. `./gradlew lint` fails on `
 so add the translations as part of the change rather than discovering it at the end.
 
 `distribution/` carries three more five-locale sets under the same rule, keyed by Play locale
-(`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than res qualifier: `whatsnew/`,
-`store-listing.md`, and the store copy under `screenshots/`. Lint sees none of them — the store
-graphics render test fails when a locale is short a caption line, and `WhatsNewFilesTest` enforces
-Play's 500-character limit and that nothing but the five locale files sits in `whatsnew/`.
+(`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than res qualifier: `whatsnew/`, `listings/`,
+and the store copy under `screenshots/`. Lint sees none of them — the store graphics render test
+fails when a locale is short a caption line, `WhatsNewFilesTest` enforces Play's 500-character limit
+and that nothing but the five locale files sits in `whatsnew/`, and `ListingFilesTest` does the same
+for `listings/` against Play's 30/80/4000-character limits. All three are uploaded verbatim by CI —
+`listings/` and the rendered graphics by `.github/scripts/promote_play_release.py`, inside the very
+edit that promotes a version code to production — so a typo there reaches the store as it is written.
 `whatsnew/` is the one set that is **generated rather than written**: the `whatsnew` skill
 (`.claude/skills/whatsnew/SKILL.md`) rewrites all five files from the commits since the latest `v*`
 tag, so regenerate rather than hand-editing them as part of an unrelated change.

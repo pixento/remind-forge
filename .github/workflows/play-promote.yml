@@ -1,7 +1,13 @@
 name: Promote to production
 
-# Reassigns a version code that is already on the internal track to production. Nothing is rebuilt,
-# so what reaches production is bit-for-bit what testers installed.
+# Reassigns a version code that is already on the internal track to production, and publishes the
+# store listing that describes it. Nothing is rebuilt, so what reaches production is bit-for-bit
+# what testers installed, and the graphics come from the tag's own GitHub Release rather than being
+# rendered again here.
+#
+# Dispatch this workflow *from the tag being promoted*: the listing copy comes from the checked-out
+# ref and the graphics from the tag's release, so running it from the tag is what makes the two
+# describe the same version.
 on:
   workflow_dispatch:
     inputs:
@@ -12,12 +18,25 @@ on:
         description: 'Staged rollout percentage (1-100)'
         required: true
         default: '100'
+      update_listing:
+        description: 'Also publish the store listing copy and graphics'
+        type: boolean
+        default: true
+      graphics_tag:
+        description: 'Tag whose rendered graphics to publish (blank = the ref this run was dispatched from)'
+        required: false
+      dry_run:
+        description: 'Validate the edit with Play and commit nothing'
+        type: boolean
+        default: false
 
 jobs:
   promote:
     name: Promote internal release to production
     runs-on: ubuntu-latest
     environment: google-play
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
 
@@ -27,10 +46,47 @@ jobs:
 
       - run: pip install --quiet google-auth requests
 
+      # The listing text comes from this checkout and the graphics from the tag's release, so a tag
+      # is what ties them together. Refusing to guess one is deliberate: publishing one release's
+      # screenshots under another's copy is not something to discover in the Console afterwards.
+      - name: Resolve the tag to publish graphics from
+        if: inputs.update_listing
+        id: graphics
+        env:
+          GRAPHICS_TAG: ${{ inputs.graphics_tag }}
+        run: |
+          tag="${GRAPHICS_TAG:-$GITHUB_REF_NAME}"
+          case "$tag" in
+            v*) ;;
+            *)
+              echo "::error::update_listing needs a v* tag: dispatch this workflow from the tag" \
+                   "being promoted, or fill in graphics_tag. Got '$tag'."
+              exit 1
+              ;;
+          esac
+          if [ "$tag" != "$GITHUB_REF_NAME" ]; then
+            echo "::notice::Listing copy comes from $GITHUB_REF_NAME, graphics from $tag."
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # The zip root is metadata/, so this unpacks to metadata/android/<locale>/images/... - the
+      # layout the uploader walks.
+      - name: Download the tag's rendered listing graphics
+        if: inputs.update_listing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.graphics.outputs.tag }}
+        run: |
+          gh release download "$TAG" --pattern 'store-graphics-*.zip' --dir "$RUNNER_TEMP"
+          unzip -q "$RUNNER_TEMP"/store-graphics-*.zip -d "$RUNNER_TEMP/graphics"
+
       - name: Promote
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           PACKAGE_NAME: nl.pixento.betterhabits
           VERSION_CODE: ${{ inputs.version_code }}
           ROLLOUT_PERCENTAGE: ${{ inputs.rollout_percentage }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          LISTINGS_DIR: ${{ inputs.update_listing && 'distribution/listings' || '' }}
+          IMAGES_ROOT: ${{ inputs.update_listing && format('{0}/graphics/metadata/android', runner.temp) || '' }}
         run: python .github/scripts/promote_play_release.py
