@@ -160,6 +160,7 @@ val recordStoreGraphics =
 val storeGraphicsOutputDir = layout.buildDirectory.dir("outputs/store-graphics")
 val storeGraphicsCopyDir = layout.projectDirectory.dir("../distribution/screenshots")
 val whatsNewDir = layout.projectDirectory.dir("../distribution/whatsnew")
+val storeListingsDir = layout.projectDirectory.dir("../distribution/listings")
 
 tasks.withType<Test>().configureEach {
     val recording = recordStoreGraphics.get()
@@ -174,6 +175,11 @@ tasks.withType<Test>().configureEach {
     systemProperty("whatsNew.dir", whatsNewDir.asFile.absolutePath)
     inputs.dir(whatsNewDir)
         .withPropertyName("whatsNewFiles")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    // The Play listing copy, read by ListingFilesTest, declared as an input for the same reason.
+    systemProperty("listings.dir", storeListingsDir.asFile.absolutePath)
+    inputs.dir(storeListingsDir)
+        .withPropertyName("storeListingFiles")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     if (recording) {
         filter { includeTestsMatching("nl.pixento.betterhabits.screenshots.*") }
