@@ -5,10 +5,10 @@ import java.time.ZoneId
 import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import nl.pixento.betterhabits.alerting.AlertPlayer
+import nl.pixento.betterhabits.alerting.CarConnectionMonitor
 import nl.pixento.betterhabits.alerting.DoNotDisturbMonitor
 import nl.pixento.betterhabits.data.ScheduleStateRepository
 import nl.pixento.betterhabits.data.SettingsRepository
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
 import nl.pixento.betterhabits.scheduling.AlarmScheduler
@@ -19,14 +19,20 @@ enum class AlarmFiredOutcome {
     DISABLED,
     OUTSIDE_WINDOW,
     DO_NOT_DISTURB,
+    ANDROID_AUTO,
     NO_ALERT_SELECTED,
 }
 
 /**
  * Handles a single alarm-chain tick: re-checks current settings (they may have changed since
- * this alarm was scheduled), plays the alert if still enabled and within the active window,
- * and always computes + schedules the next tick from the *scheduled* time so drift doesn't
+ * this alarm was scheduled), plays the alert if still enabled and none of the pause conditions
+ * apply, and always computes + schedules the next tick from the *scheduled* time so drift doesn't
  * compound across the chain.
+ *
+ * The three conditions - active hours, Do Not Disturb, a connected car - are independent and each
+ * separately opted into, so a user can ask for "09:00-17:00, *and* quiet whenever Do Not Disturb is
+ * on". Only the hours can be predicted for a future instant; the other two are readable only for
+ * *now*, which is why they are judged here per tick rather than baked into the next trigger time.
  */
 class TriggerReminderUseCase(
     private val settingsRepository: SettingsRepository,
@@ -34,6 +40,7 @@ class TriggerReminderUseCase(
     private val alertPlayer: AlertPlayer,
     private val alarmScheduler: AlarmScheduler,
     private val doNotDisturbMonitor: DoNotDisturbMonitor,
+    private val carConnectionMonitor: CarConnectionMonitor,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val now: () -> Instant = Instant::now,
     private val random: Random = Random.Default,
@@ -51,14 +58,18 @@ class TriggerReminderUseCase(
         // can't be judged in-window and then rescheduled against a slightly different "now".
         val firedAt = now()
 
+        // Cheapest first: the window check is pure math, so a tick outside the active hours costs
+        // no system calls at all. Each of the other two is asked of the OS only when the user opted
+        // into it, so nothing is read on behalf of someone who didn't ask for that condition.
         val outcome = when {
-            // Only asked of the OS when the user opted into following it, so the custom-times mode
-            // keeps firing through Do Not Disturb exactly as it does today.
-            settings.activeWindowMode == ActiveWindowMode.DO_NOT_DISTURB_OFF &&
-                    doNotDisturbMonitor.isDoNotDisturbActive() -> AlarmFiredOutcome.DO_NOT_DISTURB
-
             !NextTriggerCalculator.isWithinWindow(firedAt, zone, settings.activeWindow) ->
                 AlarmFiredOutcome.OUTSIDE_WINDOW
+
+            settings.pauseDuringDoNotDisturb && doNotDisturbMonitor.isDoNotDisturbActive() ->
+                AlarmFiredOutcome.DO_NOT_DISTURB
+
+            settings.pauseDuringAndroidAuto && carConnectionMonitor.isConnectedToCar() ->
+                AlarmFiredOutcome.ANDROID_AUTO
 
             else -> playAlert(settings)
         }

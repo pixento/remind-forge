@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import nl.pixento.betterhabits.data.ScheduleStateRepository
 import nl.pixento.betterhabits.data.SettingsRepository
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.scheduling.AlarmScheduler
@@ -151,14 +150,14 @@ class ReminderScheduleCoordinatorTest {
     }
 
     @Test
-    fun `following Do Not Disturb schedules the plain interval, ignoring the stored window`() =
+    fun `without active hours it schedules the plain interval, ignoring the stored window`() =
         runTest {
-            // Whether a future slot is active can't be known now, so this mode never clamps: the
-            // window times are still stored but must not push the next tick to 09:00 tomorrow.
+            // The times stay stored so re-ticking the checkbox restores them, but while the hours
+            // don't apply they must not push the next tick to 09:00 tomorrow.
             val settings = ReminderSettings(
                 enabled = true,
                 intervalMinutes = 15,
-                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+                limitToActiveHours = false,
                 windowStart = LocalTime.of(1, 0),
                 windowEnd = LocalTime.of(2, 0),
             )

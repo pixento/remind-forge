@@ -7,10 +7,13 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import java.io.File
 import nl.pixento.betterhabits.alerting.AlertPlayer
 import nl.pixento.betterhabits.alerting.AndroidAlertPlayer
+import nl.pixento.betterhabits.alerting.AndroidCarConnectionMonitor
 import nl.pixento.betterhabits.alerting.AndroidDoNotDisturbMonitor
+import nl.pixento.betterhabits.alerting.CarConnectionMonitor
 import nl.pixento.betterhabits.alerting.DoNotDisturbMonitor
 import nl.pixento.betterhabits.data.ScheduleStateRepository
 import nl.pixento.betterhabits.data.SettingsRepository
+import nl.pixento.betterhabits.data.datastore.ActiveWindowModeMigration
 import nl.pixento.betterhabits.data.datastore.AlertModeMigration
 import nl.pixento.betterhabits.data.datastore.ScheduleStateRepositoryImpl
 import nl.pixento.betterhabits.data.datastore.SettingsRepositoryImpl
@@ -28,7 +31,7 @@ class AppContainer(context: Context) {
 
     private val settingsDataStore: DataStore<Preferences> by lazy {
         PreferenceDataStoreFactory.create(
-            migrations = listOf(AlertModeMigration),
+            migrations = listOf(AlertModeMigration, ActiveWindowModeMigration),
             produceFile = { File(appContext.filesDir, "datastore/$SETTINGS_DATASTORE_FILE_NAME") },
         )
     }
@@ -40,6 +43,9 @@ class AppContainer(context: Context) {
     val alarmScheduler: AlarmScheduler by lazy { AndroidAlarmScheduler(appContext) }
     val alertPlayer: AlertPlayer by lazy { AndroidAlertPlayer(appContext) }
     val doNotDisturbMonitor: DoNotDisturbMonitor by lazy { AndroidDoNotDisturbMonitor(appContext) }
+    val carConnectionMonitor: CarConnectionMonitor by lazy {
+        AndroidCarConnectionMonitor(appContext)
+    }
 
     val triggerReminderUseCase: TriggerReminderUseCase by lazy {
         TriggerReminderUseCase(
@@ -48,6 +54,7 @@ class AppContainer(context: Context) {
             alertPlayer,
             alarmScheduler,
             doNotDisturbMonitor,
+            carConnectionMonitor,
         )
     }
 

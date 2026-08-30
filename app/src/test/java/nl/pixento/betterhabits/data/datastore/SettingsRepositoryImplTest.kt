@@ -10,7 +10,6 @@ import java.io.File
 import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.IntervalRandomness
 import nl.pixento.betterhabits.domain.model.ReminderSettings
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
@@ -46,9 +45,11 @@ class SettingsRepositoryImplTest {
         repository.setEnabled(true)
         repository.setIntervalMinutes(20)
         repository.setIntervalRandomness(IntervalRandomness.TWENTY_PERCENT)
-        repository.setActiveWindowMode(ActiveWindowMode.DO_NOT_DISTURB_OFF)
+        repository.setLimitToActiveHours(false)
         repository.setWindowStart(LocalTime.of(8, 30))
         repository.setWindowEnd(LocalTime.of(20, 15))
+        repository.setPauseDuringDoNotDisturb(true)
+        repository.setPauseDuringAndroidAuto(true)
         repository.setVibrationPattern(VibrationPatternType.LONG_PULSE)
         repository.setRingtoneUri("content://media/ringtone/1")
 
@@ -56,9 +57,11 @@ class SettingsRepositoryImplTest {
         assertEquals(true, result.enabled)
         assertEquals(20, result.intervalMinutes)
         assertEquals(IntervalRandomness.TWENTY_PERCENT, result.intervalRandomness)
-        assertEquals(ActiveWindowMode.DO_NOT_DISTURB_OFF, result.activeWindowMode)
+        assertEquals(false, result.limitToActiveHours)
         assertEquals(LocalTime.of(8, 30), result.windowStart)
         assertEquals(LocalTime.of(20, 15), result.windowEnd)
+        assertEquals(true, result.pauseDuringDoNotDisturb)
+        assertEquals(true, result.pauseDuringAndroidAuto)
         assertEquals(VibrationPatternType.LONG_PULSE, result.vibrationPattern)
         assertEquals("content://media/ringtone/1", result.ringtoneUri)
     }
@@ -102,12 +105,16 @@ class SettingsRepositoryImplTest {
     }
 
     @Test
-    fun `a store without the active window mode key reads as custom times`() = runTest {
-        // The key is purely additive, which is why it needs no DataMigration: every store written
-        // before it existed has to keep behaving exactly as it did.
+    fun `a store without the pause keys reads as hours-only`() = runTest {
+        // The defaults have to reproduce what a store written before these keys existed did:
+        // fixed hours, and nothing pausing them. ActiveWindowModeMigration handles the one store
+        // shape where that isn't true.
         setUp()
         dataStore.edit { it[stringPreferencesKey("window_start")] = "08:00" }
-        assertEquals(ActiveWindowMode.CUSTOM_TIMES, repository.settings.first().activeWindowMode)
+        val result = repository.settings.first()
+        assertEquals(true, result.limitToActiveHours)
+        assertEquals(false, result.pauseDuringDoNotDisturb)
+        assertEquals(false, result.pauseDuringAndroidAuto)
     }
 
     @Test
@@ -124,13 +131,6 @@ class SettingsRepositoryImplTest {
         setUp()
         dataStore.edit { it[stringPreferencesKey("interval_randomness")] = "NINETY_PERCENT" }
         assertEquals(IntervalRandomness.NONE, repository.settings.first().intervalRandomness)
-    }
-
-    @Test
-    fun `corrupted active window mode string falls back to default`() = runTest {
-        setUp()
-        dataStore.edit { it[stringPreferencesKey("active_window_mode")] = "NOT_A_REAL_MODE" }
-        assertEquals(ActiveWindowMode.CUSTOM_TIMES, repository.settings.first().activeWindowMode)
     }
 
     @Test

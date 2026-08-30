@@ -24,10 +24,8 @@ internal object SettingsMapper {
                 preferences[PreferencesKeys.INTERVAL_RANDOMNESS],
                 defaults.intervalRandomness,
             ),
-            activeWindowMode = parseEnumOrDefault(
-                preferences[PreferencesKeys.ACTIVE_WINDOW_MODE],
-                defaults.activeWindowMode,
-            ),
+            limitToActiveHours = preferences[PreferencesKeys.LIMIT_TO_ACTIVE_HOURS]
+                ?: defaults.limitToActiveHours,
             windowStart = parseTimeOrDefault(
                 preferences[PreferencesKeys.WINDOW_START],
                 defaults.windowStart
@@ -36,6 +34,10 @@ internal object SettingsMapper {
                 preferences[PreferencesKeys.WINDOW_END],
                 defaults.windowEnd
             ),
+            pauseDuringDoNotDisturb = preferences[PreferencesKeys.PAUSE_DURING_DO_NOT_DISTURB]
+                ?: defaults.pauseDuringDoNotDisturb,
+            pauseDuringAndroidAuto = preferences[PreferencesKeys.PAUSE_DURING_ANDROID_AUTO]
+                ?: defaults.pauseDuringAndroidAuto,
             vibrationPattern = parseEnumOrDefault(
                 preferences[PreferencesKeys.VIBRATION_PATTERN],
                 defaults.vibrationPattern,

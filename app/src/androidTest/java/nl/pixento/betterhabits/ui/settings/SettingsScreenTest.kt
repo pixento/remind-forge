@@ -14,7 +14,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import nl.pixento.betterhabits.R
-import nl.pixento.betterhabits.domain.model.ActiveWindowMode
 import nl.pixento.betterhabits.domain.model.VibrationPatternType
 import nl.pixento.betterhabits.ui.settings.vibration.labelRes
 import org.junit.Assert.assertTrue
@@ -52,7 +51,7 @@ class SettingsScreenTest {
                     uiState = uiState,
                     onEnabledChanged = onEnabledChanged,
                     onIntervalChanged = { _, _ -> },
-                    onActiveWindowModeChanged = {},
+                    onLimitToActiveHoursChanged = {},
                     onWindowStartChanged = {},
                     onWindowEndChanged = {},
                     onVibrationPatternSelected = {},
@@ -131,13 +130,13 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun pausedTextReplacesNextReminderWhileFollowingDoNotDisturbAndItIsOn() {
+    fun pausedTextReplacesNextReminderWhilePausingForDoNotDisturbAndItIsOn() {
         // The alarm is genuinely pending, but every tick skips its alert - so the row has to say
         // that instead of promising a reminder at a time nothing will happen at.
         setScreen(
             uiState = SettingsUiState(
                 enabled = true,
-                activeWindowMode = ActiveWindowMode.DO_NOT_DISTURB_OFF,
+                pauseDuringDoNotDisturb = true,
                 doNotDisturbActive = true,
                 nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
             ),
@@ -147,17 +146,51 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun nextReminderStillShownOnCustomTimesEvenWhileDoNotDisturbIsOn() {
+    fun pausedTextReplacesNextReminderWhilePausingForAndroidAutoAndItIsConnected() {
         setScreen(
             uiState = SettingsUiState(
                 enabled = true,
-                activeWindowMode = ActiveWindowMode.CUSTOM_TIMES,
+                pauseDuringAndroidAuto = true,
+                androidAutoConnected = true,
+                nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
+            ),
+        )
+        composeRule.onNodeWithText(string(R.string.paused_for_android_auto)).assertExists()
+        composeRule.onNodeWithText(nextReminderPrefix, substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun nextReminderStillShownWhenTheConditionHoldsButWasNotOptedInto() {
+        // Both conditions are live on the device and neither was asked for, so nothing is paused.
+        setScreen(
+            uiState = SettingsUiState(
+                enabled = true,
                 doNotDisturbActive = true,
+                androidAutoConnected = true,
                 nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
             ),
         )
         composeRule.onNodeWithText(string(R.string.paused_for_do_not_disturb)).assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.paused_for_android_auto)).assertDoesNotExist()
         composeRule.onNodeWithText(nextReminderPrefix, substring = true).assertExists()
+    }
+
+    @Test
+    fun doNotDisturbWinsTheStatusLineWhenBothConditionsPause() {
+        // One line reports the chain's state, so the two reasons need an order - and it has to be
+        // the one TriggerReminderUseCase resolves them in.
+        setScreen(
+            uiState = SettingsUiState(
+                enabled = true,
+                pauseDuringDoNotDisturb = true,
+                pauseDuringAndroidAuto = true,
+                doNotDisturbActive = true,
+                androidAutoConnected = true,
+                nextTriggerAtMillis = Instant.now().plusSeconds(600).toEpochMilli(),
+            ),
+        )
+        composeRule.onNodeWithText(string(R.string.paused_for_do_not_disturb)).assertExists()
+        composeRule.onNodeWithText(string(R.string.paused_for_android_auto)).assertDoesNotExist()
     }
 
     @Test

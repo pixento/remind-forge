@@ -6,6 +6,8 @@
     <string name="settings_reminders_enabled">Erinnerungen aktiviert</string>
     <string name="settings_schedule_title">Zeitplan</string>
     <string name="settings_schedule_description">Wähle, wie oft und in welchem Zeitraum du erinnert werden möchtest.</string>
+    <string name="settings_auto_pause_title">Automatische Pausen</string>
+    <string name="settings_auto_pause_description">Bleib still, wenn eine Erinnerung dich ohnehin nicht erreicht.</string>
     <string name="settings_alerts_title">Benachrichtigungen</string>
     <string name="settings_alerts_description">Wähle, wie du benachrichtigt wirst. Wähle ein unverwechselbares Vibrationsmuster oder einen eigenen Ton, damit du die Erinnerung erkennst, ohne aufs Handy zu schauen.</string>
     <string name="vibration_label">Vibration</string>
@@ -14,6 +16,7 @@
     <string name="no_alert_warning">Keine Vibration oder Ton ausgewählt - Erinnerungen bleiben lautlos.</string>
     <string name="next_reminder_around">Nächste Erinnerung gegen %1$s</string>
     <string name="paused_for_do_not_disturb">Pausiert, „Bitte nicht stören“ ist aktiv</string>
+    <string name="paused_for_android_auto">Pausiert, Android Auto ist verbunden</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Intervall</string>
@@ -26,14 +29,18 @@
     <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Aktives Fenster / Active window picker -->
-    <string name="follow_do_not_disturb_schedule">Dem „Bitte nicht stören“-Zeitplan folgen</string>
-    <string name="do_not_disturb_settings_title">Einstellungen für „Bitte nicht stören“</string>
-    <string name="do_not_disturb_settings_value">Zeitplan für „Bitte nicht stören“ auf deinem Telefon öffnen</string>
+    <string name="limit_to_active_hours">Nur zu festgelegten Zeiten</string>
 
     <!-- Zeitfenster / Time window picker -->
     <string name="time_window_start">Startzeit</string>
     <string name="time_window_end">Endzeit</string>
     <string name="time_window_next_day_suffix">" (nächster Tag)"</string>
+
+    <!-- Automatische Pausen / Automatic pauses -->
+    <string name="pause_during_android_auto">Pausieren, wenn Android Auto verbunden ist</string>
+    <string name="pause_during_do_not_disturb">Pausieren, wenn „Bitte nicht stören“ an ist</string>
+    <string name="do_not_disturb_settings_title">Einstellungen für „Bitte nicht stören“</string>
+    <string name="do_not_disturb_settings_value">Zeitplan für „Bitte nicht stören“ auf deinem Telefon öffnen</string>
 
     <!-- Permission banners -->
     <string name="exact_alarm_banner_message">Erinnerungen benötigen die Berechtigung, exakte Alarme zu planen, damit sie pünktlich ausgelöst werden.</string>

@@ -29,12 +29,12 @@ Some things don't need a whole notification. A short buzz is enough.
 
 Better Habits taps you on the shoulder every so often — as often as you like, and only during the hours you like. The rest of the time you'd never know it was there. Nothing to read, no reason to take your phone out of your pocket.
 
-Every fifteen minutes from nine to five, and it'll carry you through the working day. Leave it off in the evening, or let it follow Do Not Disturb and it'll go quiet on its own.
+Every fifteen minutes from nine to five, and it'll carry you through the working day. Add Do Not Disturb on top and it goes quiet on its own the moment your phone does.
 
 WHAT YOU CAN CHANGE
 • How often — every few minutes, or every few hours. Add a little variation so it doesn't turn into background noise.
 • When — a start and an end time for the day. Stretches that run past midnight are fine too.
-• Or follow Do Not Disturb — no fixed hours at all; it pauses the moment your phone goes quiet.
+• When not to — pause while Do Not Disturb is on, or while you're driving with Android Auto. Combine them with your hours, or use them instead of any fixed hours.
 • How it feels — pick a vibration pattern, or leave the buzzing out.
 • How it sounds — pick any ringtone on your phone, or keep it silent.
 
@@ -74,12 +74,12 @@ Soms heb je geen hele melding nodig. Een kort tril- of geluidssignaal is genoeg.
 
 Better Habits tikt je af en toe op je schouder — zo vaak als jij wilt, en alleen tijdens de uren die jij kiest. Verder merk je er niets van. Niets om te lezen, geen reden om je telefoon uit je zak te halen.
 
-Elk kwartier van negen tot vijf, en zo kom je de hele werkdag door. 's Avonds zet je hem uit, of je laat hem 'Niet storen' volgen — dan houdt hij vanzelf zijn mond.
+Elk kwartier van negen tot vijf, en zo kom je de hele werkdag door. Zet er 'Niet storen' bij en hij houdt vanzelf zijn mond zodra je telefoon dat ook doet.
 
 WAT JE KUNT INSTELLEN
 • Hoe vaak — om de paar minuten of om de paar uur. Met een beetje variatie, zodat het geen achtergrondgeluid wordt.
 • Wanneer — een begintijd en een eindtijd voor de dag. Ook 's nachts doorlopen kan.
-• Of volg 'Niet storen' — helemaal geen vaste tijden; hij pauzeert zodra je telefoon stil staat.
+• Wanneer niet — pauzeer als 'Niet storen' aanstaat, of als je met Android Auto rijdt. Combineer ze met je uren, of gebruik ze zonder vaste tijden.
 • Hoe het voelt — kies een trilpatroon, of laat het trillen achterwege.
 • Hoe het klinkt — kies een beltoon van je telefoon, of houd het helemaal stil.
 
@@ -119,12 +119,12 @@ Manchmal braucht es keine ganze Benachrichtigung. Ein kurzes Vibrieren reicht.
 
 Better Habits stupst dich ab und zu an — so oft du magst und nur in den Stunden, die du festlegst. Sonst merkst du gar nicht, dass es da ist. Nichts zu lesen, kein Grund, das Handy aus der Tasche zu holen.
 
-Alle fünfzehn Minuten von neun bis fünf, und du kommst gut durch den Arbeitstag. Abends lässt du es aus, oder du lässt es „Nicht stören“ folgen — dann ist es von allein still.
+Alle fünfzehn Minuten von neun bis fünf, und du kommst gut durch den Arbeitstag. Nimm „Nicht stören“ dazu, dann ist es von allein still, sobald dein Handy es auch ist.
 
 WAS DU EINSTELLEN KANNST
 • Wie oft — alle paar Minuten oder alle paar Stunden. Mit etwas Abwechslung, damit es nicht zum Hintergrundrauschen wird.
 • Wann — eine Anfangs- und eine Endzeit für den Tag. Auch über Mitternacht hinaus.
-• Oder „Nicht stören“ folgen — gar keine festen Zeiten; es pausiert, sobald dein Handy still ist.
+• Wann nicht — pausieren, solange „Nicht stören“ an ist, oder solange du mit Android Auto fährst. Kombinierbar mit deinen Zeiten, oder ganz ohne feste Zeiten.
 • Wie es sich anfühlt — such dir ein Vibrationsmuster aus, oder lass das Vibrieren weg.
 • Wie es klingt — nimm einen beliebigen Klingelton von deinem Handy, oder bleib bei der Stille.
 
@@ -164,12 +164,12 @@ A veces no hace falta una notificación entera. Basta con una vibración corta.
 
 Better Habits te da un toquecito en el hombro de vez en cuando: con la frecuencia que quieras y solo durante las horas que tú elijas. El resto del tiempo, ni te enteras de que está ahí. Nada que leer, ningún motivo para sacar el móvil del bolsillo.
 
-Cada quince minutos, de nueve a cinco, y te acompaña toda la jornada. Por la tarde lo dejas apagado, o haces que siga el modo No molestar y se calla solo.
+Cada quince minutos, de nueve a cinco, y te acompaña toda la jornada. Añade No molestar y se calla solo en cuanto lo hace tu móvil.
 
 QUÉ PUEDES CAMBIAR
 • Cada cuánto — cada pocos minutos o cada pocas horas. Con algo de variación, para que no se convierta en ruido de fondo.
 • Cuándo — una hora de inicio y otra de fin. Los tramos que cruzan la medianoche también valen.
-• O que siga a No molestar — sin ningún horario fijo: se pausa en cuanto tu móvil se queda en silencio.
+• Cuándo no — pausa mientras No molestar esté activo, o mientras conduces con Android Auto. Combínalos con tu horario, o úsalos sin ningún horario fijo.
 • Cómo se nota — elige un patrón de vibración, o quítala del todo.
 • Cómo suena — elige cualquier tono de tu móvil, o déjalo en silencio.
 
@@ -209,12 +209,12 @@ Parfois, une notification entière n'a rien à faire là. Une petite vibration s
 
 Better Habits vous tape sur l'épaule de temps en temps : aussi souvent que vous le voulez, et seulement pendant les heures que vous choisissez. Le reste du temps, il se fait complètement oublier. Rien à lire, aucune raison de sortir le téléphone de sa poche.
 
-Toutes les quinze minutes, de neuf heures à cinq heures : de quoi tenir toute la journée de travail. Le soir, vous le laissez éteint, ou vous le laissez suivre le mode Ne pas déranger et il se tait tout seul.
+Toutes les quinze minutes, de neuf heures à cinq heures : de quoi tenir toute la journée de travail. Ajoutez Ne pas déranger et il se tait tout seul dès que votre téléphone en fait autant.
 
 CE QUE VOUS POUVEZ RÉGLER
 • À quelle fréquence — toutes les quelques minutes ou toutes les quelques heures. Avec un peu de variation, pour que cela ne devienne pas un bruit de fond.
 • Quand — une heure de début et une heure de fin. Les plages qui passent minuit fonctionnent aussi.
-• Ou suivre Ne pas déranger — aucun horaire fixe : il se met en pause dès que votre téléphone se tait.
+• Quand se taire — en pause tant que Ne pas déranger est activé, ou tant que vous roulez avec Android Auto. À combiner avec vos horaires, ou à utiliser sans aucun horaire fixe.
 • Ce que vous sentez — choisissez un motif de vibration, ou supprimez la vibration.
 • Ce que vous entendez — choisissez n'importe quelle sonnerie de votre téléphone, ou restez en silence.
 

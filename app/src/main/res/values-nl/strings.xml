@@ -6,6 +6,8 @@
     <string name="settings_reminders_enabled">Herinneringen ingeschakeld</string>
     <string name="settings_schedule_title">Schema</string>
     <string name="settings_schedule_description">Kies hoe vaak en tijdens welke uren je herinnerd wilt worden.</string>
+    <string name="settings_auto_pause_title">Automatisch pauzeren</string>
+    <string name="settings_auto_pause_description">Blijf stil wanneer een herinnering je toch niet bereikt.</string>
     <string name="settings_alerts_title">Meldingen</string>
     <string name="settings_alerts_description">Kies hoe je gewaarschuwd wordt. Kies een uniek trilpatroon of geluid, zodat je de herinnering herkent zonder op je telefoon te kijken.</string>
     <string name="vibration_label">Trillen</string>
@@ -14,6 +16,7 @@
     <string name="no_alert_warning">Geen trilling of geluid geselecteerd - herinneringen gaan stil af.</string>
     <string name="next_reminder_around">Volgende herinnering rond %1$s</string>
     <string name="paused_for_do_not_disturb">Gepauzeerd, Niet storen is actief</string>
+    <string name="paused_for_android_auto">Gepauzeerd, Android Auto is verbonden</string>
 
     <!-- Interval picker -->
     <string name="interval_title">Interval</string>
@@ -26,14 +29,18 @@
     <string name="interval_randomness_value">%1$d%%</string>
 
     <!-- Actief venster / Active window picker -->
-    <string name="follow_do_not_disturb_schedule">Niet storen-schema volgen</string>
-    <string name="do_not_disturb_settings_title">Instellingen voor Niet storen</string>
-    <string name="do_not_disturb_settings_value">Open het Niet storen-schema van je telefoon</string>
+    <string name="limit_to_active_hours">Alleen tijdens ingestelde uren</string>
 
     <!-- Tijdvenster / Time window picker -->
     <string name="time_window_start">Starttijd</string>
     <string name="time_window_end">Eindtijd</string>
     <string name="time_window_next_day_suffix">" (volgende dag)"</string>
+
+    <!-- Automatische pauzes / Automatic pauses -->
+    <string name="pause_during_android_auto">Pauzeren als Android Auto verbonden is</string>
+    <string name="pause_during_do_not_disturb">Pauzeren als Niet storen aanstaat</string>
+    <string name="do_not_disturb_settings_title">Instellingen voor Niet storen</string>
+    <string name="do_not_disturb_settings_value">Open het Niet storen-schema van je telefoon</string>
 
     <!-- Permission banners -->
     <string name="exact_alarm_banner_message">Herinneringen hebben toestemming nodig om exacte alarmen te plannen, zodat ze op tijd afgaan.</string>
