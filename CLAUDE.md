@@ -95,7 +95,13 @@ of the change rather than discovering it at the end.
 `distribution/` carries three more five-locale sets that the same rule applies to, keyed by Play
 locale (`en-GB`, `nl-NL`, `de-DE`, `es-ES`, `fr-FR`) rather than by res qualifier: `whatsnew/`,
 `store-listing.md`, and the store copy under `screenshots/`. Lint can't see any of them; for
-`screenshots/` the render test is what enforces it, failing when a locale is short a caption line.
+`screenshots/` the render test is what enforces it, failing when a locale is short a caption line,
+and for `whatsnew/` it's `WhatsNewFilesTest`, which also enforces Play's 500-character limit and
+that nothing but the five locale files sits in that directory.
+
+`whatsnew/` is the one set that is **generated rather than written**: the `whatsnew` skill
+(`.claude/skills/whatsnew/SKILL.md`) rewrites all five files from the commits since the latest `v*`
+tag. Don't hand-edit them as part of an unrelated change — regenerate instead.
 
 ## Architecture
 
@@ -274,6 +280,11 @@ branch is already checked out, keep committing to it and don't branch again — 
 to carry multiple unrelated changes rather than spawning a branch per feature. Update the PR's
 description after every push to that branch so it stays a true summary of everything the branch
 contains, not just the latest push.
+
+Before opening or updating a PR, if the branch changes anything a user of the app can notice, run
+the `whatsnew` skill and include the regenerated `distribution/whatsnew` in the same push. It
+rewrites all five locale files wholesale from the latest `v*` tag onwards — never append to them by
+hand — so whatever is committed when the next tag is pushed already describes exactly that release.
 
 A PR description says what changed and why, and nothing about how it was written. Never put a
 reference to Claude, Claude Code, or a Claude session in one — no "Generated with Claude Code"
